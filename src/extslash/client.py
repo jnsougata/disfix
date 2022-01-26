@@ -1,5 +1,6 @@
 import sys
 import discord
+from discord.ext import commands
 import json
 import asyncio
 import traceback
@@ -157,7 +158,7 @@ class SlashContext:
         return await self._client.http.request(route, json=body)
 
 
-class Bot(discord.Client):
+class SlashBot(commands.Bot):
     def __init__(
             self,
             prefix: Union[Callable, str],
@@ -166,8 +167,8 @@ class Bot(discord.Client):
             guild_id: Optional[int] = None,
     ):
         super().__init__(
-            prefix=prefix,
-            intents=discord.Intents.all(),
+            command_prefix=prefix,
+            intents=intents,
             enable_debug_events=True,
             help_command=help_command,
         )

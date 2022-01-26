@@ -1,3 +1,3 @@
 import discord
 from .type import Slash
-from .client import Bot, SlashContext
+from .client import SlashBot, SlashContext

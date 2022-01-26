@@ -1,25 +1,33 @@
 import os
 import discord
 from discord.ext import commands
-from src.extslash import Bot, Slash, SlashContext
-from slash_cmds import *
-
-bot = Bot(
-    prefix='!',
-    help_command=None,
-    intents=discord.Intents.default(),
-    guild_id=877399405056102431
-)
+from src.extslash import SlashBot, Slash, SlashContext
+from cmds import echo
 
 
-@bot.slash_command(command=cmd)
+intents = discord.Intents.default()
+
+
+class MyBot(SlashBot):
+    def __init__(self):
+        super().__init__(prefix='-', help_command=None, intents=intents, guild_id=877399405056102431)
+
+    async def on_ready(self):
+        print(f'Logged in as {self.user} (ID: {self.user.id})')
+        print('------')
+
+
+bot = MyBot()
+
+
+@bot.slash_command(command=echo)
 async def echo(ctx: SlashContext):
     await ctx.reply(f'**{ctx.options[0].value}**')
 
 
-@bot.event
-async def on_ready():
-    print(f'Logged in as {bot.user} (ID: {bot.user.id})')
-    print('------')
+@bot.command(name='ping')
+async def ping(ctx: commands.Context):
+    await ctx.reply(f'Pong: {bot.latency * 1000}ms')
+
 
 bot.run(os.getenv('DISCORD_TOKEN'))
