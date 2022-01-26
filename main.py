@@ -1,7 +1,7 @@
 import os
 import discord
 from discord.ext import commands
-from src.extslash import Bot, Slash
+from src.extslash import Bot, Slash, SlashContext
 from slash_cmds import *
 
 bot = Bot(
@@ -13,8 +13,12 @@ bot = Bot(
 
 
 @bot.slash_command(command=cmd_one)
-async def slash(ctx, *args):
-    await ctx.send(f'{args}')
+async def slash(ctx: SlashContext):
+    emd = discord.Embed(
+        title=f'Slash Command | [{ctx.name}]',
+        description=f'`member` ```{ctx.member}```'
+    )
+    await ctx.reply(embed=emd)
 
 
 @bot.event

@@ -1,6 +1,8 @@
+import sys
 import discord
 import json
 import asyncio
+import traceback
 from .slash import Slash
 from typing import Callable, Optional, Any, Union
 from dataclasses import dataclass
@@ -43,10 +45,11 @@ class Bot(discord.Client):
         response = json.loads(payload)
         if response.get('t') == 'INTERACTION_CREATE':
             interaction = _BaseInteraction(**response.get('d'))
-            data = _BaseInteractionData(**interaction.data)
-            options = [_BaseSlashOption(**option) for option in data.options]
-            #ctx = _BaseSlashContext()
-            #executor = await _BaseExecutor(ctx, self._command_pool).execute()
+            if interaction.type == 2:
+                ctx = SlashContext(interaction, self)
+                data = _BaseInteractionData(**interaction.data)
+                options = [_BaseSlashOption(**option) for option in data.options]
+                await _BaseExecutor(ctx, self._command_pool).execute()
 
     async def __register(self):
         await self.wait_until_ready()
@@ -55,17 +58,16 @@ class Bot(discord.Client):
             for command in self._reg_queue:
                 route = Route('POST', f'/applications/{self.user.id}/guilds/{self.guild_id}/commands')
                 self.slash_commands[command['name']] = await self.http.request(route, json=command)
-                print(self.slash_commands)
 
 
 @dataclass(frozen=True)
 class _BaseInteraction:
     id: int
+    version: int
     token: str
     type: int
     data: dict
     application_id: int
-    version: int
     guild_id: Union[int, str]
     channel_id: Union[int, str]
     message: Optional[dict] = None
@@ -80,7 +82,7 @@ class _BaseInteractionData:
     id: Union[int, str]
     name: str
     type: int
-    resolved: dict
+    resolved: Optional[dict] = None
     custom_id: Optional[str] = None
     options: Optional[dict] = None
     component_type: Optional[int] = None
@@ -98,13 +100,108 @@ class _BaseSlashOption:
 
 
 class SlashContext:
-    name: str
-    pass
+    def __init__(self, interaction: _BaseInteraction, client: Bot):
+        self._interaction = interaction
+        self._client = client
+
+    @property
+    def name(self):
+        return self._interaction.data.get('name')
+
+    @property
+    def id(self):
+        return self._interaction.id
+
+    @property
+    def version(self):
+        return self._interaction.version
+
+    @property
+    def data(self):
+        return _BaseInteractionData(**self._interaction.data)
+
+    @property
+    def application_id(self):
+        return self._interaction.application_id
+
+    @property
+    def locale(self):
+        return self._interaction.locale
+
+    @property
+    def guild_locale(self):
+        return self._interaction.guild_locale
+
+    @property
+    def channel(self):
+        channel_id = self._interaction.channel_id
+        if channel_id:
+            return self._client.get_channel(int(channel_id))
+
+    @property
+    def guild(self):
+        guild_id = self._interaction.guild_id
+        if guild_id:
+            return self._client.get_guild(int(guild_id))
+
+    @property
+    def member(self):
+        return self._interaction.member  # TODO: make member class
+
+    @property
+    def user(self):
+        return self._interaction.user  # TODO: make user class
+
+    async def send(
+            self,
+            content: Union[str, Any] = None,
+            embed: discord.Embed = None,
+            embeds: [discord.Embed] = None,
+            ephemeral: bool = False
+    ):
+        if embed:
+            payload = [embed.to_dict()]
+        elif embeds:
+            payload = [embed.to_dict() for embed in embeds]
+        else:
+            payload = []
+
+        route = Route('POST', f'/channels/{self._interaction.channel_id}/messages')
+        body = {
+            "content": str(content) if content else ' ',
+            "embeds": payload,
+            "flags": 64 if ephemeral else None
+        }
+        return await self._client.http.request(route, json=body)
+
+    async def reply(
+            self,
+            content: Union[str, Any] = None,
+            embed: discord.Embed = None,
+            embeds: [discord.Embed] = None,
+            ephemeral: bool = False
+    ):
+        if embed:
+            payload = [embed.to_dict()]
+        elif embeds:
+            payload = [embed.to_dict() for embed in embeds]
+        else:
+            payload = []
+        route = Route('POST', f'/interactions/{self._interaction.id}/{self._interaction.token}/callback')
+        body = {
+            'type': 4,
+            'data': {
+                "content": str(content) if content else ' ',
+                "embeds": payload,
+                "flags": 64 if ephemeral else None,
+            }
+        }
+        return await self._client.http.request(route, json=body)
 
 
 class _BaseExecutor:
-    def __init__(self, context: SlashContext, pool: dict):
-        self.ctx = context
+    def __init__(self, ctx: SlashContext, pool: dict):
+        self.ctx = ctx
         self.pool = pool
 
     async def execute(self):
@@ -114,4 +211,4 @@ class _BaseExecutor:
             try:
                 await func(self.ctx)
             except Exception:
-                traceback.print_exc(*sys.exc_info())
+                traceback.print_exception(*sys.exc_info())
