@@ -3,61 +3,11 @@ import discord
 import json
 import asyncio
 import traceback
-from .slash import Slash
+from .type import Slash
 from typing import Callable, Optional, Any, Union
 from dataclasses import dataclass
 from discord.http import Route
 from functools import wraps
-
-
-class Bot(discord.Client):
-    def __init__(
-            self,
-            prefix: Union[Callable, str],
-            intents: discord.Intents = discord.Intents.default(),
-            help_command: Optional[discord.ext.commands.HelpCommand] = None,
-            guild_id: Optional[int] = None,
-    ):
-        super().__init__(
-            prefix=prefix,
-            intents=discord.Intents.all(),
-            enable_debug_events=True,
-            help_command=help_command,
-        )
-        self._check = False
-        self._command_pool = {}
-        self._reg_queue = []
-        self.guild_id = guild_id
-        self.slash_commands = {}
-
-    def slash_command(self, command: Slash):
-        self._reg_queue.append(command.object)
-
-        def decorator(func):
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                return func
-            self._command_pool[command.object["name"]] = wrapper()
-        return decorator
-
-    async def on_socket_raw_receive(self, payload: Any):
-        asyncio.ensure_future(self.__register())
-        response = json.loads(payload)
-        if response.get('t') == 'INTERACTION_CREATE':
-            interaction = _BaseInteraction(**response.get('d'))
-            if interaction.type == 2:
-                ctx = SlashContext(interaction, self)
-                data = _BaseInteractionData(**interaction.data)
-                options = [_BaseSlashOption(**option) for option in data.options]
-                await _BaseExecutor(ctx, self._command_pool).execute()
-
-    async def __register(self):
-        await self.wait_until_ready()
-        if self.guild_id and not self._check:
-            self._check = True
-            for command in self._reg_queue:
-                route = Route('POST', f'/applications/{self.user.id}/guilds/{self.guild_id}/commands')
-                self.slash_commands[command['name']] = await self.http.request(route, json=command)
 
 
 @dataclass(frozen=True)
@@ -100,7 +50,7 @@ class _BaseSlashOption:
 
 
 class SlashContext:
-    def __init__(self, interaction: _BaseInteraction, client: Bot):
+    def __init__(self, interaction: _BaseInteraction, client: discord.Client):
         self._interaction = interaction
         self._client = client
 
@@ -119,6 +69,10 @@ class SlashContext:
     @property
     def data(self):
         return _BaseInteractionData(**self._interaction.data)
+
+    @property
+    def options(self):
+        return [_BaseSlashOption(**option) for option in self.data.options]
 
     @property
     def application_id(self):
@@ -145,12 +99,16 @@ class SlashContext:
             return self._client.get_guild(int(guild_id))
 
     @property
-    def member(self):
-        return self._interaction.member  # TODO: make member class
+    def author(self):
+        if self._interaction.member:
+            member_id = self._interaction.member.get('user').get('id')
+            return self._client.get_user(int(member_id))
 
     @property
     def user(self):
-        return self._interaction.user  # TODO: make user class
+        if self._interaction.user:
+            user_id = self._interaction.user.get('id')
+            return self._client.get_user(int(user_id))
 
     async def send(
             self,
@@ -199,16 +157,58 @@ class SlashContext:
         return await self._client.http.request(route, json=body)
 
 
-class _BaseExecutor:
-    def __init__(self, ctx: SlashContext, pool: dict):
-        self.ctx = ctx
-        self.pool = pool
+class Bot(discord.Client):
+    def __init__(
+            self,
+            prefix: Union[Callable, str],
+            intents: discord.Intents = discord.Intents.default(),
+            help_command: Optional[discord.ext.commands.HelpCommand] = None,
+            guild_id: Optional[int] = None,
+    ):
+        super().__init__(
+            prefix=prefix,
+            intents=discord.Intents.all(),
+            enable_debug_events=True,
+            help_command=help_command,
+        )
+        self._check = False
+        self._command_pool = {}
+        self._reg_queue = []
+        self.guild_id = guild_id
+        self.slash_commands = {}
 
-    async def execute(self):
-        name = self.ctx.name
-        func = self.pool.get(name)
+    def slash_command(self, command: Slash):
+        self._reg_queue.append(command.object)
+
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                return func
+            self._command_pool[command.object["name"]] = wrapper()
+        return decorator
+
+    async def _register(self):
+        await self.wait_until_ready()
+        if self.guild_id and not self._check:
+            self._check = True
+            for command in self._reg_queue:
+                route = Route('POST', f'/applications/{self.user.id}/guilds/{self.guild_id}/commands')
+                self.slash_commands[command['name']] = await self.http.request(route, json=command)
+
+    async def _call_to(self, ctx: SlashContext):
+        func_name = ctx.name
+        pool = self._command_pool
+        func = pool.get(func_name)
         if func:
             try:
-                await func(self.ctx)
+                await func(ctx)
             except Exception:
                 traceback.print_exception(*sys.exc_info())
+
+    async def on_socket_raw_receive(self, payload: Any):
+        asyncio.ensure_future(self._register())
+        response = json.loads(payload)
+        if response.get('t') == 'INTERACTION_CREATE':
+            interaction = _BaseInteraction(**response.get('d'))
+            if interaction.type == 2:
+                await self._call_to(SlashContext(interaction, self))

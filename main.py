@@ -12,18 +12,14 @@ bot = Bot(
 )
 
 
-@bot.slash_command(command=cmd_one)
-async def slash(ctx: SlashContext):
-    emd = discord.Embed(
-        title=f'Slash Command | [{ctx.name}]',
-        description=f'`member` ```{ctx.member}```'
-    )
-    await ctx.reply(embed=emd)
+@bot.slash_command(command=cmd)
+async def echo(ctx: SlashContext):
+    await ctx.reply(f'**{ctx.options[0].value}**')
 
 
 @bot.event
 async def on_ready():
-    print(f'{bot.user.name} has connected to Discord!')
+    print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('------')
 
 bot.run(os.getenv('DISCORD_TOKEN'))
