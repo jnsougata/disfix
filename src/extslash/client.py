@@ -5,10 +5,10 @@ import json
 import asyncio
 import traceback
 from .type import Slash
-from typing import Callable, Optional, Any, Union
 from dataclasses import dataclass
 from discord.http import Route
 from functools import wraps
+from typing import Callable, Optional, Any, Union, List
 
 
 @dataclass(frozen=True)
@@ -115,7 +115,7 @@ class SlashContext:
             self,
             content: Union[str, Any] = None,
             embed: discord.Embed = None,
-            embeds: [discord.Embed] = None,
+            embeds: List[discord.Embed] = None,
             ephemeral: bool = False
     ):
         if embed:
@@ -137,7 +137,7 @@ class SlashContext:
             self,
             content: Union[str, Any] = None,
             embed: discord.Embed = None,
-            embeds: [discord.Embed] = None,
+            embeds: List[discord.Embed] = None,
             ephemeral: bool = False
     ):
         if embed:
