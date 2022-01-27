@@ -87,9 +87,9 @@ class SlashContext:
         if content:
             payload['content'] = content
         if embed:
-            payload['embeds'] = [embed]
+            payload['embeds'] = [embed.to_dict()]
         if embeds:
-            payload['embeds'] = embeds
+            payload['embeds'] = [embed.to_dict() for embed in embeds]
         if allowed_mentions:
             payload['allowed_mentions'] = allowed_mentions
         if components:
