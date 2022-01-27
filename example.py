@@ -28,7 +28,8 @@ async def echo(ctx: SlashContext):
 
 @bot.command(name='ping')
 async def ping(ctx: commands.Context):
-    await ctx.reply(f'Pong: {bot.latency * 1000}ms')
+    async with ctx.typing():
+        await ctx.reply(f'Pong: {bot.latency * 1000}ms')
 
 
 bot.run(os.getenv('DISCORD_TOKEN'))

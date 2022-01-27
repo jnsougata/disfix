@@ -170,3 +170,9 @@ class SlashContext:
             stickers=stickers,
             components=components,
         )
+
+    @property
+    def typing(self):
+        return self.channel.typing
+
+
