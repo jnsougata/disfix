@@ -31,5 +31,6 @@ async def ping(ctx: commands.Context):
     async with ctx.typing():
         await ctx.reply(f'Pong: {bot.latency * 1000}ms')
 
+bot.load_extension('cogs.example')
 
 bot.run(os.getenv('DISCORD_TOKEN'))

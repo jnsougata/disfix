@@ -174,5 +174,3 @@ class SlashContext:
     @property
     def typing(self):
         return self.channel.typing
-
-
