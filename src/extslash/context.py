@@ -3,6 +3,7 @@ import discord
 from .converter import BaseInteraction, BaseInteractionData, BaseSlashOption
 from discord.http import Route
 from discord.utils import _to_json
+from discord.message import Message
 from typing import Callable, Optional, Any, Union, List, Sequence, Iterable
 
 
@@ -133,7 +134,7 @@ class SlashContext:
                         'content_type': 'application/octet-stream',
                     }
                 )
-        return await self._client.http.request(route, form=form, files=files)
+        await self._client.http.request(route, form=form, files=files)
 
     async def send(
             self,

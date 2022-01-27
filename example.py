@@ -22,7 +22,7 @@ bot = MyBot()
 
 @bot.slash_command(command=echo)
 async def echo(ctx: SlashContext):
-    await ctx.respond(embed=discord.Embed(description=f'**{ctx.options[0].value}**'), ephemeral=True)
+    await ctx.respond(embed=discord.Embed(description=f'**{ctx.options[0].value}**'))
 
 
 bot.load_extension('cogs.example')
