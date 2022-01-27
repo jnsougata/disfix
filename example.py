@@ -22,7 +22,8 @@ bot = MyBot()
 
 @bot.slash_command(command=echo)
 async def echo(ctx: SlashContext):
-    await ctx.reply(f'**{ctx.options[0].value}**')
+    file = discord.File(f'example.py', filename='example.py')
+    await ctx.respond(f'**{ctx.options[0].value}**', file=file, ephemeral=True)
 
 
 @bot.command(name='ping')
