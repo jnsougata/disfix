@@ -10,8 +10,8 @@ class BaseInteraction:
     type: int
     data: dict
     application_id: int
-    guild_id: Union[int, str]
-    channel_id: Union[int, str]
+    guild_id: Optional[Union[int, str]] = None
+    channel_id: Optional[Union[int, str]] = None
     message: Optional[dict] = None
     member: Optional[dict] = None
     user: Optional[dict] = None

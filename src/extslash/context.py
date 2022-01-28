@@ -3,11 +3,10 @@ import discord
 from .converter import BaseInteraction, BaseInteractionData, BaseSlashOption
 from discord.http import Route
 from discord.utils import _to_json
-from discord.message import Message
 from typing import Callable, Optional, Any, Union, List, Sequence, Iterable
 
 
-class SlashContext:
+class SlashInteraction:
     def __init__(self, interaction: BaseInteraction, client: discord.Client):
         self._interaction = interaction
         self._client = client
@@ -58,15 +57,16 @@ class SlashContext:
 
     @property
     def author(self):
-        if self._interaction.member:
-            member_id = self._interaction.member.get('user').get('id')
-            return self._client.get_user(int(member_id))
-
-    @property
-    def user(self):
-        if self._interaction.user:
+        if self._interaction.guild_id:
+            user_id = self._interaction.member.get('user').get('id')
+            return self.guild.get_member(int(user_id))
+        else:
             user_id = self._interaction.user.get('id')
             return self._client.get_user(int(user_id))
+
+    @property
+    def send(self):
+        return self.channel.send
 
     async def respond(
             self,
@@ -78,7 +78,8 @@ class SlashContext:
             embed: Optional[discord.Embed] = None,
             embeds: Optional[Iterable[Optional[discord.Embed]]] = None,
             allowed_mentions: Optional[discord.AllowedMentions] = None,
-            components: Optional[List[discord.Component]] = None,
+            view: Optional[discord.ui.View] = None,
+            views: Optional[Iterable[discord.ui.View]] = None,
             ephemeral: bool = False
     ):
         form = []
@@ -93,8 +94,8 @@ class SlashContext:
             payload['embeds'] = [embed.to_dict() for embed in embeds]
         if allowed_mentions:
             payload['allowed_mentions'] = allowed_mentions
-        if components:
-            payload['components'] = components
+        if view:
+            payload['components'] = view.to_components()
         if ephemeral:
             payload['flags'] = 64
         if file:
@@ -135,42 +136,6 @@ class SlashContext:
                     }
                 )
         await self._client.http.request(route, form=form, files=files)
-
-    async def send(
-            self,
-            content: Optional[str] = None,
-            *,
-            file: Optional[discord.File] = None,
-            files: Sequence[discord.File] = None,
-            tts: bool = False,
-            embed: Optional[discord.Embed] = None,
-            embeds: Optional[Iterable[Optional[discord.Embed]]] = None,
-            nonce: Optional[str] = None,
-            allowed_mentions: Optional[discord.AllowedMentions] = None,
-            message_reference: Optional[discord.MessageReference] = None,
-            stickers: Optional[List[discord.StickerItem]] = None,
-            components: Optional[List[discord.Component]] = None,
-    ):
-        if file:
-            files = [file]
-        if not files:
-            files = []
-        ack_route = Route('POST', f'/interactions/{self._interaction.id}/{self._interaction.token}/callback')
-        channel_route = Route('POST', f'/channels/{self.channel.id}/messages')
-        await self._client.http.request(ack_route, json={'type': 4, 'data': {'content': '\u200e', 'ephemeral': True}})
-        return await self._client.http.send_multipart_helper(
-            route=channel_route,
-            content=content,
-            files=files,
-            tts=tts,
-            embed=embed,
-            embeds=embeds,
-            nonce=nonce,
-            allowed_mentions=allowed_mentions,
-            message_reference=message_reference,
-            stickers=stickers,
-            components=components,
-        )
 
     @property
     def typing(self):

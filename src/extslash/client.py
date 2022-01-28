@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from discord.http import Route
 from functools import wraps
 from discord.utils import _to_json
-from .context import SlashContext
+from .context import SlashInteraction
 from .converter import BaseInteraction, BaseInteractionData, BaseSlashOption
 from typing import Callable, Optional, Any, Union, List, Sequence, Iterable
 
@@ -53,7 +53,7 @@ class SlashBot(discord.ext.commands.Bot):
                     route = global_route
                 self.slash_commands[command['name']] = await self.http.request(route, json=command)
 
-    async def _call_to(self, ctx: SlashContext):
+    async def _call_to(self, ctx: SlashInteraction):
         func_name = ctx.name
         pool = self._command_pool
         func = pool.get(func_name)
@@ -69,7 +69,7 @@ class SlashBot(discord.ext.commands.Bot):
         if response.get('t') == 'INTERACTION_CREATE':
             interaction = BaseInteraction(**response.get('d'))
             if interaction.type == 2:
-                await self._call_to(SlashContext(interaction, self))
+                await self._call_to(SlashInteraction(interaction, self))
 
     def extend(self):
         """To add a new slash command, you can use this method"""
