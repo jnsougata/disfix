@@ -1,4 +1,4 @@
-from .builder import Slash
-from .client import SlashBot, SlashInteraction
+from .builder import SlashCommand
+from .client import ExtendedClient, ApplicationCommand
 
-__all__ = ('Slash', 'SlashBot', 'SlashInteraction')
+__all__ = ('SlashCommand', 'ExtendedClient', 'ApplicationCommand')

@@ -3,27 +3,27 @@ import discord
 import json
 import asyncio
 import traceback
-from .builder import Slash
+from .builder import SlashCommand
 from dataclasses import dataclass
 from discord.http import Route
 from functools import wraps
 from discord.utils import _to_json
-from .interaction import SlashInteraction
+from .interaction import ApplicationCommand
 from .core import BaseInteraction, BaseInteractionData, BaseSlashOption
 from typing import Callable, Optional, Any, Union, List, Sequence, Iterable
 import importlib
 from discord.ext.commands import Bot
 
 
-class SlashBot(Bot):
+class ExtendedClient(Bot):
     def __init__(
             self,
-            prefix: Union[Callable, str],
+            command_prefix: Union[Callable, str],
             intents: discord.Intents = discord.Intents.default(),
             help_command: Optional[discord.ext.commands.HelpCommand] = None,
     ):
         super().__init__(
-            command_prefix=prefix,
+            command_prefix=command_prefix,
             intents=intents,
             enable_debug_events=True,
             help_command=help_command,
@@ -33,7 +33,7 @@ class SlashBot(Bot):
         self._reg_queue = []
         self.slash_commands = {}
 
-    def slash_command(self, command: Slash, guild_id: Optional[int] = None):
+    def slash_command(self, command: SlashCommand, guild_id: Optional[int] = None):
         self._reg_queue.append((guild_id, command.object))
 
         def decorator(func):
@@ -55,7 +55,7 @@ class SlashBot(Bot):
                     route = global_route
                 self.slash_commands[command['name']] = await self.http.request(route, json=command)
 
-    async def _call_to(self, interaction: SlashInteraction):
+    async def _call_to(self, interaction: ApplicationCommand):
         func_name = interaction.name
         pool = self._command_pool
         func = pool.get(func_name)
@@ -63,7 +63,7 @@ class SlashBot(Bot):
             try:
                 await func(interaction)
             except Exception:
-                traceback.print_exception(*sys.exc_info())
+                traceback.print_exc()
 
     async def on_socket_raw_receive(self, payload: Any):
         asyncio.ensure_future(self._register())
@@ -71,8 +71,8 @@ class SlashBot(Bot):
         if response.get('t') == 'INTERACTION_CREATE':
             interaction = BaseInteraction(**response.get('d'))
             if interaction.type == 2:
-                await self._call_to(SlashInteraction(interaction, self))
+                await self._call_to(ApplicationCommand(interaction, self))
 
-    def add_slash(self, command: Slash, function: Callable, guild_id:  Optional[int] = None):
+    def add_slash(self, command: SlashCommand, function: Callable, guild_id:  Optional[int] = None):
         self._reg_queue.append((guild_id, command.object))
         self._command_pool[command.name] = function

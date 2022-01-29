@@ -2,16 +2,16 @@ from typing import Any
 from dataclasses import dataclass
 
 
-class Slash:
+class SlashCommand:
 
-    def __init__(self, name: str, description: str):
+    def __init__(self, name: str, description: str, options: list = None):
         self.name = name
         self.description = description
         self._payload = {
             "name": name,
             "description": description,
             "type": 1,
-            "options": [],
+            "options": options if options else []
         }
 
     def add_options(self, options: list):
@@ -46,7 +46,7 @@ class Slash:
         }
 
     @staticmethod
-    def set_str_option(name: str, description: str, required: bool = False, choices: list = None):
+    def str_option(name: str, description: str, required: bool = False, choices: list = None):
         return {
             "name": name,
             "description": description,
@@ -56,7 +56,7 @@ class Slash:
         }
 
     @staticmethod
-    def set_int_option(name: str, description: str, required: bool = False, choices: list = None):
+    def int_option(name: str, description: str, required: bool = False, choices: list = None):
         return {
             "name": name,
             "description": description,
@@ -66,7 +66,7 @@ class Slash:
         }
 
     @staticmethod
-    def set_bool_option(name: str, description: str, required: bool = False, choices: list = None):
+    def bool_option(name: str, description: str, required: bool = False, choices: list = None):
         return {
             "name": name,
             "description": description,
@@ -76,7 +76,7 @@ class Slash:
         }
 
     @staticmethod
-    def set_user_option(name: str, description: str, required: bool = False, choices: list = None):
+    def user_option(name: str, description: str, required: bool = False, choices: list = None):
         return {
             "name": name,
             "description": description,
@@ -86,7 +86,7 @@ class Slash:
         }
 
     @staticmethod
-    def set_channel_option(name: str, description: str, choices: list = None, required: bool = False):
+    def channel_option(name: str, description: str, choices: list = None, required: bool = False):
         return {
             "name": name,
             "description": description,
@@ -96,7 +96,7 @@ class Slash:
         }
 
     @staticmethod
-    def set_role_option(name: str, description: str, choices: list = None, required: bool = False):
+    def role_option(name: str, description: str, choices: list = None, required: bool = False):
         return {
             "name": name,
             "description": description,
@@ -106,7 +106,7 @@ class Slash:
         }
 
     @staticmethod
-    def set_mentionable_option(name: str, description: str, required: bool = False, choices: list = None):
+    def mentionable_option(name: str, description: str, required: bool = False, choices: list = None):
         return {
             "name": name,
             "description": description,
@@ -116,7 +116,7 @@ class Slash:
         }
 
     @staticmethod
-    def set_number_option(name: str, description: str, choices: list = None, required: bool = False):
+    def number_option(name: str, description: str, choices: list = None, required: bool = False):
         return {
             "name": name,
             "description": description,
