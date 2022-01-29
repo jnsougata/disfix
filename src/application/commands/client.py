@@ -94,4 +94,4 @@ class Client(Bot):
         try:
             await self.http.request(route)
         except discord.errors.NotFound:
-            raise ValueError(f'Command with id [{command_id}] and guild [{guild_id}] not found')
+            print(f'[ERROR] /command with (ID:{command_id}) and (GUILD:{guild_id}) not found')
