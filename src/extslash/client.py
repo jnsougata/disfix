@@ -11,7 +11,6 @@ from discord.utils import _to_json
 from .appctx import ApplicationContext
 from .base import BaseInteraction, BaseInteractionData, BaseSlashOption, BaseAppCommand
 from typing import Callable, Optional, Any, Union, List, Sequence, Iterable
-import importlib
 from discord.ext.commands import Bot
 
 
@@ -72,7 +71,7 @@ class Client(Bot):
                 await self._invoke(ApplicationContext(interaction, self))
 
     def add_slash(self, command: SlashCommand, function: Callable, guild_id:  Optional[int] = None):
-        self._reg_queue.append((guild_id, command.to_dict))
+        self._reg_queue.append((guild_id, command.to_dict()))
         self._command_pool[command.name] = function
 
     async def fetch_application_commands(self, guild_id: int = None):

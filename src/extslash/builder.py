@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Union, List, Dict, Optional
 
 
 class _Option:
@@ -101,11 +101,28 @@ class NumberOption(_Option):
         }
 
 
+class SubCommand:
+    def __init__(self, name: str, description: str, options: [_Option] = None):
+        self.data = {
+            "name": name,
+            "description": description,
+            "options": [option.data for option in options] if options else []
+        }
+
+
+class SubCommandGroup:
+    def __init__(self, name: str, description: str, subcommands: [SubCommand] = None):
+        self.data = {
+            "name": name,
+            "description": description,
+            "subcommands": [subcommand.data for subcommand in subcommands] if subcommands else []
+        }
+
+
 class SlashCommand:
 
-    def __init__(self, name: str, description: str, options: list[_Option] = None):
+    def __init__(self, name: str, description: str, options: list[Union[_Option, SubCommand, SubCommandGroup]] = None):
         self.name = name
-        self.description = description
         self._payload = {
             "name": name,
             "description": description,
@@ -140,10 +157,5 @@ class SlashCommand:
             "type": 1,
         }
 
-    @staticmethod
-    def set_choice(name: str, value):
-        return {"name": name, "value": value}
-
-    @property
     def to_dict(self):
         return self._payload
