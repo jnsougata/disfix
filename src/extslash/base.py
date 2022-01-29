@@ -36,7 +36,7 @@ class BaseInteractionData:
 class BaseSlashOption:
     name: str
     type: int
-    value: Union[str, int, float, bool]
+    value: Union[str, int, float, bool] = None
     options: Optional[list] = None
     focused: Optional[bool] = None
 

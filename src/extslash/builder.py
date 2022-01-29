@@ -106,16 +106,18 @@ class SubCommand:
         self.data = {
             "name": name,
             "description": description,
+            "type": 1,
             "options": [option.data for option in options] if options else []
         }
 
 
 class SubCommandGroup:
-    def __init__(self, name: str, description: str, subcommands: [SubCommand] = None):
+    def __init__(self, name: str, description: str, options: [SubCommand] = None):
         self.data = {
             "name": name,
             "description": description,
-            "subcommands": [subcommand.data for subcommand in subcommands] if subcommands else []
+            "type": 2,
+            "options": [sc.data for sc in options] if options else []
         }
 
 
@@ -128,33 +130,6 @@ class SlashCommand:
             "description": description,
             "type": 1,
             "options": [option.data for option in options] if options else []
-        }
-
-    @staticmethod
-    def subcommand(name: str, description: str, options: list):
-        return {
-            "name": name,
-            "description": description,
-            "type": 1,
-            "options": options
-        }
-
-    @staticmethod
-    def subcommand_group(name: str, description: str, options: list):
-
-        return {
-            "name": name,
-            "description": description,
-            "type": 2,
-            "options": options
-        }
-
-    @staticmethod
-    def create_subcommand(name: str, description: str):
-        return {
-            "name": name,
-            "description": description,
-            "type": 1,
         }
 
     def to_dict(self):

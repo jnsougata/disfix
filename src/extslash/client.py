@@ -33,13 +33,13 @@ class Client(Bot):
         self.slash_commands = {}
 
     def slash_command(self, command: SlashCommand, guild_id: Optional[int] = None):
-        self._reg_queue.append((guild_id, command.to_dict))
+        self._reg_queue.append((guild_id, command.to_dict()))
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            self._command_pool[command.to_dict["name"]] = wrapper()
+            self._command_pool[command.to_dict().get('name')] = wrapper()
         return decorator
 
     async def _register(self):
