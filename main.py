@@ -2,7 +2,7 @@ import json
 import os
 import discord
 from discord.ext import commands, tasks
-from src.extslash import (
+from src.application import (
     Client,
     SlashCommand,
     ApplicationContext,
