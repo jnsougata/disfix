@@ -1,2 +1,2 @@
 from .builder import *
-from .ext_client import ExtendedClient, ApplicationContext
+from .client import Client, ApplicationContext

@@ -9,13 +9,13 @@ from discord.http import Route
 from functools import wraps
 from discord.utils import _to_json
 from .appctx import ApplicationContext
-from .base import BaseInteraction, BaseInteractionData, BaseSlashOption
+from .base import BaseInteraction, BaseInteractionData, BaseSlashOption, BaseAppCommand
 from typing import Callable, Optional, Any, Union, List, Sequence, Iterable
 import importlib
 from discord.ext.commands import Bot
 
 
-class ExtendedClient(Bot):
+class Client(Bot):
     def __init__(
             self,
             command_prefix: Union[Callable, str],
@@ -75,12 +75,22 @@ class ExtendedClient(Bot):
         self._reg_queue.append((guild_id, command.to_dict))
         self._command_pool[command.name] = function
 
-    async def get_guild_application_commands(self, guild_id: int):
+    async def fetch_application_commands(self, guild_id: int = None):
         await self.wait_until_ready()
-        route = Route('GET', f'/applications/{self.user.id}/guilds/{guild_id}/commands')
-        return await self.http.request(route)
+        if guild_id:
+            route = Route('GET', f'/applications/{self.user.id}/guilds/{guild_id}/commands')
+        else:
+            route = Route('GET', f'/applications/{self.user.id}/commands')
+        resp = await self.http.request(route)
+        return [BaseAppCommand(**cmd) for cmd in resp]
 
-    async def get_global_application_commands(self):
+    async def delete_application_command(self, command_id: int, guild_id: int = None):
         await self.wait_until_ready()
-        route = Route('GET', f'/applications/{self.user.id}/commands')
-        return await self.http.request(route)
+        if guild_id:
+            route = Route('DELETE', f'/applications/{self.user.id}/guilds/{guild_id}/commands/{command_id}')
+        else:
+            route = Route('DELETE', f'/applications/{self.user.id}/commands/{command_id}')
+        try:
+            await self.http.request(route)
+        except discord.errors.NotFound:
+            raise ValueError(f'Command with id [{command_id}] and guild [{guild_id}] not found')
