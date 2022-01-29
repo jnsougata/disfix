@@ -46,9 +46,14 @@ class Client(Bot):
             for guild_id, payload in self._reg_queue:
                 if guild_id:
                     route = Route('POST', f'/applications/{self.user.id}/guilds/{guild_id}/commands')
+                    prompt = f'[GUILD] registered /{payload.get("name")}'
                 else:
                     route = Route('POST', f'/applications/{self.user.id}/commands')
-                self.slash_commands[payload['name']] = await self.http.request(route, json=payload)
+                    prompt = f'[GLOBAL] registered /{payload.get("name")}'
+
+                resp = await self.http.request(route, json=payload)
+                print(f'{prompt} ... ID: {resp.get("id")}')
+                self.slash_commands[payload['name']] = resp
 
     async def _invoke(self, interaction: ApplicationContext):
         pool = self._command_pool
