@@ -2,7 +2,19 @@ import json
 import os
 import discord
 from discord.ext import commands, tasks
-from src.extslash import ExtendedClient, SlashCommand, ApplicationContext
+from src.extslash import (
+    ExtendedClient,
+    SlashCommand,
+    ApplicationContext,
+    StrOption,
+    IntOption,
+    BoolOption,
+    ChannelOption,
+    RoleOption,
+    UserOption,
+    NumberOption,
+    MentionableOption
+)
 
 
 intents = discord.Intents.default()
@@ -26,10 +38,10 @@ bot = MyBot()
         name='echo',
         description='Echo a message',
         options=[
-            SlashCommand.str_option('message', 'The message to echo', required=True),
-            SlashCommand.int_option('times', 'The number of times to echo the message', required=True),
-            SlashCommand.bool_option('upper', 'Whether to uppercase the message', required=True),
-            SlashCommand.user_option('user', 'The user to echo to', required=True),
+            StrOption('message', 'The message to echo', required=True),
+            IntOption('times', 'The number of times to echo the message', required=True),
+            BoolOption('upper', 'Whether to uppercase the message', required=True),
+            UserOption('user', 'The user to echo to', required=True),
         ]),
     guild_id=877399405056102431)
 async def test(appctx: ApplicationContext):

@@ -3,7 +3,7 @@ import discord
 import json
 import asyncio
 import traceback
-from .cmdbuilder import SlashCommand
+from .builder import SlashCommand
 from dataclasses import dataclass
 from discord.http import Route
 from functools import wraps
@@ -34,13 +34,13 @@ class ExtendedClient(Bot):
         self.slash_commands = {}
 
     def slash_command(self, command: SlashCommand, guild_id: Optional[int] = None):
-        self._reg_queue.append((guild_id, command.object))
+        self._reg_queue.append((guild_id, command.data))
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            self._command_pool[command.object["name"]] = wrapper()
+            self._command_pool[command.data["name"]] = wrapper()
         return decorator
 
     async def _register(self):
@@ -74,7 +74,7 @@ class ExtendedClient(Bot):
                 await self._call_to(ApplicationContext(interaction, self))
 
     def add_slash(self, command: SlashCommand, function: Callable, guild_id:  Optional[int] = None):
-        self._reg_queue.append((guild_id, command.object))
+        self._reg_queue.append((guild_id, command.data))
         self._command_pool[command.name] = function
 
     async def get_guild_application_commands(self, guild_id: int):
