@@ -1,14 +1,14 @@
 import json
 import discord
 from discord.webhook.async_ import Webhook
-from .base import BaseInteraction, BaseInteractionData, BaseSlashOption
+from .base import Interaction, InteractionData, InteractionDataOption, InteractionDataResolved
 from discord.http import Route
 from discord.utils import _to_json
 from typing import Optional, Any, Union, Sequence, Iterable
 
 
 class ApplicationContext:
-    def __init__(self, interaction: BaseInteraction, client: discord.Client):
+    def __init__(self, interaction: Interaction, client: discord.Client):
         self._interaction = interaction
         self._client = client
 
@@ -30,11 +30,16 @@ class ApplicationContext:
 
     @property
     def data(self):
-        return BaseInteractionData(**self._interaction.data)
+        return InteractionData(**self._interaction.data)
+
+    @property
+    def resolved(self):
+        if self.data.resolved:
+            return InteractionDataResolved(**self.data.resolved)
 
     @property
     def options(self):
-        return [BaseSlashOption(**option) for option in self.data.options]
+        return [InteractionDataOption(**option) for option in self.data.options]
 
     @property
     def application_id(self):

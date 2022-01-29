@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 
 
 @dataclass(frozen=True)
-class BaseInteraction:
+class Interaction:
     id: int
     version: int
     token: str
@@ -20,25 +20,37 @@ class BaseInteraction:
 
 
 @dataclass(frozen=True)
-class BaseInteractionData:
+class InteractionData:
     id: Union[int, str]
     name: str
     type: int
     resolved: Optional[dict] = None
-    custom_id: Optional[str] = None
     options: Optional[dict] = None
+    # below are only used for type != 2
+    custom_id: Optional[str] = None
     component_type: Optional[int] = None
     values: Optional[list] = None
+    # only used for User Command & Message Command
     target_id: Optional[str] = None
 
 
 @dataclass(frozen=True)
-class BaseSlashOption:
+class InteractionDataOption:
     name: str
     type: int
     value: Union[str, int, float, bool] = None
     options: Optional[list] = None
     focused: Optional[bool] = None
+
+
+@dataclass(frozen=True)
+class InteractionDataResolved:
+    # only for application command
+    users: Optional[dict] = None
+    members: Optional[dict] = None
+    roles: Optional[dict] = None
+    channels: Optional[dict] = None
+    messages: Optional[dict] = None
 
 
 @dataclass(frozen=True)

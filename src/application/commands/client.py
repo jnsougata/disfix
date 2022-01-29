@@ -6,7 +6,7 @@ from ..builder import SlashCommand
 from discord.http import Route
 from functools import wraps
 from .context import ApplicationContext
-from .base import BaseInteraction, BaseAppCommand
+from .base import Interaction, BaseAppCommand
 from typing import Callable, Optional, Any, Union
 from discord.ext.commands import Bot
 
@@ -63,7 +63,7 @@ class Client(Bot):
         asyncio.ensure_future(self._register())
         response = json.loads(payload)
         if response.get('t') == 'INTERACTION_CREATE':
-            interaction = BaseInteraction(**response.get('d'))
+            interaction = Interaction(**response.get('d'))
             if interaction.type == 2:
                 await self._invoke(ApplicationContext(interaction, self))
 

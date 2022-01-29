@@ -28,40 +28,19 @@ bot = MyBot()
         description='repeats a phrase',
         options=[StrOption('phrase', 'The message to echo', required=True)]),
     guild_id=877399405056102431)
-async def test(appctx: ApplicationContext):
+async def echo(appctx: ApplicationContext):
     message = appctx.options[0].value
     await appctx.respond(f'**{appctx.author}** said: {message}')
 
 
 @bot.slash_command(
     command=SlashCommand(
-        name='animal',
-        description='gives an animal image',
-        options=[
-            SubCommandGroup(
-                name='domestic',
-                description='domestic animals',
-                options=[
-                    SubCommand(name='cat', description='gives a cat image'),
-                    SubCommand(name='dog', description='gives a dog image'),
-                    SubCommand(name='pig', description='gives a pig image'),
-                    SubCommand(name='rabbit', description='gives a rabbit image')
-                ]
-            ),
-            SubCommandGroup(
-                name='wild',
-                description='wild animals',
-                options=[
-                    SubCommand(name='fox', description='gives a fox image'),
-                    SubCommand(name='panda', description='gives a panda image'),
-                    SubCommand(name='tiger', description='gives a tiger image'),
-                ]
-            )
-        ]),
+        name='ban',
+        description='bans a user from the guild',
+        options=[UserOption('user', 'The user to ban', required=True)]),
     guild_id=877399405056102431)
-async def app_cmd(appctx: ApplicationContext):
-    message = appctx.options
-    await appctx.respond(f'Received: {message}')
+async def ban(appctx: ApplicationContext):
+    await appctx.respond(f'{appctx.resolved.users}')
 
 
 @bot.command(name='delcmd')
