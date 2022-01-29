@@ -5,6 +5,14 @@ class _Option:
     data: Any
 
 
+class Choice:
+    def __init__(self, name: str, value: Any):
+        self.data = {
+            "name": name,
+            "value": value
+        }
+
+
 class StrOption(_Option):
     def __init__(self, name: str, description: str, required: bool = False, choices: list[Choice] = None):
         self.data = {
@@ -139,12 +147,3 @@ class SlashCommand:
     @property
     def data(self):
         return self._payload
-
-
-class Choice:
-    def __init__(self, name: str, value: str):
-        self.data = {
-            "name": name,
-            "value": value
-        }
-

@@ -13,7 +13,8 @@ from src.extslash import (
     RoleOption,
     UserOption,
     NumberOption,
-    MentionableOption
+    MentionableOption,
+    Choice,
 )
 
 
@@ -39,7 +40,8 @@ bot = MyBot()
         description='Echo a message',
         options=[
             StrOption('message', 'The message to echo', required=True),
-            IntOption('times', 'The number of times to echo the message', required=True),
+            IntOption('times', 'The number of times to echo the message', required=True,
+                      choices=[Choice('One', 1), Choice('Two', 2), Choice('Three', 3)]),
             BoolOption('upper', 'Whether to uppercase the message', required=True),
             UserOption('user', 'The user to echo to', required=True),
         ]),
