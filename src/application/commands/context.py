@@ -4,7 +4,7 @@ from discord.webhook.async_ import Webhook
 from .base import BaseInteraction, BaseInteractionData, BaseSlashOption
 from discord.http import Route
 from discord.utils import _to_json
-from typing import Callable, Optional, Any, Union, List, Sequence, Iterable
+from typing import Optional, Any, Union, Sequence, Iterable
 
 
 class ApplicationContext:

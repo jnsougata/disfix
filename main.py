@@ -2,22 +2,8 @@ import json
 import os
 import discord
 from discord.ext import commands, tasks
-from src.application import (
-    Client,
-    SlashCommand,
-    ApplicationContext,
-    StrOption,
-    IntOption,
-    BoolOption,
-    ChannelOption,
-    RoleOption,
-    UserOption,
-    NumberOption,
-    MentionableOption,
-    Choice,
-    SubCommand,
-    SubCommandGroup,
-)
+from src.application import *
+from src.application.commands import *
 
 
 intents = discord.Intents.default()

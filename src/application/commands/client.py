@@ -1,16 +1,13 @@
-import sys
 import discord
 import json
 import asyncio
 import traceback
-from .builder import SlashCommand
-from dataclasses import dataclass
+from ..builder import SlashCommand
 from discord.http import Route
 from functools import wraps
-from discord.utils import _to_json
-from .appctx import ApplicationContext
-from .base import BaseInteraction, BaseInteractionData, BaseSlashOption, BaseAppCommand
-from typing import Callable, Optional, Any, Union, List, Sequence, Iterable
+from .context import ApplicationContext
+from .base import BaseInteraction, BaseAppCommand
+from typing import Callable, Optional, Any, Union
 from discord.ext.commands import Bot
 
 
