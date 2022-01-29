@@ -76,3 +76,13 @@ class ExtendedClient(Bot):
     def add_slash(self, command: SlashCommand, function: Callable, guild_id:  Optional[int] = None):
         self._reg_queue.append((guild_id, command.object))
         self._command_pool[command.name] = function
+
+    async def get_guild_application_commands(self, guild_id: int):
+        await self.wait_until_ready()
+        route = Route('GET', f'/applications/{self.user.id}/guilds/{guild_id}/commands')
+        return await self.http.request(route)
+
+    async def get_global_application_commands(self):
+        await self.wait_until_ready()
+        route = Route('GET', f'/applications/{self.user.id}/commands')
+        return await self.http.request(route)
