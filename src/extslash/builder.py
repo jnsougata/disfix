@@ -145,5 +145,5 @@ class SlashCommand:
         return {"name": name, "value": value}
 
     @property
-    def data(self):
+    def to_dict(self):
         return self._payload

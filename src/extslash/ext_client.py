@@ -23,8 +23,8 @@ class ExtendedClient(Bot):
             help_command: Optional[discord.ext.commands.HelpCommand] = None,
     ):
         super().__init__(
-            command_prefix=command_prefix,
             intents=intents,
+            command_prefix=command_prefix,
             enable_debug_events=True,
             help_command=help_command,
         )
@@ -34,31 +34,29 @@ class ExtendedClient(Bot):
         self.slash_commands = {}
 
     def slash_command(self, command: SlashCommand, guild_id: Optional[int] = None):
-        self._reg_queue.append((guild_id, command.data))
+        self._reg_queue.append((guild_id, command.to_dict))
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            self._command_pool[command.data["name"]] = wrapper()
+            self._command_pool[command.to_dict["name"]] = wrapper()
         return decorator
 
     async def _register(self):
         await self.wait_until_ready()
-        global_route = Route('POST', f'/applications/{self.user.id}/commands')
         if not self._check:
             self._check = True
-            for guild_id, command in self._reg_queue:
+            for guild_id, payload in self._reg_queue:
                 if guild_id:
                     route = Route('POST', f'/applications/{self.user.id}/guilds/{guild_id}/commands')
                 else:
-                    route = global_route
-                self.slash_commands[command['name']] = await self.http.request(route, json=command)
+                    route = Route('POST', f'/applications/{self.user.id}/commands')
+                self.slash_commands[payload['name']] = await self.http.request(route, json=payload)
 
-    async def _call_to(self, interaction: ApplicationContext):
-        func_name = interaction.name
+    async def _invoke(self, interaction: ApplicationContext):
         pool = self._command_pool
-        func = pool.get(func_name)
+        func = pool.get(interaction.name)
         if func:
             try:
                 await func(interaction)
@@ -71,10 +69,10 @@ class ExtendedClient(Bot):
         if response.get('t') == 'INTERACTION_CREATE':
             interaction = BaseInteraction(**response.get('d'))
             if interaction.type == 2:
-                await self._call_to(ApplicationContext(interaction, self))
+                await self._invoke(ApplicationContext(interaction, self))
 
     def add_slash(self, command: SlashCommand, function: Callable, guild_id:  Optional[int] = None):
-        self._reg_queue.append((guild_id, command.data))
+        self._reg_queue.append((guild_id, command.to_dict))
         self._command_pool[command.name] = function
 
     async def get_guild_application_commands(self, guild_id: int):
