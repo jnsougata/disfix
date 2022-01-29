@@ -1,13 +1,13 @@
 import json
 import discord
 from discord.webhook.async_ import Webhook
-from .core import BaseInteraction, BaseInteractionData, BaseSlashOption
+from .base import BaseInteraction, BaseInteractionData, BaseSlashOption
 from discord.http import Route
 from discord.utils import _to_json
 from typing import Callable, Optional, Any, Union, List, Sequence, Iterable
 
 
-class ApplicationCommand:
+class ApplicationContext:
     def __init__(self, interaction: BaseInteraction, client: discord.Client):
         self._interaction = interaction
         self._client = client

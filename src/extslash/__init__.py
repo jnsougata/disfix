@@ -1,4 +1,4 @@
-from .builder import SlashCommand
-from .client import ExtendedClient, ApplicationCommand
+from .cmdbuilder import SlashCommand
+from .client import ExtendedClient, ApplicationContext
 
-__all__ = ('SlashCommand', 'ExtendedClient', 'ApplicationCommand')
+__all__ = ('SlashCommand', 'ExtendedClient', 'ApplicationContext')

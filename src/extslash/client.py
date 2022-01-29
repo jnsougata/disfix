@@ -3,13 +3,13 @@ import discord
 import json
 import asyncio
 import traceback
-from .builder import SlashCommand
+from .cmdbuilder import SlashCommand
 from dataclasses import dataclass
 from discord.http import Route
 from functools import wraps
 from discord.utils import _to_json
-from .interaction import ApplicationCommand
-from .core import BaseInteraction, BaseInteractionData, BaseSlashOption
+from .appctx import ApplicationContext
+from .base import BaseInteraction, BaseInteractionData, BaseSlashOption
 from typing import Callable, Optional, Any, Union, List, Sequence, Iterable
 import importlib
 from discord.ext.commands import Bot
@@ -55,7 +55,7 @@ class ExtendedClient(Bot):
                     route = global_route
                 self.slash_commands[command['name']] = await self.http.request(route, json=command)
 
-    async def _call_to(self, interaction: ApplicationCommand):
+    async def _call_to(self, interaction: ApplicationContext):
         func_name = interaction.name
         pool = self._command_pool
         func = pool.get(func_name)
@@ -71,7 +71,7 @@ class ExtendedClient(Bot):
         if response.get('t') == 'INTERACTION_CREATE':
             interaction = BaseInteraction(**response.get('d'))
             if interaction.type == 2:
-                await self._call_to(ApplicationCommand(interaction, self))
+                await self._call_to(ApplicationContext(interaction, self))
 
     def add_slash(self, command: SlashCommand, function: Callable, guild_id:  Optional[int] = None):
         self._reg_queue.append((guild_id, command.object))

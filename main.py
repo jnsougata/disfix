@@ -2,7 +2,7 @@ import json
 import os
 import discord
 from discord.ext import commands, tasks
-from src.extslash import ExtendedClient, SlashCommand, ApplicationCommand
+from src.extslash import ExtendedClient, SlashCommand, ApplicationContext
 
 
 intents = discord.Intents.default()
@@ -32,7 +32,7 @@ bot = MyBot()
             SlashCommand.user_option('user', 'The user to echo to', required=True),
         ]),
     guild_id=877399405056102431)
-async def test(appctx: ApplicationCommand):
+async def test(appctx: ApplicationContext):
     message = appctx.options[0].value
     user_id = appctx.options[3].value
     await appctx.defer()
