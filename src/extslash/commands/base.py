@@ -45,7 +45,7 @@ class InteractionDataOption:
 
 @dataclass(frozen=True)
 class InteractionDataResolved:
-    # only for application command
+    # only for extslash command
     users: Optional[dict] = None
     members: Optional[dict] = None
     roles: Optional[dict] = None

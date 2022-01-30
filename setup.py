@@ -25,7 +25,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         'Programming Language :: Python :: 3 :: Only',
     ],
-    keywords='discord.py, slash-commands, application-commands, python-discord-bot',
+    keywords='discord.py, slash-commands, extslash-commands, python-discord-bot',
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
     python_requires='>=3.6, <4',

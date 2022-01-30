@@ -132,7 +132,7 @@ class ApplicationContext:
                     'name': 'file',
                     'value': file.fp,
                     'filename': file.filename,
-                    'content_type': 'application/octet-stream',
+                    'content_type': 'extslash/octet-stream',
                 }
             )
         else:
@@ -142,7 +142,7 @@ class ApplicationContext:
                         'name': f'file{index}',
                         'value': file.fp,
                         'filename': file.filename,
-                        'content_type': 'application/octet-stream',
+                        'content_type': 'extslash/octet-stream',
                     }
                 )
         await self._client.http.request(route, form=form, files=files)
