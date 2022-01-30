@@ -9,6 +9,8 @@ from .context import ApplicationContext
 from .base import Interaction, BaseAppCommand
 from typing import Callable, Optional, Any, Union
 from discord.ext.commands import Bot
+from importlib.machinery import SourceFileLoader
+from .cog import SlashCog
 
 
 class Client(Bot):
@@ -72,9 +74,25 @@ class Client(Bot):
             if interaction.type == 2:
                 await self._invoke(ApplicationContext(interaction, self))
 
-    def add_slash(self, command: SlashCommand, function: Callable, guild_id:  Optional[int] = None):
-        self._reg_queue.append((guild_id, command.to_dict()))
-        self._command_pool[command.name] = function
+    def load_slash(self, path: str, guild_id:  Optional[int] = None):
+        src = path.replace('.', '/') + '.py'
+        try:
+            module = SourceFileLoader('setup', src).load_module()
+        except FileNotFoundError:
+            print(f'[ERROR] Extension not found at {src}')
+        else:
+            obj = module.setup(self)
+            cog_name = obj.__class__.__name__
+            if isinstance(obj, list):
+                pass
+            elif isinstance(obj, SlashCog):
+                slash_obj = obj.register()
+                slash_cmd = obj.command
+                if asyncio.iscoroutinefunction(slash_cmd):
+                    self._reg_queue.append((guild_id, slash_obj.to_dict()))
+                    self._command_pool[slash_obj.name] = slash_cmd
+                else:
+                    raise TypeError(f'Command inside cog `{cog_name}` must be a coroutine')
 
     async def fetch_application_commands(self, guild_id: int = None):
         await self.wait_until_ready()

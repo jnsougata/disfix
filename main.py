@@ -1,9 +1,8 @@
-import json
 import os
 import discord
 from discord.ext import commands, tasks
 from src.application import *
-from src.application.commands import *
+from src.application.commands import Client, ApplicationContext
 
 
 intents = discord.Intents.default()
@@ -53,5 +52,7 @@ async def appcmd_(ctx: commands.Context, command_name: str):
             return
     else:
         await ctx.send(f'Command not found: **{command_name}**')
+
+bot.load_slash('icog.test')
 
 bot.run(os.getenv('DISCORD_TOKEN'))
