@@ -21,5 +21,5 @@ class MyBot(Client):
 bot = MyBot()
 
 
-bot.load_slash('cog.test', 877399405056102431)
+bot.load_slash('cog.echo', 877399405056102431)
 bot.run(os.getenv('DISCORD_TOKEN'))
