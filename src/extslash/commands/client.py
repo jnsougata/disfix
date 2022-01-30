@@ -11,7 +11,7 @@ from typing import Callable, Optional, Any, Union
 from discord.ext.commands import Bot
 from importlib.machinery import SourceFileLoader
 from .cog import SlashCog
-from .errors import InvalidCog, CogNotFound
+from .errors import *
 
 
 class Client(Bot):
@@ -76,11 +76,13 @@ class Client(Bot):
                 await self._invoke(ApplicationContext(interaction, self))
 
     def load_slash(self, path: str, guild_id:  Optional[int] = None):
-        src = path.replace('.', '/') + '.py'
+        fp = path.replace('.', '/') + '.py'
         try:
-            module = SourceFileLoader('setup', src).load_module()
+            module = SourceFileLoader('setup', fp).load_module()
         except FileNotFoundError:
-            raise CogNotFound(f'Slash extension not found at {src}')
+            raise CogNotFound(f'Slash extension not found at {fp}')
+        except AttributeError:
+            raise SetupNotFound(f'Setup function not found in {fp}')
         else:
             try:
                 obj = module.setup(self)
