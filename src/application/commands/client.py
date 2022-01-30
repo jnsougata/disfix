@@ -86,7 +86,7 @@ class Client(Bot):
                 obj = module.setup(self)
             except TypeError:
                 raise InvalidCog(
-                    f'Extension must be a subclass of SlashCog and must have `register` and `async command` method')
+                    f'Extension must be a subclass of SlashCog \nMust have `register` and `async command` method')
             cog_name = obj.__class__.__name__
             if isinstance(obj, list):
                 pass
