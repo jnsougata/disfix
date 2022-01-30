@@ -55,7 +55,7 @@ class Client(Bot):
                     prompt = f'[GLOBAL] registered /{payload.get("name")}'
 
                 resp = await self.http.request(route, json=payload)
-                print(f'{prompt} ... ID: {resp.get("id")}')
+                print(f'{prompt} ... ID: {resp.get("id")} ... Guild: {guild_id if guild_id else "NA"}')
                 self.slash_commands[payload['name']] = resp
 
     async def _invoke(self, interaction: ApplicationContext):

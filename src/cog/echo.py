@@ -15,7 +15,7 @@ class Echo(SlashCog):
 
     async def command(self, appctx: ApplicationContext):
         message = appctx.options[0].value
-        await appctx.respond(f'**{appctx.author}** said: {message}')
+        await appctx.respond(f'**{message}**')
 
 
 def setup(bot):
