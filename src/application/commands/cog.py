@@ -4,8 +4,10 @@ from .context import ApplicationContext
 
 class SlashCog(ABC):
 
+    @abstractmethod
     def register(self):
         pass
 
-    async def command(self, ctx: ApplicationContext):
+    @abstractmethod
+    async def command(self, appctx: ApplicationContext):
         pass

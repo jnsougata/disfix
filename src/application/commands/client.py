@@ -11,6 +11,7 @@ from typing import Callable, Optional, Any, Union
 from discord.ext.commands import Bot
 from importlib.machinery import SourceFileLoader
 from .cog import SlashCog
+from .errors import InvalidCog, CogNotFound
 
 
 class Client(Bot):
@@ -79,9 +80,13 @@ class Client(Bot):
         try:
             module = SourceFileLoader('setup', src).load_module()
         except FileNotFoundError:
-            print(f'[ERROR] Extension not found at {src}')
+            raise CogNotFound(f'Slash extension not found at {src}')
         else:
-            obj = module.setup(self)
+            try:
+                obj = module.setup(self)
+            except TypeError:
+                raise InvalidCog(
+                    f'Extension must be a subclass of SlashCog and must have `register` and `async command` method')
             cog_name = obj.__class__.__name__
             if isinstance(obj, list):
                 pass
