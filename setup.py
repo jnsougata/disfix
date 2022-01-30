@@ -29,7 +29,7 @@ setup(
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
     python_requires='>=3.6, <4',
-    install_requires=['discord.py@git+https://github.com/Rapptz/discord.py'],
+    install_requires=[],
     project_urls={
         'Bug Reports': 'https://github.com/jnsougata/ExtSlash/issues',
         'Source': 'https://github.com/jnsougata/ExtSlash',
