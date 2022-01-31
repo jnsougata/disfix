@@ -12,8 +12,8 @@ setup(
     description='Integrates slash commands with discord.py 2.0',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='jnsougata',
-    author=__author__,
+    url='https://github.com/jnsougata/ExtSlash',
+    author='jnsougata',
     author_email='jnsougata@gmail.com',
     classifiers=[
         'License :: OSI Approved :: MIT License',
