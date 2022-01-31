@@ -1,6 +1,6 @@
 import pathlib
 from setuptools import setup, find_packages
-from src.extslash import __version__, __author__
+from .src.extslash import __version__, __author__
 
 
 here = pathlib.Path(__file__).parent.resolve()
