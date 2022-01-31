@@ -1,6 +1,5 @@
 import os
 import discord
-from extslash import *
 from extslash.commands import Client
 
 
@@ -19,5 +18,5 @@ class MyBot(Client):
 
 bot = MyBot()
 
-bot.load_slash('cogs.echo', 877399405056102431)
+bot.load_slash_extension('cogs.echo')
 bot.run(os.getenv('DISCORD_TOKEN'))
