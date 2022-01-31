@@ -87,12 +87,10 @@ class Client(Bot):
             try:
                 obj = module.setup(self)
             except TypeError:
-                raise InvalidCog(
-                    f'Extension must be a subclass of SlashCog \nMust have `register` and `async command` method')
+                raise InvalidCog('Custom cog must have methods `register` and `async command`')
             cog_name = obj.__class__.__name__
-            if isinstance(obj, list):
-                pass
-            elif isinstance(obj, SlashCog):
+
+            if isinstance(obj, SlashCog):
                 slash_obj = obj.register()
                 slash_cmd = obj.command
                 if asyncio.iscoroutinefunction(slash_cmd):
@@ -100,6 +98,8 @@ class Client(Bot):
                     self._command_pool[slash_obj.name] = slash_cmd
                 else:
                     raise TypeError(f'Command inside cog `{cog_name}` must be a coroutine')
+            else:
+                raise TypeError(f'Custom cog `{cog_name}` must be a subclass of SlashCog')
 
     async def fetch_application_commands(self, guild_id: int = None):
         await self.wait_until_ready()
