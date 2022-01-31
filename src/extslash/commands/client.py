@@ -39,7 +39,7 @@ class Client(Bot):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            self._command_pool[command.to_dict().get('name')] = wrapper()
+            self._command_pool[command.name] = wrapper()
         return decorator
 
     async def _register(self):
@@ -49,14 +49,14 @@ class Client(Bot):
             for guild_id, payload in self._reg_queue:
                 if guild_id:
                     route = Route('POST', f'/applications/{self.user.id}/guilds/{guild_id}/commands')
-                    prompt = f'[GUILD] registered /{payload.get("name")}'
                 else:
                     route = Route('POST', f'/applications/{self.user.id}/commands')
-                    prompt = f'[GLOBAL] registered /{payload.get("name")}'
 
                 resp = await self.http.request(route, json=payload)
+                self.slash_commands[payload.get("name")] = resp
+
+                prompt = f'[{"GLOBAL" if not guild_id else "GUILD"}] registered /{payload.get("name")}'
                 print(f'{prompt} ... ID: {resp.get("id")} ... Guild: {guild_id if guild_id else "NA"}')
-                self.slash_commands[payload['name']] = resp
 
     async def _invoke(self, appctx: ApplicationContext):
         cmd = self._command_pool.get(appctx.name)
@@ -99,7 +99,7 @@ class Client(Bot):
             try:
                 module.setup(self)
             except TypeError:
-                raise InvalidCog('Custom cog must have methods `register` and `async command`')
+                raise InvalidCog('Custom cog must have methods `register` and `command [coro]`')
 
     async def fetch_application_commands(self, guild_id: int = None):
         await self.wait_until_ready()
