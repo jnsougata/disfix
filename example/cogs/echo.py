@@ -11,7 +11,7 @@ from extslash import (
     ChannelOption,
     NumberOption,
     MentionableOption,)  # rather use: from extslash import *
-from extslash.commands import SlashCog, ApplicationContext, Client
+from extslash.commands import Client, SlashCog, ApplicationContext
 
 
 class Echo(SlashCog):
