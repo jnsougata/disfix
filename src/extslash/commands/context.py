@@ -1,15 +1,21 @@
+import asyncio
 import json
 import discord
 from discord.webhook.async_ import Webhook
-from .base import Interaction, InteractionData, InteractionDataOption, InteractionDataResolved
+from .base import (
+    Interaction,
+    InteractionData,
+    InteractionDataOption,
+    InteractionDataResolved
+)
 from discord.http import Route
 from discord.utils import _to_json
 from typing import Optional, Any, Union, Sequence, Iterable
 
 
 class ApplicationContext:
-    def __init__(self, interaction: Interaction, client: discord.Client):
-        self._interaction = interaction
+    def __init__(self, ia: Interaction, client: discord.Client):
+        self._ia = ia
         self._client = client
 
     @property
@@ -18,19 +24,19 @@ class ApplicationContext:
 
     @property
     def name(self):
-        return self._interaction.data.get('name')
+        return self._ia.data.get('name')
 
     @property
     def id(self):
-        return self._interaction.id
+        return self._ia.id
 
     @property
     def version(self):
-        return self._interaction.version
+        return self._ia.version
 
     @property
     def data(self):
-        return InteractionData(**self._interaction.data)
+        return InteractionData(**self._ia.data)
 
     @property
     def resolved(self):
@@ -39,39 +45,44 @@ class ApplicationContext:
 
     @property
     def options(self):
-        return [InteractionDataOption(**option) for option in self.data.options]
+        options = self.data.options
+        if options:
+            return [InteractionDataOption(**option) for option in options]
 
     @property
     def application_id(self):
-        return self._interaction.application_id
+        return self._ia.application_id
 
     @property
     def locale(self):
-        return self._interaction.locale
+        return self._ia.locale
 
     @property
     def guild_locale(self):
-        return self._interaction.guild_locale
+        return self._ia.guild_locale
 
     @property
     def channel(self):
-        channel_id = self._interaction.channel_id
+        channel_id = self._ia.channel_id
         if channel_id:
             return self._client.get_channel(int(channel_id))
 
     @property
     def guild(self):
-        guild_id = self._interaction.guild_id
+        guild_id = self._ia.guild_id
         if guild_id:
             return self._client.get_guild(int(guild_id))
 
     @property
     def author(self):
-        if self._interaction.guild_id:
-            user_id = self._interaction.member.get('user').get('id')
+        if self._ia.guild_id:
+            user_id = self._ia.member.get('user').get('id')
             return self.guild.get_member(int(user_id))
-        else:
-            user_id = self._interaction.user.get('id')
+
+    @property
+    def user(self):
+        user_id = self._ia.user.get('id')
+        if user_id:
             return self._client.get_user(int(user_id))
 
     @property
@@ -93,7 +104,7 @@ class ApplicationContext:
             ephemeral: bool = False
     ):
         form = []
-        route = Route('POST', f'/interactions/{self._interaction.id}/{self._interaction.token}/callback')
+        route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
 
         payload: Dict[str, Any] = {'tts': tts}
         if content:
@@ -148,18 +159,33 @@ class ApplicationContext:
         await self._client.http.request(route, form=form, files=files)
 
     async def defer(self):
-        route = Route('POST', f'/interactions/{self._interaction.id}/{self._interaction.token}/callback')
+        route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
         return await self._client.http.request(route, json={'type': '5'})
+
+    @property
+    def thinking(self):
+        return _ThinkingState(self)
 
     @property
     def followup(self):
         payload = {
-            'id': self.application_id,
             'type': 3,
-            'token': self._interaction.token,
+            'token': self._ia.token,
+            'id': self.application_id
         }
         return Webhook.from_state(data=payload, state=self._client._connection)
 
     @property
     def typing(self):
         return self.channel.typing
+
+
+class _ThinkingState:
+    def __init__(self, _obj: ApplicationContext):
+        self._obj = _obj
+
+    async def __aenter__(self):
+        await self._obj.defer()
+
+    async def __aexit__(self, exc_type, exc, tb):
+        pass

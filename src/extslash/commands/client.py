@@ -28,8 +28,8 @@ class Client(Bot):
             help_command=help_command,
         )
         self._check = False
-        self._command_pool = {}
         self._reg_queue = []
+        self._command_pool = {}
         self.slash_commands = {}
 
     def slash_command(self, command: SlashCommand, guild_id: Optional[int] = None):
@@ -58,12 +58,11 @@ class Client(Bot):
                 print(f'{prompt} ... ID: {resp.get("id")} ... Guild: {guild_id if guild_id else "NA"}')
                 self.slash_commands[payload['name']] = resp
 
-    async def _invoke(self, interaction: ApplicationContext):
-        pool = self._command_pool
-        func = pool.get(interaction.name)
-        if func:
+    async def _invoke(self, appctx: ApplicationContext):
+        cmd = self._command_pool.get(appctx.name)
+        if cmd:
             try:
-                await func(interaction)
+                await cmd(appctx)
             except Exception:
                 traceback.print_exc()
 
@@ -75,8 +74,21 @@ class Client(Bot):
             if interaction.type == 2:
                 await self._invoke(ApplicationContext(interaction, self))
 
-    def load_slash(self, path: str, guild_id:  Optional[int] = None):
-        fp = path.replace('.', '/') + '.py'
+    def add_slash_cog(self, cog: SlashCog, guild_id:  Optional[int] = None):
+        cog_name = cog.__class__.__name__
+        if isinstance(cog, SlashCog):
+            reg_obj = cog.register()
+            cmd = cog.command
+            if asyncio.iscoroutinefunction(cmd):
+                self._reg_queue.append((guild_id, reg_obj.to_dict()))
+                self._command_pool[reg_obj.name] = cmd
+            else:
+                raise TypeError(f'Command inside cog `{cog_name}` must be a coroutine')
+        else:
+            raise TypeError(f'Custom cog `{cog_name}` must be a subclass of SlashCog')
+
+    def load_slash_extension(self, name: str):
+        fp = name.replace('.', '/') + '.py'
         try:
             module = SourceFileLoader('setup', fp).load_module()
         except FileNotFoundError:
@@ -85,21 +97,9 @@ class Client(Bot):
             raise SetupNotFound(f'Setup function not found in {fp}')
         else:
             try:
-                obj = module.setup(self)
+                module.setup(self)
             except TypeError:
                 raise InvalidCog('Custom cog must have methods `register` and `async command`')
-            cog_name = obj.__class__.__name__
-
-            if isinstance(obj, SlashCog):
-                slash_obj = obj.register()
-                slash_cmd = obj.command
-                if asyncio.iscoroutinefunction(slash_cmd):
-                    self._reg_queue.append((guild_id, slash_obj.to_dict()))
-                    self._command_pool[slash_obj.name] = slash_cmd
-                else:
-                    raise TypeError(f'Command inside cog `{cog_name}` must be a coroutine')
-            else:
-                raise TypeError(f'Custom cog `{cog_name}` must be a subclass of SlashCog')
 
     async def fetch_application_commands(self, guild_id: int = None):
         await self.wait_until_ready()
