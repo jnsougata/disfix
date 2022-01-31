@@ -1,6 +1,5 @@
 import pathlib
 from setuptools import setup, find_packages
-from .src.extslash import __version__, __author__
 
 
 here = pathlib.Path(__file__).parent.resolve()
@@ -9,11 +8,11 @@ long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 setup(
     name='extslash',
-    version=__version__,
+    version='0.0.3',
     description='Integrates slash commands with discord.py 2.0',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/jnsougata/ExtSlash',
+    url='jnsougata',
     author=__author__,
     author_email='jnsougata@gmail.com',
     classifiers=[
