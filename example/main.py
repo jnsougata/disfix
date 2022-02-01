@@ -1,6 +1,6 @@
 import os
 import discord
-from extslash.commands import Client
+from src.extslash.commands import Client
 
 
 intents = discord.Intents.default()

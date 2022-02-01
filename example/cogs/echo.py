@@ -1,5 +1,5 @@
 import asyncio
-from extslash import (
+from src.extslash import (
     SlashCommand,
     SubCommandGroup,
     SubCommand,
@@ -10,8 +10,10 @@ from extslash import (
     UserOption,
     ChannelOption,
     NumberOption,
-    MentionableOption,)  # rather use: from extslash import *
-from extslash.commands import Client, SlashCog, ApplicationContext
+    MentionableOption,
+    SlashPermission,
+)  # rather use: from extslash import *
+from src.extslash.commands import Client, SlashCog, ApplicationContext
 
 
 class Echo(SlashCog):
@@ -28,7 +30,11 @@ class Echo(SlashCog):
                     description='the message to echo back',
                     required=True
                 )
-            ]
+            ],
+            permissions=[
+                SlashPermission.for_user(516649677001719819, allow=True),
+                SlashPermission.for_role(921001978916642856, allow=False),
+            ],
         )
 
     async def command(self, appctx: ApplicationContext):

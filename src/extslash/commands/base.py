@@ -66,4 +66,5 @@ class BaseAppCommand:
     version: Optional[Union[int, str]] = None
     default_member_permissions: Optional[list] = None
     dm_permission: Optional[bool] = None
-
+    name_localizations: Optional = None
+    description_localizations: Optional = None

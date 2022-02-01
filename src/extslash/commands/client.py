@@ -46,16 +46,25 @@ class Client(Bot):
         await self.wait_until_ready()
         if not self._check:
             self._check = True
-            for guild_id, payload in self._reg_queue:
+            for guild_id, reg_obj in self._reg_queue:
                 if guild_id:
                     route = Route('POST', f'/applications/{self.user.id}/guilds/{guild_id}/commands')
+                    resp = await self.http.request(route, json=reg_obj.to_dict())
+                    command = BaseAppCommand(**resp)
+                    perm_route = Route(
+                        'PUT',
+                        f'/applications/{self.user.id}/guilds/{guild_id}/commands/{command.id}/permissions'
+                    )
+                    if reg_obj.permissions:
+                        await self.http.request(perm_route, json=reg_obj.permissions)
                 else:
                     route = Route('POST', f'/applications/{self.user.id}/commands')
+                    resp = await self.http.request(route, json=reg_obj.to_dict())
+                    command = BaseAppCommand(**resp)
 
-                resp = await self.http.request(route, json=payload)
-                self._slash_commands[payload.get("name")] = resp
+                self._slash_commands[reg_obj.name] = command
 
-                prompt = f'[{"GLOBAL" if not guild_id else "GUILD"}] registered /{payload.get("name")}'
+                prompt = f'[{"GLOBAL" if not guild_id else "GUILD"}] registered /{reg_obj.name}'
                 print(f'{prompt} ... ID: {resp.get("id")} ... Guild: {guild_id if guild_id else "NA"}')
 
     async def _invoke(self, appctx: ApplicationContext):
@@ -80,7 +89,7 @@ class Client(Bot):
             reg_obj = cog.register()
             cmd = cog.command
             if asyncio.iscoroutinefunction(cmd):
-                self._reg_queue.append((guild_id, reg_obj.to_dict()))
+                self._reg_queue.append((guild_id, reg_obj))
                 self._command_pool[reg_obj.name] = cmd
             else:
                 raise TypeError(f'Command inside cog `{cog_name}` must be a coroutine')
@@ -135,3 +144,15 @@ class Client(Bot):
             route = Route('DELETE', f'/applications/{self.user.id}/commands/{command_id}')
 
         await self.http.request(route)
+
+    async def update_slash_command(self, command_id: int, modified: SlashCommand, guild_id: int = None):
+        await self.wait_until_ready()
+        if guild_id:
+            route = Route('PATCH', f'/applications/{self.user.id}/guilds/{guild_id}/commands/{command_id}')
+        else:
+            route = Route('PATCH', f'/applications/{self.user.id}/commands/{command_id}')
+
+        resp = await self.http.request(route, json=modified.to_dict())
+
+        return BaseAppCommand(**resp)
+     # editing perms

@@ -121,16 +121,55 @@ class SubCommandGroup:
         }
 
 
+class SlashPermission:
+    def __init__(self, payload: dict):
+        self._payload = payload
+
+    def to_dict(self):
+        return self._payload
+
+    @classmethod
+    def for_role(cls, role_id: int, allow: bool = True):
+        return cls({
+            'id': str(role_id),
+            'type': 1,
+            'permission': allow
+        })
+
+    @classmethod
+    def for_user(cls, user_id: int, allow: bool = True):
+        return cls({
+            'id': str(user_id),
+            'type': 2,
+            'permission': allow
+        })
+
+
 class SlashCommand:
 
-    def __init__(self, name: str, description: str, options: list[Union[_Option, SubCommand, SubCommandGroup]] = None):
+    def __init__(
+            self,
+            name: str,
+            description: str,
+            options: list[Union[_Option, SubCommand, SubCommandGroup]] = None,
+            everyone: bool = True,
+            permissions: list[SlashPermission] = None,
+    ) -> None:
         self.name = name
         self._payload = {
             "name": name,
             "description": description,
             "type": 1,
-            "options": [option.data for option in options] if options else []
+            "options": [option.data for option in options] if options else [],
+            "default_permission": everyone,
         }
+        self._permissions = permissions
+
+    @property
+    def permissions(self):
+        if self._permissions:
+            perms_list = [perm.to_dict() for perm in self._permissions]
+            return {"permissions": perms_list}
 
     def to_dict(self):
         return self._payload
