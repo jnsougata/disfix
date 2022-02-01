@@ -30,7 +30,7 @@ class Client(Bot):
         self._check = False
         self._reg_queue = []
         self._command_pool = {}
-        self.slash_commands = {}
+        self._slash_commands = {}
 
     def slash_command(self, command: SlashCommand, guild_id: Optional[int] = None):
         self._reg_queue.append((guild_id, command.to_dict()))
@@ -53,7 +53,7 @@ class Client(Bot):
                     route = Route('POST', f'/applications/{self.user.id}/commands')
 
                 resp = await self.http.request(route, json=payload)
-                self.slash_commands[payload.get("name")] = resp
+                self._slash_commands[payload.get("name")] = resp
 
                 prompt = f'[{"GLOBAL" if not guild_id else "GUILD"}] registered /{payload.get("name")}'
                 print(f'{prompt} ... ID: {resp.get("id")} ... Guild: {guild_id if guild_id else "NA"}')
@@ -101,22 +101,37 @@ class Client(Bot):
             except TypeError:
                 raise InvalidCog('Custom cog must have methods `register` and `command [coro]`')
 
-    async def fetch_application_commands(self, guild_id: int = None):
+    async def fetch_global_slash_commands(self):
         await self.wait_until_ready()
-        if guild_id:
-            route = Route('GET', f'/applications/{self.user.id}/guilds/{guild_id}/commands')
-        else:
-            route = Route('GET', f'/applications/{self.user.id}/commands')
+        route = Route('GET', f'/applications/{self.user.id}/commands')
         resp = await self.http.request(route)
         return [BaseAppCommand(**cmd) for cmd in resp]
 
-    async def delete_application_command(self, command_id: int, guild_id: int = None):
+    async def fetch_guild_slash_commands(self, guild_id: int):
+        await self.wait_until_ready()
+        route = Route('GET', f'/applications/{self.user.id}/guilds/{guild_id}/commands')
+        resp = await self.http.request(route)
+        return [BaseAppCommand(**cmd) for cmd in resp]
+
+    async def fetch_slash_command(self, command_id: int, guild_id: int = None):
+        await self.wait_until_ready()
+        if guild_id:
+            route = Route('GET', f'/applications/{self.user.id}/guilds/{guild_id}/commands/{command_id}')
+        else:
+            route = Route('GET', f'/applications/{self.user.id}/commands/{command_id}')
+
+        resp = await self.http.request(route)
+
+        return BaseAppCommand(**resp)
+
+    def get_slash_commands(self):
+        return [BaseAppCommand(**cmd) for cmd in self._slash_commands.values()]
+
+    async def delete_slash_command(self, command_id: int, guild_id: int = None):
         await self.wait_until_ready()
         if guild_id:
             route = Route('DELETE', f'/applications/{self.user.id}/guilds/{guild_id}/commands/{command_id}')
         else:
             route = Route('DELETE', f'/applications/{self.user.id}/commands/{command_id}')
-        try:
-            await self.http.request(route)
-        except discord.errors.NotFound:
-            print(f'[ERROR] /command with (ID:{command_id}) and (GUILD:{guild_id}) not found')
+
+        await self.http.request(route)
