@@ -47,7 +47,9 @@ class ApplicationContext:
     def options(self):
         options = self.data.options
         if options:
-            return [InteractionDataOption(**option) for option in options]
+            return [
+                InteractionDataOption(option, self._client, self.guild, self.resolved)
+                for option in options]
 
     @property
     def application_id(self):

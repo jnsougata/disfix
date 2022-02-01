@@ -27,17 +27,10 @@ class Echo(SlashCog):
             name='echo',
             description='echos back a given message',
             options=[
-                StrOption(
-                    name='message',
-                    description='the message to echo back',
-                    choices=[
-                              Choice(name='hello', value='hello'),
-                              Choice(name='world', value='world'),
-                          ]
-                )
+                UserOption('anything', 'something user based'),
             ],
             permissions=[
-                SlashPermission.for_user(516649677001719819, allow=True),
+                SlashPermission.for_user(516649677001719819),
                 SlashPermission.for_role(921001978916642856, allow=False),
             ],
         )
@@ -46,13 +39,10 @@ class Echo(SlashCog):
         async with appctx.thinking:
             # doing some heavy task
             # maximum time is 15min ig
-            await asyncio.sleep(3)
-            # sending followup message
-            msg = await appctx.followup.send(f'**{appctx.options[0].value}**')
-
-            await asyncio.sleep(3)
-
-            await msg.edit(embed=discord.Embed(description=f'{appctx.options[0].value}'))
+            # await asyncio.sleep(900)
+            # sending followup after
+            value = appctx.options[0].value
+            await appctx.followup.send(value.avatar.url)
 
 
 def setup(bot: Client):
