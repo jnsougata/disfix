@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Optional, Union, Any
 import discord
+from .enums import *
 
 
 @dataclass(frozen=True)
@@ -68,23 +69,43 @@ class InteractionDataOption:
         return self._data.get('type')
 
     @property
-    def value(self) -> Union[str, int, float, bool, discord.User, discord.Role, discord.TextChannel]:
-        if self.type == 3:
+    def value(
+            self
+    ) -> Union[
+            str,
+            int,
+            float,
+            bool,
+            discord.User,
+            discord.Role,
+            discord.TextChannel,
+            discord.VoiceChannel,
+            discord.StageChannel,
+            discord.CategoryChannel,
+            discord.StoreChannel,
+            discord.ChannelType,
+    ]:
+
+        if self.type == OptionType.SUBCOMMAND:
+            return self._data.get('value')  # TODO: parse subcommand
+        elif self.type == OptionType.SUBCOMMAND_GROUP:
+            return self._data.get('value')  # TODO: parse subcommand group
+        elif self.type == OptionType.STRING:
             return self._data.get('value')
-        elif self.type == 4:
+        elif self.type == OptionType.INTEGER:
             return self._data.get('value')
-        elif self.type == 5:
+        elif self.type == OptionType.BOOLEAN:
             return self._data.get('value')
-        elif self.type == 6:
+        elif self.type == OptionType.USER:
             user_id = int(self._data.get('value'))
             return self._client.get_user(user_id)
-        elif self.type == 7:
+        elif self.type == OptionType.CHANNEL:
             channel_id = int(self._data.get('value'))
-            return self._client.get_channel(channel_id)
-        elif self.type == 8:
+            return self._guild.get_channel(channel_id)
+        elif self.type == OptionType.ROLE:
             role_id = int(self._data.get('value'))
             return self._guild.get_role(role_id)
-        elif self.type == 9:
+        elif self.type == OptionType.MENTIONABLE:
             some_id = self._data.get('value')
             user_data = self._resolved.users
             role_data = self._resolved.roles
@@ -92,7 +113,7 @@ class InteractionDataOption:
                 return self._client.get_user(int(some_id))
             else:
                 return self._guild.get_role(int(some_id))
-        elif self.type == 10:
+        elif self.type == OptionType.NUMBER:
             return self._data.get('value')
         else:
             return self._data.get('value')
