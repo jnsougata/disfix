@@ -1,4 +1,5 @@
 import asyncio
+import discord
 from src.extslash import (
     SlashCommand,
     SubCommandGroup,
@@ -12,6 +13,7 @@ from src.extslash import (
     NumberOption,
     MentionableOption,
     SlashPermission,
+    Choice,
 )  # rather use: from extslash import *
 from src.extslash.commands import Client, SlashCog, ApplicationContext
 
@@ -28,7 +30,10 @@ class Echo(SlashCog):
                 StrOption(
                     name='message',
                     description='the message to echo back',
-                    required=True
+                    choices=[
+                              Choice(name='hello', value='hello'),
+                              Choice(name='world', value='world'),
+                          ]
                 )
             ],
             permissions=[
@@ -41,9 +46,13 @@ class Echo(SlashCog):
         async with appctx.thinking:
             # doing some heavy task
             # maximum time is 15min ig
-            await asyncio.sleep(5)
+            await asyncio.sleep(3)
             # sending followup message
-            await appctx.followup.send(f'**{appctx.options[0].value}**')
+            msg = await appctx.followup.send(f'**{appctx.options[0].value}**')
+
+            await asyncio.sleep(3)
+
+            await msg.edit(embed=discord.Embed(description=f'{appctx.options[0].value}'))
 
 
 def setup(bot: Client):

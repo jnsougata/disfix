@@ -104,6 +104,3 @@ class SlashOverwrite:
     @property
     def permissions(self):
         return [SlashPermissionData(**perm) for perm in self._perms.permissions]
-
-
-

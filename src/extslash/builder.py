@@ -14,7 +14,7 @@ class Choice:
 
 
 class StrOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = False, choices: list[Choice] = None):
+    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
         self.data = {
             "name": name,
             "description": description,
@@ -25,7 +25,7 @@ class StrOption(_Option):
 
 
 class IntOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = False, choices: list[Choice] = None):
+    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
         self.data = {
             "name": name,
             "description": description,
@@ -36,7 +36,7 @@ class IntOption(_Option):
 
 
 class BoolOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = False, choices: list[Choice] = None):
+    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
         self.data = {
             "name": name,
             "description": description,
@@ -47,7 +47,7 @@ class BoolOption(_Option):
 
 
 class UserOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = False, choices: list[Choice] = None):
+    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
         self.data = {
             "name": name,
             "description": description,
@@ -58,7 +58,7 @@ class UserOption(_Option):
 
 
 class ChannelOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = False, choices: list[Choice] = None):
+    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
         self.data = {
             "name": name,
             "description": description,
@@ -69,7 +69,7 @@ class ChannelOption(_Option):
 
 
 class RoleOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = False, choices: list[Choice] = None):
+    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
         self.data = {
             "name": name,
             "description": description,
@@ -80,7 +80,7 @@ class RoleOption(_Option):
 
 
 class MentionableOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = False, choices: list[Choice] = None):
+    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
         self.data = {
             "name": name,
             "description": description,
@@ -91,7 +91,7 @@ class MentionableOption(_Option):
 
 
 class NumberOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = False, choices: list[Choice] = None):
+    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
         self.data = {
             "name": name,
             "description": description,
@@ -151,7 +151,7 @@ class SlashCommand:
             self,
             name: str,
             description: str,
-            options: list[Union[_Option, SubCommand, SubCommandGroup]] = None,
+            options: list[Union[_Option, SubCommand, SubCommandGroup, Choice]] = None,
             everyone: bool = True,
             permissions: list[SlashPermission] = None,
     ) -> None:
