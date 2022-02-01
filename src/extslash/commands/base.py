@@ -68,3 +68,42 @@ class BaseAppCommand:
     dm_permission: Optional[bool] = None
     name_localizations: Optional = None
     description_localizations: Optional = None
+
+
+@dataclass(frozen=True)
+class BaseSlashPermission:
+    id: Union[int, str]
+    application_id: Union[int, str]
+    guild_id: [Union[int, str]]
+    permissions: list[dict]
+
+
+@dataclass(frozen=True)
+class SlashPermissionData:
+    id: Union[int, str]
+    type: int
+    permission: bool
+
+
+class SlashOverwrite:
+    def __init__(self, data: dict):
+        self._perms = BaseSlashPermission(**data)
+
+    @property
+    def command_id(self):
+        return int(self._perms.id)
+
+    @property
+    def application_id(self):
+        return int(self._perms.application_id)
+
+    @property
+    def guild_id(self):
+        return int(self._perms.guild_id)
+
+    @property
+    def permissions(self):
+        return [SlashPermissionData(**perm) for perm in self._perms.permissions]
+
+
+

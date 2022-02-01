@@ -2,16 +2,16 @@ import discord
 import json
 import asyncio
 import traceback
-from ..builder import SlashCommand
+from .errors import *
+from .cog import SlashCog
+from ..builder import SlashCommand, SlashPermission
 from discord.http import Route
 from functools import wraps
 from .context import ApplicationContext
-from .base import Interaction, BaseAppCommand
+from .base import Interaction, BaseAppCommand, SlashOverwrite
 from typing import Callable, Optional, Any, Union
 from discord.ext.commands import Bot
 from importlib.machinery import SourceFileLoader
-from .cog import SlashCog
-from .errors import *
 
 
 class Client(Bot):
@@ -30,10 +30,10 @@ class Client(Bot):
         self._check = False
         self._reg_queue = []
         self._command_pool = {}
-        self._slash_commands = {}
+        self._slash_commands = {}  # for caching - implement later
 
     def slash_command(self, command: SlashCommand, guild_id: Optional[int] = None):
-        self._reg_queue.append((guild_id, command.to_dict()))
+        self._reg_queue.append((guild_id, command))
 
         def decorator(func):
             @wraps(func)
@@ -41,31 +41,6 @@ class Client(Bot):
                 return func
             self._command_pool[command.name] = wrapper()
         return decorator
-
-    async def _register(self):
-        await self.wait_until_ready()
-        if not self._check:
-            self._check = True
-            for guild_id, reg_obj in self._reg_queue:
-                if guild_id:
-                    route = Route('POST', f'/applications/{self.user.id}/guilds/{guild_id}/commands')
-                    resp = await self.http.request(route, json=reg_obj.to_dict())
-                    command = BaseAppCommand(**resp)
-                    perm_route = Route(
-                        'PUT',
-                        f'/applications/{self.user.id}/guilds/{guild_id}/commands/{command.id}/permissions'
-                    )
-                    if reg_obj.permissions:
-                        await self.http.request(perm_route, json=reg_obj.permissions)
-                else:
-                    route = Route('POST', f'/applications/{self.user.id}/commands')
-                    resp = await self.http.request(route, json=reg_obj.to_dict())
-                    command = BaseAppCommand(**resp)
-
-                self._slash_commands[reg_obj.name] = command
-
-                prompt = f'[{"GLOBAL" if not guild_id else "GUILD"}] registered /{reg_obj.name}'
-                print(f'{prompt} ... ID: {resp.get("id")} ... Guild: {guild_id if guild_id else "NA"}')
 
     async def _invoke(self, appctx: ApplicationContext):
         cmd = self._command_pool.get(appctx.name)
@@ -110,6 +85,29 @@ class Client(Bot):
             except TypeError:
                 raise InvalidCog('Custom cog must have methods `register` and `command [coro]`')
 
+    async def _register(self):
+        await self.wait_until_ready()
+        if not self._check:
+            self._check = True
+            for guild_id, reg_obj in self._reg_queue:
+                if guild_id:
+                    route = Route('POST', f'/applications/{self.user.id}/guilds/{guild_id}/commands')
+                    resp = await self.http.request(route, json=reg_obj.to_dict())
+                    command = BaseAppCommand(**resp)
+                    if reg_obj.permissions:
+                        perm_route = Route(
+                            'PUT',
+                            f'/applications/{self.user.id}/guilds/{guild_id}/commands/{command.id}/permissions'
+                        )
+                        await self.http.request(perm_route, json=reg_obj.permissions)
+                else:
+                    route = Route('POST', f'/applications/{self.user.id}/commands')
+                    resp = await self.http.request(route, json=reg_obj.to_dict())
+                    command = BaseAppCommand(**resp)
+
+                prompt = f'[{"GLOBAL" if not guild_id else "GUILD"}] registered /{reg_obj.name}'
+                print(f'{prompt} ... ID: {resp.get("id")} ... Guild: {guild_id if guild_id else "NA"}')
+
     async def fetch_global_slash_commands(self):
         await self.wait_until_ready()
         route = Route('GET', f'/applications/{self.user.id}/commands')
@@ -133,9 +131,6 @@ class Client(Bot):
 
         return BaseAppCommand(**resp)
 
-    def get_slash_commands(self):
-        return [BaseAppCommand(**cmd) for cmd in self._slash_commands.values()]
-
     async def delete_slash_command(self, command_id: int, guild_id: int = None):
         await self.wait_until_ready()
         if guild_id:
@@ -155,4 +150,31 @@ class Client(Bot):
         resp = await self.http.request(route, json=modified.to_dict())
 
         return BaseAppCommand(**resp)
-     # editing perms
+
+    async def update_slash_permission(self, guild_id: int, command_id: int, permissions: [SlashPermission]):
+        await self.wait_until_ready()
+        payload = [perm.to_dict() for perm in permissions]
+        route = Route('PATCH', f'/applications/{self.user.id}/guilds/{guild_id}/commands/{command_id}/permissions')
+        resp = await self.http.request(route, json=payload)
+        return SlashOverwrite(**resp)
+
+    async def batch_update_slash_permission(
+            self,
+            guild_id: int,
+            command_ids: [int],
+            permissions: [[SlashPermission]]
+    ):
+
+        await self.wait_until_ready()
+        if len(command_ids) != len(permissions):
+            raise ValueError('Command IDs and Permissions must be the same length')
+        payload = []
+        for command_id, perm_list in zip(command_ids, permissions):
+            payload.append({
+                "id": command_id,
+                "permissions": [perm.to_dict() for perm in perm_list]
+            })
+
+        route = Route('PATCH', f'/applications/{self.user.id}/guilds/{guild_id}/commands/permissions')
+        resp = await self.http.request(route, json=payload)
+        return [SlashOverwrite(**overwrite) for overwrite in resp]
