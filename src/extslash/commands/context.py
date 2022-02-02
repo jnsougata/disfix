@@ -19,11 +19,15 @@ class ApplicationContext:
         self._client = client
 
     @property
+    def raw_interaction(self) -> Interaction:
+        return self._ia
+
+    @property
     def client(self):
         return self._client
 
     @property
-    def name(self):
+    def command(self):
         return self._ia.data.get('name')
 
     @property

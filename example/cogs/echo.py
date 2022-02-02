@@ -27,22 +27,23 @@ class Echo(SlashCog):
             name='echo',
             description='echos back a given message',
             options=[
-                UserOption('anything', 'something user based'),
+                StrOption('anything', 'something user based'),
             ],
             permissions=[
                 SlashPermission.for_user(516649677001719819),
-                SlashPermission.for_role(921001978916642856, allow=False),
+                SlashPermission.for_role(921001978916642856),
             ],
         )
 
-    async def command(self, appctx: ApplicationContext):
-        async with appctx.thinking:
+    async def command(self, ctx: ApplicationContext):
+        async with ctx.thinking:
             # doing some heavy task
             # maximum time is 15min ig
             # await asyncio.sleep(900)
             # sending followup after
-            value = appctx.options[0].value
-            await appctx.followup.send(value.avatar.url)
+            value = ctx.options[0].value
+            await ctx.author.send(f'`{ctx.command}`: {value}')
+            await ctx.followup.send('Done!')
 
 
 def setup(bot: Client):

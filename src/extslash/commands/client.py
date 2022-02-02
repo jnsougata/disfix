@@ -31,6 +31,9 @@ class Client(Bot):
         self._reg_queue = []
         self._command_pool = {}
         self._slash_commands = {}  # for caching - implement later
+        self.__parent = 'on_socket_raw_receive'
+        self.__child = self.__slash_create
+        self.add_listener(self.__child, self.__parent)
 
     def slash_command(self, command: SlashCommand, guild_id: Optional[int] = None):
         self._reg_queue.append((guild_id, command))
@@ -43,14 +46,14 @@ class Client(Bot):
         return decorator
 
     async def _invoke(self, appctx: ApplicationContext):
-        cmd = self._command_pool.get(appctx.name)
+        cmd = self._command_pool.get(appctx.command)
         if cmd:
             try:
                 await cmd(appctx)
             except Exception:
                 traceback.print_exc()
 
-    async def on_socket_raw_receive(self, payload: Any):
+    async def __slash_create(self, payload: Any):
         asyncio.ensure_future(self._register())
         response = json.loads(payload)
         if response.get('t') == 'INTERACTION_CREATE':
