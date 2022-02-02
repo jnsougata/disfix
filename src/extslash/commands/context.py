@@ -27,7 +27,7 @@ class ApplicationContext:
         return self._client
 
     @property
-    def command(self):
+    def command(self) -> str:
         return self._ia.data.get('name')
 
     @property
@@ -52,8 +52,9 @@ class ApplicationContext:
         options = self.data.options
         if options:
             return [
-                InteractionDataOption(option, self._client, self.guild, self.resolved)
-                for option in options]
+                InteractionDataOption(
+                    option, self._client, self.guild, self.resolved
+                )for option in options]
 
     @property
     def application_id(self):
