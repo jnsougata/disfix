@@ -101,13 +101,11 @@ class Client(Bot):
         return [BaseAppCommand(**cmd) for cmd in resp]
 
     async def fetch_guild_slash_commands(self, guild_id: int):
-        await self.wait_until_ready()
         route = Route('GET', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
         resp = await self.http.request(route)
         return [BaseAppCommand(**cmd) for cmd in resp]
 
     async def fetch_slash_command(self, command_id: int, guild_id: int = None):
-        await self.wait_until_ready()
         if guild_id:
             route = Route('GET', f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}')
         else:
@@ -118,7 +116,6 @@ class Client(Bot):
         return BaseAppCommand(**resp)
 
     async def delete_slash_command(self, command_id: int, guild_id: int = None):
-        await self.wait_until_ready()
         if guild_id:
             route = Route('DELETE', f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}')
         else:
@@ -127,7 +124,6 @@ class Client(Bot):
         await self.http.request(route)
 
     async def update_slash_command(self, command_id: int, modified: SlashCommand, guild_id: int = None):
-        await self.wait_until_ready()
         if guild_id:
             route = Route('PATCH', f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}')
         else:
@@ -138,7 +134,6 @@ class Client(Bot):
         return BaseAppCommand(**resp)
 
     async def update_slash_permission(self, guild_id: int, command_id: int, permissions: [SlashPermission]):
-        await self.wait_until_ready()
         payload = [perm.to_dict() for perm in permissions]
         route = Route('PATCH',
                       f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}/permissions')
@@ -151,8 +146,6 @@ class Client(Bot):
             command_ids: [int],
             permissions: [[SlashPermission]]
     ):
-
-        await self.wait_until_ready()
         if len(command_ids) != len(permissions):
             raise ValueError('Command IDs and Permissions must be the same length')
         payload = []
