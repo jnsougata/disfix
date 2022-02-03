@@ -20,35 +20,67 @@ class ApplicationContext:
 
     @property
     def raw_interaction(self) -> Interaction:
+        """
+        returns the raw interaction object
+        :return:
+        """
         return self._ia
 
     @property
     def client(self):
+        """
+        returns the client object currently used
+        :return:
+        """
         return self._client
 
     @property
     def command(self) -> str:
+        """
+        returns the command used to invoke the interaction
+        :return:
+        """
         return self._ia.data.get('name')
 
     @property
     def id(self):
+        """
+        returns the interaction id
+        :return:
+        """
         return self._ia.id
 
     @property
     def version(self):
+        """
+        returns the version of the interaction
+        :return:
+        """
         return self._ia.version
 
     @property
     def data(self):
+        """
+        returns the interaction data
+        :return: InteractionData
+        """
         return InteractionData(**self._ia.data)
 
     @property
     def resolved(self):
+        """
+        returns the resolved data of the interaction
+        :return:
+        """
         if self.data.resolved:
             return InteractionDataResolved(**self.data.resolved)
 
     @property
     def options(self):
+        """
+        returns the options of the interaction
+        :return: InteractionDataOption
+        """
         options = self.data.options
         if options:
             return [
@@ -58,6 +90,10 @@ class ApplicationContext:
 
     @property
     def application_id(self):
+        """
+        returns the application id / bot id of the interaction
+        :return:
+        """
         return self._ia.application_id
 
     @property
@@ -70,30 +106,52 @@ class ApplicationContext:
 
     @property
     def channel(self):
+        """
+        returns the channel where the interaction was created
+        :return:
+        """
         channel_id = self._ia.channel_id
         if channel_id:
             return self._client.get_channel(int(channel_id))
 
     @property
     def guild(self):
+        """
+        returns the guild where the interaction was created
+        :return:
+        """
         guild_id = self._ia.guild_id
         if guild_id:
             return self._client.get_guild(int(guild_id))
 
     @property
     def author(self):
+        """
+        returns the author of the interaction
+        :return: discord.Member
+        """
         if self._ia.guild_id:
             user_id = self._ia.member.get('user').get('id')
             return self.guild.get_member(int(user_id))
 
     @property
     def user(self):
+        """
+        returns the user of the interaction
+        :return: discord.User
+        """
         user_id = self._ia.user.get('id')
         if user_id:
             return self._client.get_user(int(user_id))
 
     @property
     def send(self):
+        """
+        sends a message to the channel
+        where the interaction was created
+        use `respond` to respond to that interaction
+        :return:
+        """
         return self.channel.send
 
     async def respond(
@@ -110,6 +168,20 @@ class ApplicationContext:
             views: Optional[Iterable[discord.ui.View]] = None,
             ephemeral: bool = False
     ):
+        """
+        sends a response to the interaction
+        :param content: (str) the content of the message
+        :param tts: (book) whether the message should be read aloud
+        :param file: (discord.File) a file to send
+        :param files: (Sequence[discord.File]) a list of files to send
+        :param embed: (discord.Embed) an embed to send
+        :param embeds: (Iterable[discord.Embed]) a list of embeds to send
+        :param allowed_mentions: (discord.AllowedMentions) the mentions to allow
+        :param view: (discord.ui.View) a view to send
+        :param views: (Iterable[discord.ui.View]) a list of views to send
+        :param ephemeral: (bool) whether the message should be sent as ephemeral
+        :return: None
+        """
         form = []
         route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
 
@@ -171,20 +243,26 @@ class ApplicationContext:
 
     @property
     def thinking(self):
+        """
+        gives a context manager to invoke bot thinking to the interaction
+        :return: _ThinkingState
+        """
         return _ThinkingState(self)
 
     @property
     def followup(self):
+        """
+        sends follow up to a deferred interaction
+        valid only for deferred interactions
+        works until the interaction is token expired
+        :return:
+        """
         payload = {
             'type': 3,
             'token': self._ia.token,
             'id': self.application_id
         }
         return Webhook.from_state(data=payload, state=self._client._connection)
-
-    @property
-    def typing(self):
-        return self.channel.typing
 
 
 class _ThinkingState:

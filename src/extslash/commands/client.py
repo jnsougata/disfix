@@ -26,15 +26,21 @@ class Client(Bot):
             enable_debug_events=True,
             help_command=help_command,
         )
-        self._check = False
+        self._check_reg = False
         self._reg_queue = []
         self._command_pool = {}
         self._slash_commands = {}  # for caching - implement later
         self.__parent = 'on_socket_raw_receive'
-        self.__child = self.__slash_create
+        self.__child = self.__invoke_slash
         self.add_listener(self.__child, self.__parent)
 
     def slash_command(self, command: SlashCommand, guild_id: Optional[int] = None):
+        """
+        Decorator for registering a slash command
+        :param command:
+        :param guild_id:
+        :return:
+        """
         self._reg_queue.append((guild_id, command))
 
         def decorator(func):
@@ -44,21 +50,16 @@ class Client(Bot):
             self._command_pool[command.name] = wrapper()
         return decorator
 
-    async def _invoke(self, appctx: ApplicationContext):
-        cmd = self._command_pool.get(appctx.command)
-        if cmd:
-            try:
-                await cmd(appctx)
-            except Exception:
-                traceback.print_exc()
-
-    async def __slash_create(self, payload: Any):
-        asyncio.ensure_future(self._register())
+    async def __invoke_slash(self, payload: Any):
+        asyncio.ensure_future(self.__register_slash())
         response = json.loads(payload)
         if response.get('t') == 'INTERACTION_CREATE':
             interaction = Interaction(**response.get('d'))
             if interaction.type == 2:
-                await self._invoke(ApplicationContext(interaction, self))
+                application_ctx = ApplicationContext(interaction, self)
+                cmd = self._command_pool.get(application_ctx.command)
+                if cmd:
+                    await cmd(application_ctx)
 
     def add_slash_cog(self, cog: SlashCog, guild_id:  Optional[int] = None):
         cog_name = cog.__class__.__name__
@@ -73,10 +74,10 @@ class Client(Bot):
         else:
             raise InvalidCog(f'cog `{cog_name}` must be a subclass of SlashCog')
 
-    async def _register(self):
+    async def __register_slash(self):
         await self.wait_until_ready()
-        if not self._check:
-            self._check = True
+        if not self._check_reg:
+            self._check_reg = True
             for guild_id, reg_obj in self._reg_queue:
                 if guild_id:
                     route = Route('POST', f'/applications/{self.user.id}/guilds/{guild_id}/commands')
@@ -85,8 +86,7 @@ class Client(Bot):
                     if reg_obj.permissions:
                         perm_route = Route(
                             'PUT',
-                            f'/applications/{self.user.id}/guilds/{guild_id}/commands/{command.id}/permissions'
-                        )
+                            f'/applications/{self.user.id}/guilds/{guild_id}/commands/{command.id}/permissions')
                         await self.http.request(perm_route, json=reg_obj.permissions)
                 else:
                     route = Route('POST', f'/applications/{self.user.id}/commands')

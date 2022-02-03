@@ -38,12 +38,11 @@ class Echo(SlashCog):
     async def command(self, ctx: ApplicationContext):
         async with ctx.thinking:
             # doing some heavy task
-            # maximum time is 15min ig
             # await asyncio.sleep(900)
+            # maximum time is 15min ig
             # sending followup after
             value = ctx.options[0].value
-            await ctx.author.send(f'`{ctx.command}`: {value}')
-            await ctx.followup.send('Done!')
+            await ctx.followup.send(f'{value}')
 
 
 def setup(bot: Client):
