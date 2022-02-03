@@ -51,7 +51,7 @@ class Client(Bot):
         return decorator
 
     async def __invoke_slash(self, payload: Any):
-        asyncio.ensure_future(self.__register_slash())
+        asyncio.ensure_future(self.sync_slash())
         response = json.loads(payload)
         if response.get('t') == 'INTERACTION_CREATE':
             interaction = Interaction(**response.get('d'))
@@ -74,22 +74,21 @@ class Client(Bot):
         else:
             raise InvalidCog(f'cog `{cog_name}` must be a subclass of SlashCog')
 
-    async def __register_slash(self):
-        await self.wait_until_ready()
+    async def sync_slash(self):
         if not self._check_reg:
             self._check_reg = True
             for guild_id, reg_obj in self._reg_queue:
                 if guild_id:
-                    route = Route('POST', f'/applications/{self.user.id}/guilds/{guild_id}/commands')
+                    route = Route('POST', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
                     resp = await self.http.request(route, json=reg_obj.to_dict())
                     command = BaseAppCommand(**resp)
                     if reg_obj.permissions:
                         perm_route = Route(
                             'PUT',
-                            f'/applications/{self.user.id}/guilds/{guild_id}/commands/{command.id}/permissions')
+                            f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command.id}/permissions')
                         await self.http.request(perm_route, json=reg_obj.permissions)
                 else:
-                    route = Route('POST', f'/applications/{self.user.id}/commands')
+                    route = Route('POST', f'/applications/{self.application_id}/commands')
                     resp = await self.http.request(route, json=reg_obj.to_dict())
                     command = BaseAppCommand(**resp)
 
@@ -97,23 +96,22 @@ class Client(Bot):
                 print(f'{prompt} ... ID: {resp.get("id")} ... Guild: {guild_id if guild_id else "NA"}')
 
     async def fetch_global_slash_commands(self):
-        await self.wait_until_ready()
-        route = Route('GET', f'/applications/{self.user.id}/commands')
+        route = Route('GET', f'/applications/{self.application_id}/commands')
         resp = await self.http.request(route)
         return [BaseAppCommand(**cmd) for cmd in resp]
 
     async def fetch_guild_slash_commands(self, guild_id: int):
         await self.wait_until_ready()
-        route = Route('GET', f'/applications/{self.user.id}/guilds/{guild_id}/commands')
+        route = Route('GET', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
         resp = await self.http.request(route)
         return [BaseAppCommand(**cmd) for cmd in resp]
 
     async def fetch_slash_command(self, command_id: int, guild_id: int = None):
         await self.wait_until_ready()
         if guild_id:
-            route = Route('GET', f'/applications/{self.user.id}/guilds/{guild_id}/commands/{command_id}')
+            route = Route('GET', f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}')
         else:
-            route = Route('GET', f'/applications/{self.user.id}/commands/{command_id}')
+            route = Route('GET', f'/applications/{self.application_id}/commands/{command_id}')
 
         resp = await self.http.request(route)
 
@@ -122,18 +120,18 @@ class Client(Bot):
     async def delete_slash_command(self, command_id: int, guild_id: int = None):
         await self.wait_until_ready()
         if guild_id:
-            route = Route('DELETE', f'/applications/{self.user.id}/guilds/{guild_id}/commands/{command_id}')
+            route = Route('DELETE', f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}')
         else:
-            route = Route('DELETE', f'/applications/{self.user.id}/commands/{command_id}')
+            route = Route('DELETE', f'/applications/{self.application_id}/commands/{command_id}')
 
         await self.http.request(route)
 
     async def update_slash_command(self, command_id: int, modified: SlashCommand, guild_id: int = None):
         await self.wait_until_ready()
         if guild_id:
-            route = Route('PATCH', f'/applications/{self.user.id}/guilds/{guild_id}/commands/{command_id}')
+            route = Route('PATCH', f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}')
         else:
-            route = Route('PATCH', f'/applications/{self.user.id}/commands/{command_id}')
+            route = Route('PATCH', f'/applications/{self.application_id}/commands/{command_id}')
 
         resp = await self.http.request(route, json=modified.to_dict())
 
@@ -142,7 +140,8 @@ class Client(Bot):
     async def update_slash_permission(self, guild_id: int, command_id: int, permissions: [SlashPermission]):
         await self.wait_until_ready()
         payload = [perm.to_dict() for perm in permissions]
-        route = Route('PATCH', f'/applications/{self.user.id}/guilds/{guild_id}/commands/{command_id}/permissions')
+        route = Route('PATCH',
+                      f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}/permissions')
         resp = await self.http.request(route, json=payload)
         return SlashOverwrite(**resp)
 
@@ -163,6 +162,13 @@ class Client(Bot):
                 "permissions": [perm.to_dict() for perm in perm_list]
             })
 
-        route = Route('PATCH', f'/applications/{self.user.id}/guilds/{guild_id}/commands/permissions')
+        route = Route('PATCH', f'/applications/{self.application_id}/guilds/{guild_id}/commands/permissions')
         resp = await self.http.request(route, json=payload)
         return [SlashOverwrite(**overwrite) for overwrite in resp]
+
+    async def start(self, token: str, *, reconnect: bool = True) -> None:
+        await self.login(token)
+        app_info = await self.application_info()
+        self._connection.application_id = app_info.id
+        await self.sync_slash()
+        await self.connect(reconnect=reconnect)
