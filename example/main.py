@@ -1,13 +1,13 @@
 import os
 import discord
-from src.extslash.commands import Client
+from src.extslash.commands import Bot
 
 
 intents = discord.Intents.default()
 intents.members = True
 
 
-class MyBot(Client):
+class MyBot(Bot):
     def __init__(self):
         super().__init__(command_prefix='-', help_command=None, intents=intents)
 

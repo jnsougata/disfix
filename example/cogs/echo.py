@@ -15,11 +15,11 @@ from src.extslash import (
     SlashPermission,
     Choice,
 )  # rather use: from extslash import *
-from src.extslash.commands import Client, SlashCog, ApplicationContext
+from src.extslash.commands import Bot, SlashCog, ApplicationContext
 
 
 class Echo(SlashCog):
-    def __init__(self, bot: Client):
+    def __init__(self, bot: Bot):
         self.bot = bot
 
     def register(self):
@@ -45,7 +45,7 @@ class Echo(SlashCog):
             await ctx.followup.send(f'{value}')
 
 
-def setup(bot: Client):
+def setup(bot: Bot):
     bot.add_slash_cog(Echo(bot), 877399405056102431)
     # add guild if you want to limit the command to a specific guild
     # if you to register the command to all guilds, you can leave it empty
