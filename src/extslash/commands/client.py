@@ -26,7 +26,6 @@ class Client(Bot):
             enable_debug_events=True,
             help_command=help_command,
         )
-        self._check_reg = False
         self._reg_queue = []
         self._command_pool = {}
         self._slash_commands = {}  # for caching - implement later
@@ -158,10 +157,3 @@ class Client(Bot):
         route = Route('PATCH', f'/applications/{self.application_id}/guilds/{guild_id}/commands/permissions')
         resp = await self.http.request(route, json=payload)
         return [SlashOverwrite(**overwrite) for overwrite in resp]
-
-    async def start(self, token: str, *, reconnect: bool = True) -> None:
-        await self.login(token)
-        app_info = await self.application_info()
-        self._connection.application_id = app_info.id
-        await self.sync_slash()
-        await self.connect(reconnect=reconnect)
