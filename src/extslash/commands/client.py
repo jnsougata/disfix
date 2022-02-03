@@ -11,7 +11,6 @@ from .context import ApplicationContext
 from .base import Interaction, BaseAppCommand, SlashOverwrite
 from typing import Callable, Optional, Any, Union
 from discord.ext.commands import Bot
-from importlib.machinery import SourceFileLoader
 
 
 class Client(Bot):
@@ -70,23 +69,9 @@ class Client(Bot):
                 self._reg_queue.append((guild_id, reg_obj))
                 self._command_pool[reg_obj.name] = cmd
             else:
-                raise TypeError(f'Command inside cog `{cog_name}` must be a coroutine')
+                raise NonCoroutine(f'command method inside cog `{cog_name}` must be a coroutine')
         else:
-            raise TypeError(f'Custom cog `{cog_name}` must be a subclass of SlashCog')
-
-    def load_slash_extension(self, name: str):
-        fp = name.replace('.', '/') + '.py'
-        try:
-            module = SourceFileLoader('setup', fp).load_module()
-        except FileNotFoundError:
-            raise CogNotFound(f'Slash extension not found at {fp}')
-        except AttributeError:
-            raise SetupNotFound(f'Setup function not found in {fp}')
-        else:
-            try:
-                module.setup(self)
-            except TypeError:
-                raise InvalidCog('Custom cog must have methods `register` and `command [coro]`')
+            raise InvalidCog(f'cog `{cog_name}` must be a subclass of SlashCog')
 
     async def _register(self):
         await self.wait_until_ready()

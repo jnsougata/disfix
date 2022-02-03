@@ -18,5 +18,5 @@ class MyBot(Client):
 
 bot = MyBot()
 
-bot.load_slash_extension('cogs.echo')
+bot.load_extension('cogs.echo')
 bot.run(os.getenv('DISCORD_TOKEN'))
