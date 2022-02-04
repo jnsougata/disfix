@@ -3,7 +3,6 @@ import json
 import discord
 from discord.webhook.async_ import Webhook
 from .base import (
-    Interaction,
     InteractionData,
     InteractionDataOption,
     InteractionDataResolved
@@ -14,25 +13,17 @@ from typing import Optional, Any, Union, Sequence, Iterable
 
 
 class ApplicationContext:
-    def __init__(self, ia: Interaction, client: discord.Client):
-        self._ia = ia
+    def __init__(self, action: discord.Interaction, client: discord.Client):
+        self._action = action
         self._client = client
+        self._is_deferred = False
 
-    @property
-    def raw_interaction(self) -> Interaction:
+    def is_deferred(self):
         """
-        returns the raw interaction object
-        :return:
+        returns whether the interaction is deferred
+        :return: bool
         """
-        return self._ia
-
-    @property
-    def client(self):
-        """
-        returns the client object currently used
-        :return:
-        """
-        return self._client
+        return self._is_deferred
 
     @property
     def command(self) -> str:
@@ -40,7 +31,7 @@ class ApplicationContext:
         returns the command used to invoke the interaction
         :return:
         """
-        return self._ia.data.get('name')
+        return self._action.data.get('name')
 
     @property
     def id(self):
@@ -48,7 +39,7 @@ class ApplicationContext:
         returns the interaction id
         :return:
         """
-        return self._ia.id
+        return self._action.id
 
     @property
     def version(self):
@@ -56,7 +47,7 @@ class ApplicationContext:
         returns the version of the interaction
         :return:
         """
-        return self._ia.version
+        return self._action.version
 
     @property
     def data(self):
@@ -64,7 +55,7 @@ class ApplicationContext:
         returns the interaction data
         :return: InteractionData
         """
-        return InteractionData(**self._ia.data)
+        return InteractionData(**self._action.data)
 
     @property
     def resolved(self):
@@ -72,8 +63,9 @@ class ApplicationContext:
         returns the resolved data of the interaction
         :return:
         """
-        if self.data.resolved:
-            return InteractionDataResolved(**self.data.resolved)
+        d = self.data.resolved
+        if d:
+            return InteractionDataResolved(**d)
 
     @property
     def options(self):
@@ -86,7 +78,7 @@ class ApplicationContext:
             return [
                 InteractionDataOption(
                     option, self._client, self.guild, self.resolved
-                )for option in options]
+                ) for option in options]
 
     @property
     def application_id(self):
@@ -94,15 +86,7 @@ class ApplicationContext:
         returns the application id / bot id of the interaction
         :return:
         """
-        return self._ia.application_id
-
-    @property
-    def locale(self):
-        return self._ia.locale
-
-    @property
-    def guild_locale(self):
-        return self._ia.guild_locale
+        return self._action.application_id
 
     @property
     def channel(self):
@@ -110,9 +94,7 @@ class ApplicationContext:
         returns the channel where the interaction was created
         :return:
         """
-        channel_id = self._ia.channel_id
-        if channel_id:
-            return self._client.get_channel(int(channel_id))
+        return self._action.channel
 
     @property
     def guild(self):
@@ -120,9 +102,7 @@ class ApplicationContext:
         returns the guild where the interaction was created
         :return:
         """
-        guild_id = self._ia.guild_id
-        if guild_id:
-            return self._client.get_guild(int(guild_id))
+        return self._action.guild
 
     @property
     def author(self):
@@ -130,19 +110,7 @@ class ApplicationContext:
         returns the author of the interaction
         :return: discord.Member
         """
-        if self._ia.guild_id:
-            user_id = self._ia.member.get('user').get('id')
-            return self.guild.get_member(int(user_id))
-
-    @property
-    def user(self):
-        """
-        returns the user of the interaction
-        :return: discord.User
-        """
-        user_id = self._ia.user.get('id')
-        if user_id:
-            return self._client.get_user(int(user_id))
+        return self._action.user
 
     @property
     def send(self):
@@ -183,7 +151,7 @@ class ApplicationContext:
         :return: None
         """
         form = []
-        route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
+        route = Route('POST', f'/interactions/{self._action.id}/{self._action.token}/callback')
 
         payload: Dict[str, Any] = {'tts': tts}
         if content:
@@ -238,8 +206,9 @@ class ApplicationContext:
         await self._client.http.request(route, form=form, files=files)
 
     async def defer(self):
-        route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
-        return await self._client.http.request(route, json={'type': '5'})
+        route = Route('POST', f'/interactions/{self._action.id}/{self._action.token}/callback')
+        await self._client.http.request(route, json={'type': '5'})
+        self._is_deferred = True
 
     @property
     def thinking(self):
@@ -257,12 +226,7 @@ class ApplicationContext:
         works until the interaction is token expired
         :return:
         """
-        payload = {
-            'type': 3,
-            'token': self._ia.token,
-            'id': self.application_id
-        }
-        return Webhook.from_state(data=payload, state=self._client._connection)
+        return self._action.followup
 
 
 class _ThinkingState:
@@ -273,4 +237,4 @@ class _ThinkingState:
         await self._obj.defer()
 
     async def __aexit__(self, exc_type, exc, tb):
-        pass
+        return

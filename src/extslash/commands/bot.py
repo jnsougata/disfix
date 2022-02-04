@@ -11,6 +11,7 @@ from .context import ApplicationContext
 from .base import Interaction, BaseAppCommand, SlashOverwrite
 from typing import Callable, Optional, Any, Union
 from discord.ext import commands
+from discord.enums import InteractionType
 
 
 __all__ = ['Bot']
@@ -27,16 +28,10 @@ class Bot(commands.Bot):
         super().__init__(
             intents=intents,
             command_prefix=command_prefix,
-            enable_debug_events=True,
             help_command=help_command,
         )
-        self._synced = False
         self._reg_queue = []
-        self._command_pool = {}
         self._slash_commands = {}  # for caching - implement later
-        self.__child = self.__invoke_slash
-        self.__parent = 'on_socket_raw_receive'
-        self.add_listener(self.__child, self.__parent)
 
     def slash_command(self, command: SlashCommand, guild_id: Optional[int] = None):
         """
@@ -51,36 +46,31 @@ class Bot(commands.Bot):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            self._command_pool[command.name] = wrapper()
+            self._connection.hooks[command.name] = wrapper()
         return decorator
 
-    async def __invoke_slash(self, payload: Any):
+    async def _invoke_slash(self, interaction: discord.Interaction):
         asyncio.ensure_future(self.sync_slash())
-        response = json.loads(payload)
-        if response.get('t') == 'INTERACTION_CREATE':
-            interaction = Interaction(**response.get('d'))
-            if interaction.type == 2:
-                application_ctx = ApplicationContext(interaction, self)
-                cmd = self._command_pool.get(application_ctx.command)
-                if cmd:
-                    await cmd(application_ctx)
+        if interaction.type == InteractionType.application_command:
+            ctx = ApplicationContext(interaction, self)
+            await self._connection.call_hooks(ctx.command, ctx)
 
     def add_slash_cog(self, cog: SlashCog, guild_id:  Optional[int] = None):
         cog_name = cog.__class__.__name__
         if isinstance(cog, SlashCog):
-            reg_obj = cog.register()
+            slash_obj = cog.register()
             cmd = cog.command
             if asyncio.iscoroutinefunction(cmd):
-                self._reg_queue.append((guild_id, reg_obj))
-                self._command_pool[reg_obj.name] = cmd
+                self._reg_queue.append((guild_id, slash_obj))
+                self._connection.hooks[slash_obj.name] = cmd
             else:
                 raise NonCoroutine(f'command method inside cog `{cog_name}` must be a coroutine')
         else:
             raise InvalidCog(f'cog `{cog_name}` must be a subclass of SlashCog')
 
     async def sync_slash(self):
-        if not self._synced:
-            self._synced = True
+        if not self._connection.is_synced:
+            self._connection.is_synced = True
             for guild_id, reg_obj in self._reg_queue:
                 if guild_id:
                     route = Route('POST', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
@@ -164,8 +154,10 @@ class Bot(commands.Bot):
         return [SlashOverwrite(**overwrite) for overwrite in resp]
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
+        self.add_listener(self._invoke_slash, 'on_interaction')
         await self.login(token)
         app_info = await self.application_info()
         self._connection.application_id = app_info.id
+        self._connection.is_synced = False
         await self.sync_slash()
         await self.connect(reconnect=reconnect)

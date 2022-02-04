@@ -42,7 +42,7 @@ class Echo(SlashCog):
             # maximum time is 15min ig
             # sending followup after
             value = ctx.options[0].value
-            await ctx.followup.send(f'{value}')
+            await ctx.followup.send(f'**{value}**')
 
 
 def setup(bot: Bot):

@@ -17,6 +17,5 @@ class MyBot(Bot):
 
 
 bot = MyBot()
-
 bot.load_extension('cogs.echo')
 bot.run(os.getenv('DISCORD_TOKEN'))
