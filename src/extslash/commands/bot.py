@@ -8,7 +8,7 @@ from ..builder import SlashCommand, SlashPermission
 from discord.http import Route
 from functools import wraps
 from .context import ApplicationContext
-from .base import Interaction, BaseAppCommand, SlashOverwrite
+from .base import BaseAppCommand, SlashOverwrite
 from typing import Callable, Optional, Any, Union
 from discord.ext import commands
 from discord.enums import InteractionType
@@ -56,16 +56,21 @@ class Bot(commands.Bot):
     async def _invoke_slash(self, interaction: discord.Interaction):
         if interaction.type == InteractionType.application_command:
             ctx = ApplicationContext(interaction, self)
-            await self._connection.call_hooks(ctx.command, ctx)
+            try:
+                await self._connection.call_hooks(ctx.command, ctx)
+            except Exception as exc:
+                await self._connection.call_hooks(f'{ctx.command}_on_error', ctx, exc)
 
     def add_slash_cog(self, cog: SlashCog, guild_id:  Optional[int] = None):
         cog_name = cog.__class__.__name__
         if isinstance(cog, SlashCog):
             slash_obj = cog.register()
             cmd = cog.command
+            cmd_error = cog.on_error
             if asyncio.iscoroutinefunction(cmd):
                 self._reg_queue.append((guild_id, slash_obj))
                 self._connection.hooks[slash_obj.name] = cmd
+                self._connection.hooks[f'{slash_obj.name}_on_error'] = cmd_error
             else:
                 raise NonCoroutine(f'command method inside cog `{cog_name}` must be a coroutine')
         else:

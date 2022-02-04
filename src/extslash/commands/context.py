@@ -2,11 +2,7 @@ import asyncio
 import json
 import discord
 from discord.webhook.async_ import Webhook
-from .base import (
-    InteractionData,
-    InteractionDataOption,
-    InteractionDataResolved
-)
+from .base import InteractionData, InteractionDataOption, InteractionDataResolved
 from discord.http import Route
 from discord.utils import _to_json
 from typing import Optional, Any, Union, Sequence, Iterable
@@ -18,6 +14,7 @@ class ApplicationContext:
         self._client = client
         self._is_deferred = False
 
+    @property
     def is_deferred(self):
         """
         returns whether the interaction is deferred
@@ -77,7 +74,7 @@ class ApplicationContext:
         if options:
             return [
                 InteractionDataOption(
-                    option, self._client, self.guild, self.resolved
+                    option, self.guild, self._client, self.resolved
                 ) for option in options]
 
     @property
@@ -231,6 +228,11 @@ class ApplicationContext:
     @property
     def permissions(self):
         return self._action.permissions
+
+    @property
+    def me(self):
+        if self.guild:
+            return self.guild.me
 
 
 class _ThinkingState:

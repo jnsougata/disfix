@@ -41,8 +41,22 @@ class Echo(SlashCog):
             # await asyncio.sleep(900)
             # maximum time is 15min ig
             # sending followup after
-            value = ctx.options[0].value
-            await ctx.followup.send(f'**{value}**')
+            if ctx.permissions.administrator:
+                value = ctx.options[0].value
+                await ctx.followup.send(f'**{value}**')
+            else:
+                await ctx.followup.send('you are not allowed to use this command')
+
+    async def on_error(self, ctx: ApplicationContext, error):
+        """
+        This is called when an error occurs in the command.
+        Localized error handling is done here.
+        :param ctx: application context
+        :param error: Exception
+        :return: None
+        """
+        if isinstance(error, discord.errors.NotFound):
+            await ctx.followup.send('not found')
 
 
 def setup(bot: Bot):

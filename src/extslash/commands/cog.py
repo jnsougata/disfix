@@ -9,5 +9,9 @@ class SlashCog(ABC):
         pass
 
     @abstractmethod
-    async def command(self, appctx: ApplicationContext):
+    async def command(self, ctx: ApplicationContext):
+        pass
+
+    @abstractmethod
+    async def on_error(self, ctx: ApplicationContext, error: Exception):
         pass

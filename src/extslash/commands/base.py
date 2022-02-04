@@ -5,23 +5,6 @@ from .enums import *
 
 
 @dataclass(frozen=True)
-class Interaction:
-    id: int
-    version: int
-    token: str
-    type: int
-    data: dict
-    application_id: int
-    guild_id: Optional[Union[int, str]] = None
-    channel_id: Optional[Union[int, str]] = None
-    message: Optional[dict] = None
-    member: Optional[dict] = None
-    user: Optional[dict] = None
-    locale: Optional[str] = None
-    guild_locale: Optional[str] = None
-
-
-@dataclass(frozen=True)
 class InteractionData:
     id: Union[int, str]
     name: str
@@ -51,8 +34,8 @@ class InteractionDataOption:
     def __init__(
             self,
             data: dict,
-            client: discord.Client,
             guild: discord.Guild,
+            client: discord.Client,
             resolved: InteractionDataResolved,
     ):
         self._data = data
