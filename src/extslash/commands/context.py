@@ -228,6 +228,10 @@ class ApplicationContext:
         """
         return self._action.followup
 
+    @property
+    def permissions(self):
+        return self._action.permissions
+
 
 class _ThinkingState:
     def __init__(self, _obj: ApplicationContext):
