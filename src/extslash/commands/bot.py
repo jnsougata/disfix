@@ -24,14 +24,18 @@ class Bot(commands.Bot):
             command_prefix: Union[Callable, str],
             intents: discord.Intents = discord.Intents.default(),
             help_command: Optional[discord.ext.commands.HelpCommand] = None,
+            description: Optional[str] = None,
+            **options
     ):
         super().__init__(
             intents=intents,
             command_prefix=command_prefix,
             help_command=help_command,
+            description=description,
+            **options
         )
         self._reg_queue = []
-        self._slash_commands = {}  # for caching - implement later
+        self._slash_commands = {}  # cache not implemented
 
     def slash_command(self, command: SlashCommand, guild_id: Optional[int] = None):
         """
