@@ -28,7 +28,7 @@ class ApplicationContext:
     @property
     def command(self) -> str:
         """
-        returns the command used to invoke the interaction
+        returns the command name used to invoke the interaction
         :return:
         """
         return self._action.data.get('name')

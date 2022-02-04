@@ -54,7 +54,6 @@ class Bot(commands.Bot):
         return decorator
 
     async def _invoke_slash(self, interaction: discord.Interaction):
-        asyncio.ensure_future(self.sync_slash())
         if interaction.type == InteractionType.application_command:
             ctx = ApplicationContext(interaction, self)
             await self._connection.call_hooks(ctx.command, ctx)
@@ -73,25 +72,23 @@ class Bot(commands.Bot):
             raise InvalidCog(f'cog `{cog_name}` must be a subclass of SlashCog')
 
     async def sync_slash(self):
-        if not self._connection.is_synced:
-            self._connection.is_synced = True
-            for guild_id, reg_obj in self._reg_queue:
-                if guild_id:
-                    route = Route('POST', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
-                    resp = await self.http.request(route, json=reg_obj.to_dict())
-                    command = BaseAppCommand(**resp)
-                    if reg_obj.permissions:
-                        perm_route = Route(
-                            'PUT',
-                            f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command.id}/permissions')
-                        await self.http.request(perm_route, json=reg_obj.permissions)
-                else:
-                    route = Route('POST', f'/applications/{self.application_id}/commands')
-                    resp = await self.http.request(route, json=reg_obj.to_dict())
-                    command = BaseAppCommand(**resp)
+        for guild_id, slash_obj in self._reg_queue:
+            if guild_id:
+                route = Route('POST', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
+                resp = await self.http.request(route, json=slash_obj.to_dict())
+                command = BaseAppCommand(**resp)
+                if slash_obj.permissions:
+                    perm_route = Route(
+                        'PUT',
+                        f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command.id}/permissions')
+                    await self.http.request(perm_route, json=slash_obj.permissions)
+            else:
+                route = Route('POST', f'/applications/{self.application_id}/commands')
+                resp = await self.http.request(route, json=slash_obj.to_dict())
+                command = BaseAppCommand(**resp)
 
-                prompt = f'[{"GLOBAL" if not guild_id else "GUILD"}] registered /{reg_obj.name}'
-                print(f'{prompt} ... ID: {resp.get("id")} ... Guild: {guild_id if guild_id else "NA"}')
+            prompt = f'[{"GLOBAL" if not guild_id else "GUILD"}] registered /{slash_obj.name}'
+            print(f'{prompt} ... ID: {resp.get("id")} ... Guild: {guild_id if guild_id else "NA"}')
 
     async def fetch_global_slash_commands(self):
         route = Route('GET', f'/applications/{self.application_id}/commands')
@@ -162,6 +159,5 @@ class Bot(commands.Bot):
         await self.login(token)
         app_info = await self.application_info()
         self._connection.application_id = app_info.id
-        self._connection.is_synced = False
         await self.sync_slash()
         await self.connect(reconnect=reconnect)
