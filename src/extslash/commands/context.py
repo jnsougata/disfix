@@ -76,10 +76,7 @@ class ApplicationContext:
         """
         options = self.data.options
         if options:
-            return [
-                InteractionDataOption(
-                    option, self.guild, self._client, self.resolved
-                ) for option in options]
+            return [InteractionDataOption(option, self.guild, self._client, self.resolved) for option in options]
 
     @property
     def application_id(self):
@@ -113,15 +110,42 @@ class ApplicationContext:
         """
         return self._action.user
 
-    @property
-    def send(self):
+    def send(self,
+             content: str = None, *,
+             tts: bool = False,
+             embed: discord.Embed = None,
+             file: discord.File = None,
+             embeds: Iterable[discord.Embed] = None,
+             files: Iterable[discord.File] = None,
+             allowed_mentions: discord.AllowedMentions = None,
+             stickers: Optional[Union[discord.File, discord.Sticker]] = None,
+             delete_after: float = None,
+             nonce: Optional[Any] = None,
+             reference: Optional[Union[discord.Message, discord.PartialMessage, int, str]] = None,
+             mention_author: bool = False,
+             view: Optional[discord.ui.View] = None,
+             ) -> discord.Message:
         """
         sends a message to the channel
         where the interaction was created
         use `respond` to respond to that interaction
         :return:
         """
-        return self.channel.send
+        return self.channel.send(
+            content=content,
+            tts=tts,
+            embed=embed,
+            file=file,
+            embeds=embeds,
+            files=files,
+            allowed_mentions=allowed_mentions,
+            stickers=stickers,
+            delete_after=delete_after,
+            nonce=nonce,
+            reference=reference,
+            mention_author=mention_author,
+            view=view,
+        )
 
     async def respond(
             self,

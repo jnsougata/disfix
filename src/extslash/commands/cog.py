@@ -1,7 +1,7 @@
-from abc import ABC, abstractmethod
-from .context import ApplicationContext
 import sys
 import traceback
+from abc import ABC, abstractmethod
+from .context import ApplicationContext
 
 
 class SlashCog(ABC):
