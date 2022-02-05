@@ -16,6 +16,7 @@ from src.extslash import (
     Choice,
 )  # rather use: from extslash import *
 from src.extslash.commands import Bot, SlashCog, ApplicationContext
+import traceback
 
 
 class Echo(SlashCog):
@@ -37,17 +38,18 @@ class Echo(SlashCog):
 
     async def command(self, ctx: ApplicationContext):
         async with ctx.thinking:
+            print(1/0)
             # doing some heavy task
             # await asyncio.sleep(900)
             # maximum time is 15min ig
             # sending followup after
             if ctx.permissions.administrator:
                 value = ctx.options[0].value
-                await ctx.followup.send(f'**{value}**')
+                await ctx.respond(f'**{value}**')
             else:
                 await ctx.followup.send('you are not allowed to use this command')
 
-    async def on_error(self, ctx: ApplicationContext, error):
+    '''async def on_error(self, ctx: ApplicationContext, error):
         """
         This is called when an error occurs in the command.
         Localized error handling is done here.
@@ -57,6 +59,8 @@ class Echo(SlashCog):
         """
         if isinstance(error, discord.errors.NotFound):
             await ctx.followup.send('not found')
+        else:
+            await ctx.followup.send(f'{error}')'''
 
 
 def setup(bot: Bot):

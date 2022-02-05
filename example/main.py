@@ -9,11 +9,15 @@ intents.members = True
 
 class MyBot(Bot):
     def __init__(self):
-        super().__init__(command_prefix='-', help_command=None, intents=intents)
+        super().__init__(command_prefix='-', help_command=None, intents=intents, enable_debug_events=True)
 
     async def on_ready(self):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
         print('------')
+
+    @staticmethod
+    async def on_socket_raw_receive(event):
+        print(event)
 
 
 bot = MyBot()

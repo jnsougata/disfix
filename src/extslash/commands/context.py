@@ -15,6 +15,18 @@ class ApplicationContext:
         self._is_deferred = False
 
     @property
+    def id(self):
+        return self._action.id
+
+    @property
+    def command_id(self):
+        """
+        returns the command id of the application command
+        :return:
+        """
+        return self._action.data.get('id')
+
+    @property
     def is_deferred(self):
         """
         returns whether the interaction is deferred
@@ -23,20 +35,12 @@ class ApplicationContext:
         return self._is_deferred
 
     @property
-    def command(self) -> str:
+    def command_name(self) -> str:
         """
         returns the command name used to invoke the interaction
         :return:
         """
         return self._action.data.get('name')
-
-    @property
-    def id(self):
-        """
-        returns the interaction id
-        :return:
-        """
-        return self._action.id
 
     @property
     def version(self):

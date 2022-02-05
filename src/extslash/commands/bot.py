@@ -57,9 +57,9 @@ class Bot(commands.Bot):
         if interaction.type == InteractionType.application_command:
             ctx = ApplicationContext(interaction, self)
             try:
-                await self._connection.call_hooks(ctx.command, ctx)
+                await self._connection.call_hooks(ctx.command_name, ctx)
             except Exception as exc:
-                await self._connection.call_hooks(f'{ctx.command}_on_error', ctx, exc)
+                await self._connection.call_hooks(f'{ctx.command_name}_on_error', ctx, exc)
 
     def add_slash_cog(self, cog: SlashCog, guild_id:  Optional[int] = None):
         cog_name = cog.__class__.__name__
