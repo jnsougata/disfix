@@ -2,7 +2,6 @@ import sys
 import asyncio
 import json
 import discord
-from discord.webhook.async_ import WebhookMessage
 from .base import InteractionData, InteractionDataOption, InteractionDataResolved
 from discord.http import Route
 from discord.utils import _to_json

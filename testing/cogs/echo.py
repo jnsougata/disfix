@@ -19,6 +19,18 @@ from src.extslash.commands import Bot, SlashCog, ApplicationContext
 import traceback
 
 
+class BaseView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.delete = False
+        self.timeout = 10
+
+    @discord.ui.button(label='DELETE', style=discord.ButtonStyle.red)
+    async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.delete = True
+        self.stop()
+
+
 class Echo(SlashCog):
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -39,11 +51,12 @@ class Echo(SlashCog):
     async def command(self, ctx: ApplicationContext):
         if ctx.permissions.administrator:
             value = ctx.options[0].value
-            #resp = await ctx.send_response(f'You used `/{ctx.command_name}` (ID: {ctx.command_id})')
-            resp = await ctx.send_followup(f'{value}')
-            await asyncio.sleep(5)
-            await resp.edit('This is an edited followup message', file=discord.File('cogs/echo.py'))
-
+            view = BaseView()
+            resp = await ctx.send_response(f'Value: **{value}**', view=view)
+            await view.wait()
+            if view.delete:
+                await resp.delete()
+                await ctx.channel.send('Done')
         else:
             await ctx.send_response('you are not allowed to use this command')
 
