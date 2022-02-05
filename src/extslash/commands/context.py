@@ -2,7 +2,7 @@ import sys
 import asyncio
 import json
 import discord
-from discord.webhook.async_ import Webhook, ExecuteWebhookParameters, handle_message_parameters
+from discord.webhook.async_ import Webhook
 from .base import InteractionData, InteractionDataOption, InteractionDataResolved
 from discord.http import Route
 from discord.utils import _to_json
@@ -248,40 +248,42 @@ class ApplicationContext:
         form = []
         if file:
             files = [file]
+        if not files:
+            files = []
 
-        if files:
+        form.append(
+            {
+                'name': 'payload_json',
+                'value': _to_json(payload),
+            }
+        )
+
+        if len(files) == 1:
+            file = files[0]
             form.append(
                 {
-                    'name': 'payload_json',
-                    'value': _to_json(payload),
+                    'name': 'file',
+                    'value': file.fp,
+                    'filename': file.filename,
+                    'content_type': 'application/octet-stream',
                 }
             )
-            if len(files) == 1:
-                file = files[0]
-                multipart.append(
+        else:
+            for index, file in enumerate(files):
+                form.append(
                     {
-                        'name': 'file',
+                        'name': f'file{index}',
                         'value': file.fp,
                         'filename': file.filename,
                         'content_type': 'application/octet-stream',
                     }
                 )
-            else:
-                for index, file in enumerate(files):
-                    form.append(
-                        {
-                            'name': f'file{index}',
-                            'value': file.fp,
-                            'filename': file.filename,
-                            'content_type': 'application/octet-stream',
-                        }
-                    )
         r = Route('POST', f'/webhooks/{self.application_id}/{self.token}')
         if self._deferred:
-            await self._client.http.request(r, json=payload)
+            await self._client.http.request(r, form=form, files=files)
         else:
             await self.defer()
-            await self._client.http.request(r, json=payload)
+            await self._client.http.request(r, form=form, files=files)
 
     async def defer(self):
         route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
@@ -363,7 +365,7 @@ class Response:
         form.append(
             {
                 'name': 'payload_json',
-                'value': _to_json(payload)
+                'value': json.dumps({'data': json.loads(_to_json(payload)), 'type': 3})
             }
         )
 
