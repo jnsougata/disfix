@@ -15,6 +15,10 @@ class ApplicationContext:
         self._is_deferred = False
 
     @property
+    def token(self):
+        return self._action.token
+
+    @property
     def id(self):
         return self._action.id
 
@@ -215,7 +219,7 @@ class ApplicationContext:
                     'name': 'file',
                     'value': file.fp,
                     'filename': file.filename,
-                    'content_type': 'extslash/octet-stream',
+                    'content_type': 'application/octet-stream',
                 }
             )
         else:
@@ -225,10 +229,11 @@ class ApplicationContext:
                         'name': f'file{index}',
                         'value': file.fp,
                         'filename': file.filename,
-                        'content_type': 'extslash/octet-stream',
+                        'content_type': 'application/octet-stream',
                     }
                 )
         await self._client.http.request(route, form=form, files=files)
+        return Response(self)
 
     async def defer(self):
         route = Route('POST', f'/interactions/{self._action.id}/{self._action.token}/callback')
@@ -273,3 +278,96 @@ class _ThinkingState:
 
     async def __aexit__(self, exc_type, exc, tb):
         return
+
+
+# noinspection PyTypeChecker
+class Response:
+    def __init__(self, parent: ApplicationContext):
+        self._parent = parent
+
+    async def delete(self):
+        route = Route('DELETE', f'/webhooks/{self._parent.application_id}/{self._parent.token}/messages/@original')
+        await self._parent._client.http.request(route)
+
+    async def edit(
+            self,
+            content: Union[str, Any] = None,
+            *,
+            tts: bool = False,
+            file: Optional[discord.File] = None,
+            files: Sequence[discord.File] = None,
+            embed: Optional[discord.Embed] = None,
+            embeds: Optional[Iterable[Optional[discord.Embed]]] = None,
+            allowed_mentions: Optional[discord.AllowedMentions] = None,
+            view: Optional[discord.ui.View] = None,
+            views: Optional[Iterable[discord.ui.View]] = None,
+            ephemeral: bool = False
+    ):
+        """
+        edits an interaction response message
+        :param content: (str) the content of the message
+        :param tts: (book) whether the message should be read aloud
+        :param file: (discord.File) a file to send
+        :param files: (Sequence[discord.File]) a list of files to send
+        :param embed: (discord.Embed) an embed to send
+        :param embeds: (Iterable[discord.Embed]) a list of embeds to send
+        :param allowed_mentions: (discord.AllowedMentions) the mentions to allow
+        :param view: (discord.ui.View) a view to send
+        :param views: (Iterable[discord.ui.View]) a list of views to send
+        :param ephemeral: (bool) whether the message should be sent as ephemeral
+        :return: None
+        """
+        form = []
+        route = Route('PATCH', f'/webhooks/{self._parent.application_id}/{self._parent.token}/messages/@original')
+
+        payload: Dict[str, Any] = {'tts': tts}
+        if content:
+            payload['content'] = content
+        if embed:
+            payload['embeds'] = [embed.to_dict()]
+        if embeds:
+            payload['embeds'] = [embed.to_dict() for embed in embeds]
+        if allowed_mentions:
+            payload['allowed_mentions'] = allowed_mentions
+        if view:
+            payload['components'] = view.to_components()
+        if ephemeral:
+            payload['flags'] = 64
+
+        if file:
+            files = [file]
+        if not files:
+            files = []
+
+        # handling non-attachment data
+        form.append(
+            {
+                'name': 'payload_json',
+                'value': json.dumps(json.loads(_to_json(payload)))
+            }
+        )
+
+        # handling attachment data
+        if len(files) == 1:
+            file = files[0]
+            form.append(
+                {
+                    'name': 'file',
+                    'value': file.fp,
+                    'filename': file.filename,
+                    'content_type': 'application/octet-stream',
+                }
+            )
+        else:
+            for index, file in enumerate(files):
+                form.append(
+                    {
+                        'name': f'file{index}',
+                        'value': file.fp,
+                        'filename': file.filename,
+                        'content_type': 'application/octet-stream',
+                    }
+                )
+        payload = await self._parent._client.http.request(route, form=form, files=files)
+        return discord.Message(
+            state=self._parent._client._connection, data=payload, channel=self._parent.channel)

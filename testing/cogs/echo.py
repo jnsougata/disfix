@@ -39,7 +39,9 @@ class Echo(SlashCog):
     async def command(self, ctx: ApplicationContext):
         if ctx.permissions.administrator:
             value = ctx.options[0].value
-            await ctx.respond(f'**{value}**')
+            resp = await ctx.respond(f'**{value}**')
+            await asyncio.sleep(5)
+            await resp.edit(content=f'**edited to uppercase: {value.upper()}**')
         else:
             await ctx.followup.send('you are not allowed to use this command')
 
@@ -52,9 +54,9 @@ class Echo(SlashCog):
         :return: None
         """
         if isinstance(error, discord.errors.NotFound):
-            await ctx.followup.send('not found')
+            print(error)
         else:
-            await ctx.followup.send(f'{error}')
+            print(error)
 
 
 def setup(bot: Bot):
