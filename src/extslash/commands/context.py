@@ -2,7 +2,7 @@ import sys
 import asyncio
 import json
 import discord
-from discord.webhook.async_ import Webhook
+from discord.webhook.async_ import WebhookMessage
 from .base import InteractionData, InteractionDataOption, InteractionDataResolved
 from discord.http import Route
 from discord.utils import _to_json
@@ -280,10 +280,12 @@ class ApplicationContext:
                 )
         r = Route('POST', f'/webhooks/{self.application_id}/{self.token}')
         if self._deferred:
-            await self._client.http.request(r, form=form, files=files)
+            resp = await self._client.http.request(r, form=form, files=files)
+            return FollowupResponse(self, resp, ephemeral)
         else:
             await self.defer()
-            await self._client.http.request(r, form=form, files=files)
+            resp = await self._client.http.request(r, form=form, files=files)
+            return FollowupResponse(self, resp, ephemeral)
 
     async def defer(self):
         route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
@@ -394,3 +396,100 @@ class Response:
         payload = await self._parent._client.http.request(r, form=form, files=files)
         return discord.Message(
             state=self._parent._client._connection, data=payload, channel=self._parent.channel)
+
+
+class FollowupResponse:
+    def __init__(self, parent: ApplicationContext, payload: dict, ephemeral: bool = False):
+        self._data = payload
+        self._parent = parent
+        self._eph = ephemeral
+        self.id = payload['id']
+        self.application_id = parent.application_id
+        self.token = parent.token
+
+    async def delete(self):
+        route = Route('DELETE', f'/webhooks/{self.application_id}/{self.token}/messages/{self.id}')
+        if not self._eph:
+            await self._parent._client.http.request(route)
+
+    async def edit(
+            self,
+            content: str = None,
+            *,
+            tts: bool = False,
+            ephemeral: bool = False,
+            embed: Optional[discord.Embed] = None,
+            embeds: Optional[list[discord.Embed]] = None,
+            allowed_mentions: Optional[discord.AllowedMentions] = None,
+            file: Optional[discord.File] = None,
+            files: Sequence[discord.File] = None,
+            view: Optional[discord.ui.View] = None
+    ):
+        if files and file:
+            raise TypeError('Cannot mix file and files keyword arguments.')
+        if embeds and embed:
+            raise TypeError('Cannot mix embed and embeds keyword arguments.')
+
+        payload = {}
+
+        payload['content'] = str(content) if content else None
+
+        if embeds:
+            if len(embeds) > 10:
+                raise discord.errors.InvalidArgument('embeds has a maximum of 10 elements.')
+            payload['embeds'] = [e.to_dict() for e in embeds]
+        if embed:
+            payload['embeds'] = [embed.to_dict()]
+        else:
+            payload['embeds'] = []
+
+        if view:
+            payload['components'] = view.to_components()
+        else:
+            payload['components'] = []
+
+        payload['tts'] = tts
+
+        if ephemeral:
+            payload['flags'] = 64
+
+        if allowed_mentions:
+            payload['allowed_mentions'] = allowed_mentions.to_dict()
+
+        payload['wait'] = True
+
+        form = []
+        if file:
+            files = [file]
+        if not files:
+            files = []
+
+        form.append(
+            {
+                'name': 'payload_json',
+                'value': _to_json(payload),
+            }
+        )
+
+        if len(files) == 1:
+            file = files[0]
+            form.append(
+                {
+                    'name': 'file',
+                    'value': file.fp,
+                    'filename': file.filename,
+                    'content_type': 'application/octet-stream',
+                }
+            )
+        else:
+            for index, file in enumerate(files):
+                form.append(
+                    {
+                        'name': f'file{index}',
+                        'value': file.fp,
+                        'filename': file.filename,
+                        'content_type': 'application/octet-stream',
+                    }
+                )
+        route = Route('PATCH', f'/webhooks/{self.application_id}/{self.token}/messages/{self.id}')
+        await self._parent._client.http.request(route, form=form, files=files)

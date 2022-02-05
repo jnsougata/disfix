@@ -39,8 +39,11 @@ class Echo(SlashCog):
     async def command(self, ctx: ApplicationContext):
         if ctx.permissions.administrator:
             value = ctx.options[0].value
-            resp = await ctx.send_response(f'You used `/{ctx.command_name}` (ID: {ctx.command_id})')
-            await ctx.send_followup(f'{value}')
+            #resp = await ctx.send_response(f'You used `/{ctx.command_name}` (ID: {ctx.command_id})')
+            resp = await ctx.send_followup(f'{value}')
+            await asyncio.sleep(5)
+            await resp.edit('This is an edited followup message', file=discord.File('cogs/echo.py'))
+
         else:
             await ctx.send_response('you are not allowed to use this command')
 
