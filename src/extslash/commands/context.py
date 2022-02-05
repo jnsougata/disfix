@@ -167,7 +167,7 @@ class ApplicationContext:
                 'name': 'payload_json',
                 'value': json.dumps({
                     'type': 4,
-                    'data': json.loads(_to_json(payload))
+                    'data': payload
                 })
             }
         )
@@ -196,6 +196,11 @@ class ApplicationContext:
         route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
         await self._client.http.request(route, form=form, files=files)
         self._deferred = True
+        # getting message for storing view
+        if view:
+            re_route = Route('GET', f'/webhooks/{self.application_id}/{self.token}/messages/@original')
+            original = await self._client.http.request(re_route)
+            self._client._connection.store_view(view, int(original.get('id')))
         return Response(self, ephemeral=ephemeral)
 
     async def send_followup(
@@ -253,7 +258,7 @@ class ApplicationContext:
         form.append(
             {
                 'name': 'payload_json',
-                'value': _to_json(payload),
+                'value': json.dumps(payload),
             }
         )
 
@@ -280,11 +285,12 @@ class ApplicationContext:
         r = Route('POST', f'/webhooks/{self.application_id}/{self.token}')
         if self._deferred:
             resp = await self._client.http.request(r, form=form, files=files)
-            return FollowupResponse(self, resp, ephemeral)
         else:
             await self.defer()
             resp = await self._client.http.request(r, form=form, files=files)
-            return FollowupResponse(self, resp, ephemeral)
+        if view:
+            self._client._connection.store_view(view, int(resp.get('id')))
+        return FollowupResponse(self, resp, ephemeral)
 
     async def defer(self):
         route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
@@ -393,6 +399,8 @@ class Response:
                 )
         r = Route('PATCH', f'/webhooks/{self._parent.application_id}/{self._parent.token}/messages/@original')
         payload = await self._parent._client.http.request(r, form=form, files=files)
+        if view:
+            self._parent._client._connection.store_view(view, int(payload['id']))
         return discord.Message(
             state=self._parent._client._connection, data=payload, channel=self._parent.channel)
 
@@ -402,7 +410,7 @@ class FollowupResponse:
         self._data = payload
         self._parent = parent
         self._eph = ephemeral
-        self.id = payload['id']
+        self.id = int(payload['id'])
         self.application_id = parent.application_id
         self.token = parent.token
 
@@ -491,4 +499,6 @@ class FollowupResponse:
                     }
                 )
         route = Route('PATCH', f'/webhooks/{self.application_id}/{self.token}/messages/{self.id}')
-        await self._parent._client.http.request(route, form=form, files=files)
+        resp = await self._parent._client.http.request(route, form=form, files=files)
+        if view:
+            self._parent._client._connection.store_view(view, self.id)
