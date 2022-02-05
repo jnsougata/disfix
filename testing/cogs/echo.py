@@ -40,8 +40,9 @@ class Echo(SlashCog):
         if ctx.permissions.administrator:
             value = ctx.options[0].value
             resp = await ctx.respond(f'**{value}**')
-            await asyncio.sleep(5)
-            await resp.edit(content=f'**edited to uppercase: {value.upper()}**')
+            await asyncio.sleep(3)
+            await resp.delete()
+            await resp.edit(f'editing: **{value}**')
         else:
             await ctx.followup.send('you are not allowed to use this command')
 

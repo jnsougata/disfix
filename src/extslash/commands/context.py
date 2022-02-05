@@ -233,7 +233,7 @@ class ApplicationContext:
                     }
                 )
         await self._client.http.request(route, form=form, files=files)
-        return Response(self)
+        return Response(self, ephemeral=ephemeral)
 
     async def defer(self):
         route = Route('POST', f'/interactions/{self._action.id}/{self._action.token}/callback')
@@ -282,12 +282,14 @@ class _ThinkingState:
 
 # noinspection PyTypeChecker
 class Response:
-    def __init__(self, parent: ApplicationContext):
+    def __init__(self, parent: ApplicationContext, ephemeral=False):
         self._parent = parent
+        self._eph = ephemeral
 
     async def delete(self):
         route = Route('DELETE', f'/webhooks/{self._parent.application_id}/{self._parent.token}/messages/@original')
-        await self._parent._client.http.request(route)
+        if not self._eph:
+            await self._parent._client.http.request(route)
 
     async def edit(
             self,
@@ -301,7 +303,6 @@ class Response:
             allowed_mentions: Optional[discord.AllowedMentions] = None,
             view: Optional[discord.ui.View] = None,
             views: Optional[Iterable[discord.ui.View]] = None,
-            ephemeral: bool = False
     ):
         """
         edits an interaction response message
@@ -314,7 +315,6 @@ class Response:
         :param allowed_mentions: (discord.AllowedMentions) the mentions to allow
         :param view: (discord.ui.View) a view to send
         :param views: (Iterable[discord.ui.View]) a list of views to send
-        :param ephemeral: (bool) whether the message should be sent as ephemeral
         :return: None
         """
         form = []
@@ -331,8 +331,6 @@ class Response:
             payload['allowed_mentions'] = allowed_mentions
         if view:
             payload['components'] = view.to_components()
-        if ephemeral:
-            payload['flags'] = 64
 
         if file:
             files = [file]
@@ -368,6 +366,7 @@ class Response:
                         'content_type': 'application/octet-stream',
                     }
                 )
+
         payload = await self._parent._client.http.request(route, form=form, files=files)
         return discord.Message(
             state=self._parent._client._connection, data=payload, channel=self._parent.channel)
