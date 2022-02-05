@@ -288,7 +288,7 @@ class Response:
 
     async def delete(self):
         route = Route('DELETE', f'/webhooks/{self._parent.application_id}/{self._parent.token}/messages/@original')
-        if not self._eph:
+        if self._eph is not True:
             await self._parent._client.http.request(route)
 
     async def edit(
