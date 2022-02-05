@@ -151,7 +151,7 @@ class ApplicationContext:
             view=view,
         )
 
-    async def respond(
+    async def send_response(
             self,
             content: Union[str, Any] = None,
             *,
@@ -233,7 +233,10 @@ class ApplicationContext:
                     }
                 )
         await self._client.http.request(route, form=form, files=files)
-        return Response(self, ephemeral=ephemeral)
+        # getting the response
+        re_route = Route('GET', f'/webhooks/{self._action.application_id}/{self._action.token}/messages/@original')
+        resp = await self._client.http.request(re_route)
+        return Response(self, payload=resp, ephemeral=ephemeral)
 
     async def defer(self):
         route = Route('POST', f'/interactions/{self._action.id}/{self._action.token}/callback')
@@ -248,16 +251,6 @@ class ApplicationContext:
         :return: _ThinkingState
         """
         return _ThinkingState(self)
-
-    @property
-    def followup(self):
-        """
-        sends follow up to a deferred interaction
-        valid only for deferred interactions
-        works until the interaction is token expired
-        :return:
-        """
-        return self._action.followup
 
     @property
     def permissions(self):
@@ -282,9 +275,24 @@ class _ThinkingState:
 
 # noinspection PyTypeChecker
 class Response:
-    def __init__(self, parent: ApplicationContext, ephemeral=False):
+    def __init__(self, parent: ApplicationContext, payload: dict, ephemeral=False):
         self._parent = parent
         self._eph = ephemeral
+        self.data = payload
+
+    @property
+    def content(self) -> str:
+        return self.data.get('content')
+
+    @property
+    def embeds(self):
+        return self.data.get('embeds')  # TODO: make this a proper object
+
+    @property
+    def attachments(self):
+        return self.data.get('attachments')  # TODO: make this a proper object
+
+    # add more properties here i.e. parse the payload
 
     async def delete(self):
         route = Route('DELETE', f'/webhooks/{self._parent.application_id}/{self._parent.token}/messages/@original')
