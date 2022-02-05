@@ -1,26 +1,27 @@
+import sys
 import asyncio
 import json
 import discord
-from discord.webhook.async_ import Webhook
+from discord.webhook.async_ import Webhook, ExecuteWebhookParameters, handle_message_parameters
 from .base import InteractionData, InteractionDataOption, InteractionDataResolved
 from discord.http import Route
 from discord.utils import _to_json
-from typing import Optional, Any, Union, Sequence, Iterable
+from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple
 
 
 class ApplicationContext:
     def __init__(self, action: discord.Interaction, client: discord.Client):
-        self._action = action
+        self._ia = action
         self._client = client
-        self._is_deferred = False
+        self._deferred = False
 
     @property
     def token(self):
-        return self._action.token
+        return self._ia.token
 
     @property
     def id(self):
-        return self._action.id
+        return self._ia.id
 
     @property
     def command_id(self):
@@ -28,15 +29,15 @@ class ApplicationContext:
         returns the command id of the application command
         :return:
         """
-        return self._action.data.get('id')
+        return self._ia.data.get('id')
 
     @property
-    def is_deferred(self):
+    def responded(self):
         """
         returns whether the interaction is deferred
         :return: bool
         """
-        return self._is_deferred
+        return self._deferred
 
     @property
     def command_name(self) -> str:
@@ -44,7 +45,7 @@ class ApplicationContext:
         returns the command name used to invoke the interaction
         :return:
         """
-        return self._action.data.get('name')
+        return self._ia.data.get('name')
 
     @property
     def version(self):
@@ -52,7 +53,7 @@ class ApplicationContext:
         returns the version of the interaction
         :return:
         """
-        return self._action.version
+        return self._ia.version
 
     @property
     def data(self):
@@ -60,7 +61,7 @@ class ApplicationContext:
         returns the interaction data
         :return: InteractionData
         """
-        return InteractionData(**self._action.data)
+        return InteractionData(**self._ia.data)
 
     @property
     def resolved(self):
@@ -88,7 +89,7 @@ class ApplicationContext:
         returns the application id / bot id of the interaction
         :return:
         """
-        return self._action.application_id
+        return self._ia.application_id
 
     @property
     def channel(self):
@@ -96,7 +97,7 @@ class ApplicationContext:
         returns the channel where the interaction was created
         :return:
         """
-        return self._action.channel
+        return self._ia.channel
 
     @property
     def guild(self):
@@ -104,7 +105,7 @@ class ApplicationContext:
         returns the guild where the interaction was created
         :return:
         """
-        return self._action.guild
+        return self._ia.guild
 
     @property
     def author(self):
@@ -112,44 +113,7 @@ class ApplicationContext:
         returns the author of the interaction
         :return: discord.Member
         """
-        return self._action.user
-
-    def send(self,
-             content: str = None, *,
-             tts: bool = False,
-             embed: discord.Embed = None,
-             file: discord.File = None,
-             embeds: Iterable[discord.Embed] = None,
-             files: Iterable[discord.File] = None,
-             allowed_mentions: discord.AllowedMentions = None,
-             stickers: Optional[Union[discord.File, discord.Sticker]] = None,
-             delete_after: float = None,
-             nonce: Optional[Any] = None,
-             reference: Optional[Union[discord.Message, discord.PartialMessage, int, str]] = None,
-             mention_author: bool = False,
-             view: Optional[discord.ui.View] = None,
-             ) -> discord.Message:
-        """
-        sends a message to the channel
-        where the interaction was created
-        use `respond` to respond to that interaction
-        :return:
-        """
-        return self.channel.send(
-            content=content,
-            tts=tts,
-            embed=embed,
-            file=file,
-            embeds=embeds,
-            files=files,
-            allowed_mentions=allowed_mentions,
-            stickers=stickers,
-            delete_after=delete_after,
-            nonce=nonce,
-            reference=reference,
-            mention_author=mention_author,
-            view=view,
-        )
+        return self._ia.user
 
     async def send_response(
             self,
@@ -180,8 +144,6 @@ class ApplicationContext:
         :return: None
         """
         form = []
-        route = Route('POST', f'/interactions/{self._action.id}/{self._action.token}/callback')
-
         payload: Dict[str, Any] = {'tts': tts}
         if content:
             payload['content'] = content
@@ -232,29 +194,108 @@ class ApplicationContext:
                         'content_type': 'application/octet-stream',
                     }
                 )
+        route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
         await self._client.http.request(route, form=form, files=files)
-        # getting the response
-        re_route = Route('GET', f'/webhooks/{self._action.application_id}/{self._action.token}/messages/@original')
-        resp = await self._client.http.request(re_route)
-        return Response(self, payload=resp, ephemeral=ephemeral)
+        self._deferred = True
+        return Response(self, ephemeral=ephemeral)
+
+    async def send_followup(
+            self,
+            content: str = None,
+            *,
+            tts: bool = False,
+            ephemeral: bool = False,
+            embed: Optional[discord.Embed] = None,
+            embeds: Optional[list[discord.Embed]] = None,
+            allowed_mentions: Optional[discord.AllowedMentions] = None,
+            file: Optional[discord.File] = None,
+            files: Sequence[discord.File] = None,
+            view: Optional[discord.ui.View] = None
+    ):
+        if files and file:
+            raise TypeError('Cannot mix file and files keyword arguments.')
+        if embeds and embed:
+            raise TypeError('Cannot mix embed and embeds keyword arguments.')
+
+        payload = {}
+
+        payload['content'] = str(content) if content else None
+
+        if embeds:
+            if len(embeds) > 10:
+                raise discord.errors.InvalidArgument('embeds has a maximum of 10 elements.')
+            payload['embeds'] = [e.to_dict() for e in embeds]
+        if embed:
+            payload['embeds'] = [embed.to_dict()]
+        else:
+            payload['embeds'] = []
+
+        if view:
+            payload['components'] = view.to_components()
+        else:
+            payload['components'] = []
+
+        payload['tts'] = tts
+
+        if ephemeral:
+            payload['flags'] = 64
+
+        if allowed_mentions:
+            payload['allowed_mentions'] = allowed_mentions.to_dict()
+
+        payload['wait'] = True
+
+        form = []
+        if file:
+            files = [file]
+
+        if files:
+            form.append(
+                {
+                    'name': 'payload_json',
+                    'value': _to_json(payload),
+                }
+            )
+            if len(files) == 1:
+                file = files[0]
+                multipart.append(
+                    {
+                        'name': 'file',
+                        'value': file.fp,
+                        'filename': file.filename,
+                        'content_type': 'application/octet-stream',
+                    }
+                )
+            else:
+                for index, file in enumerate(files):
+                    form.append(
+                        {
+                            'name': f'file{index}',
+                            'value': file.fp,
+                            'filename': file.filename,
+                            'content_type': 'application/octet-stream',
+                        }
+                    )
+        r = Route('POST', f'/webhooks/{self.application_id}/{self.token}')
+        if self._deferred:
+            await self._client.http.request(r, json=payload)
+        else:
+            await self.defer()
+            await self._client.http.request(r, json=payload)
 
     async def defer(self):
-        route = Route('POST', f'/interactions/{self._action.id}/{self._action.token}/callback')
+        route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
         await self._client.http.request(route, json={'type': '5'})
-        self._is_deferred = True
+        self._deferred = True
 
-    @property
-    def thinking(self):
-        """
-        gives a context manager to invoke bot thinking
-        always send a follow-up message after this.
-        :return: _ThinkingState
-        """
-        return _ThinkingState(self)
+    async def think_for(self, time: float):
+        if not self._deferred:
+            await self.defer()
+            await asyncio.sleep(time)
 
     @property
     def permissions(self):
-        return self._action.permissions
+        return self._ia.permissions
 
     @property
     def me(self):
@@ -262,37 +303,11 @@ class ApplicationContext:
             return self.guild.me
 
 
-class _ThinkingState:
-    def __init__(self, _obj: ApplicationContext):
-        self._obj = _obj
-
-    async def __aenter__(self):
-        await self._obj.defer()
-
-    async def __aexit__(self, exc_type, exc, tb):
-        return
-
-
 # noinspection PyTypeChecker
 class Response:
-    def __init__(self, parent: ApplicationContext, payload: dict, ephemeral=False):
+    def __init__(self, parent: ApplicationContext, ephemeral=False):
         self._parent = parent
         self._eph = ephemeral
-        self.data = payload
-
-    @property
-    def content(self) -> str:
-        return self.data.get('content')
-
-    @property
-    def embeds(self):
-        return self.data.get('embeds')  # TODO: make this a proper object
-
-    @property
-    def attachments(self):
-        return self.data.get('attachments')  # TODO: make this a proper object
-
-    # add more properties here i.e. parse the payload
 
     async def delete(self):
         route = Route('DELETE', f'/webhooks/{self._parent.application_id}/{self._parent.token}/messages/@original')
@@ -326,7 +341,6 @@ class Response:
         :return: None
         """
         form = []
-        route = Route('PATCH', f'/webhooks/{self._parent.application_id}/{self._parent.token}/messages/@original')
 
         payload: Dict[str, Any] = {'tts': tts}
         if content:
@@ -349,7 +363,7 @@ class Response:
         form.append(
             {
                 'name': 'payload_json',
-                'value': json.dumps(json.loads(_to_json(payload)))
+                'value': _to_json(payload)
             }
         )
 
@@ -374,7 +388,7 @@ class Response:
                         'content_type': 'application/octet-stream',
                     }
                 )
-
-        payload = await self._parent._client.http.request(route, form=form, files=files)
+        r = Route('PATCH', f'/webhooks/{self._parent.application_id}/{self._parent.token}/messages/@original')
+        payload = await self._parent._client.http.request(r, form=form, files=files)
         return discord.Message(
             state=self._parent._client._connection, data=payload, channel=self._parent.channel)

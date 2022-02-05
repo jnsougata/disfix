@@ -15,10 +15,6 @@ class MyBot(Bot):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
         print('------')
 
-    @staticmethod
-    async def on_socket_raw_receive(event):
-        print(event)
-
 
 bot = MyBot()
 bot.load_extension('cogs.echo')

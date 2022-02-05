@@ -40,22 +40,9 @@ class Echo(SlashCog):
         if ctx.permissions.administrator:
             value = ctx.options[0].value
             resp = await ctx.send_response(f'You used `/{ctx.command_name}` (ID: {ctx.command_id})')
-            print(resp.content)
+            await ctx.send_followup(f'{value}')
         else:
-            await ctx.followup.send('you are not allowed to use this command')
-
-    async def on_error(self, ctx: ApplicationContext, error):
-        """
-        This is called when an error occurs in the command.
-        Localized error handling is done here.
-        :param ctx: application context
-        :param error: Exception
-        :return: None
-        """
-        if isinstance(error, discord.errors.NotFound):
-            print(error)
-        else:
-            print(error)
+            await ctx.send_response('you are not allowed to use this command')
 
 
 def setup(bot: Bot):
