@@ -238,7 +238,8 @@ class ApplicationContext:
     @property
     def thinking(self):
         """
-        gives a context manager to invoke bot thinking to the interaction
+        gives a context manager to invoke bot thinking
+        always send a follow-up message after this.
         :return: _ThinkingState
         """
         return _ThinkingState(self)
