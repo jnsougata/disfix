@@ -142,26 +142,58 @@ class ApplicationContext:
         :param ephemeral: (bool) whether the message should be sent as ephemeral
         :return: None
         """
-        form = []
-        payload: Dict[str, Any] = {'tts': tts}
+
+        if view and views:
+            raise TypeError('Can not mix views and views')
+
+        if embed and embeds:
+            raise TypeError('Can not mix embeds and embeds')
+
+        if file and files:
+            raise TypeError('Can not mix files and files')
+
+        payload = {}
+
+        if tts:
+            payload['tts'] = tts
+
         if content:
             payload['content'] = content
+
         if embed:
             payload['embeds'] = [embed.to_dict()]
+
         if embeds:
             payload['embeds'] = [embed.to_dict() for embed in embeds]
+
         if allowed_mentions:
             payload['allowed_mentions'] = allowed_mentions
+
         if view:
             payload['components'] = view.to_components()
+
+        if views:
+            components = []
+            views_ = [view.to_components() for view in views]
+            for view_ in views_:
+                components.extend(view_)
+            payload['components'] = components
+
         if ephemeral:
             payload['flags'] = 64
-        if file:
-            files = [file]
-        if not files:
-            files = []
 
-        # handling non-attachment data
+        if file:
+            files_ = [file]
+        else:
+            files_ = []
+
+        if files:
+            files_ = files
+        else:
+            files_ = []
+
+        form = []
+
         form.append(
             {
                 'name': 'payload_json',
@@ -172,24 +204,23 @@ class ApplicationContext:
             }
         )
 
-        # handling attachment data
-        if len(files) == 1:
-            file = files[0]
+        if len(files_) == 1:
+            file_ = files_[0]
             form.append(
                 {
                     'name': 'file',
-                    'value': file.fp,
-                    'filename': file.filename,
+                    'value': file_.fp,
+                    'filename': file_.filename,
                     'content_type': 'application/octet-stream',
                 }
             )
         else:
-            for index, file in enumerate(files):
+            for index, file_ in enumerate(files_):
                 form.append(
                     {
                         'name': f'file{index}',
-                        'value': file.fp,
-                        'filename': file.filename,
+                        'value': file_.fp,
+                        'filename': file_.filename,
                         'content_type': 'application/octet-stream',
                     }
                 )
@@ -197,10 +228,15 @@ class ApplicationContext:
         await self._client.http.request(route, form=form, files=files)
         self._deferred = True
         # getting message for storing view
+        # getting this message is a bit of a hack, but it works if you want to refresh the view
+        re_route = Route('GET', f'/webhooks/{self.application_id}/{self.token}/messages/@original')
+        original = await self._client.http.request(re_route)
+        message_id = int(original.get('id'))
         if view:
-            re_route = Route('GET', f'/webhooks/{self.application_id}/{self.token}/messages/@original')
-            original = await self._client.http.request(re_route)
-            self._client._connection.store_view(view, int(original.get('id')))
+            self._client._connection.store_view(view, message_id)
+        if views:
+            for view in views:
+                self._client._connection.store_view(view, message_id)
         return Response(self, ephemeral=ephemeral)
 
     async def send_followup(

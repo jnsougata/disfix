@@ -52,7 +52,8 @@ class Echo(SlashCog):
         if ctx.permissions.administrator:
             value = ctx.options[0].value
             view = BaseView()
-            resp = await ctx.send_response(f'Value: **{value}**', view=view)
+            view2 = BaseView()
+            resp = await ctx.send_response(f'Value: **{value}**', views=[view, view2])
             await view.wait()
             if view.delete:
                 await resp.delete()
