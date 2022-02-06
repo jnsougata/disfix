@@ -23,7 +23,7 @@ class Bot(commands.Bot):
             self,
             command_prefix: Union[Callable, str],
             intents: discord.Intents = discord.Intents.default(),
-            help_command: Optional[discord.ext.commands.HelpCommand] = None,
+            help_command: Optional[discord.ext.commands.HelpCommand] = discord.ext.commands.DefaultHelpCommand(),
             description: Optional[str] = None,
             **options
     ):
