@@ -57,7 +57,7 @@ class Echo(SlashCog):
         if ctx.permissions.administrator:
             value = ctx.options[0].value
             view = BaseView()
-            await ctx.send_response(embed=discord.Embed(description=f'Value: **{value}**'), view=view, delete_after=5)
+            await ctx.send_response(embed=discord.Embed(description=f'Value: **{value}**'), view=view)
             await view.wait()
             if view.value == 1:
                 await ctx.edit_response(
