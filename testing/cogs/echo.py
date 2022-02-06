@@ -55,15 +55,20 @@ class Echo(SlashCog):
 
     async def command(self, ctx: ApplicationContext):
         if ctx.permissions.administrator:
+            await ctx.send_message(f'{ctx.author.mention} you are an administrator')
             value = ctx.options[0].value
             view = BaseView()
-            resp = await ctx.send_followup(f'Value: **{value}**', view=view)
+            resp = await ctx.send_response(
+                embed=discord.Embed(description=f'Value: **{value}**'),
+                view=view)
             await view.wait()
             if view.value == 1:
                 await resp.delete()
             elif view.value == 2:
                 view.clear_items()
-                await resp.edit(content=f'Edited: **{value}**', view=view)
+                await resp.edit(
+                    embed=discord.Embed(description=f'Edited: **{value}**'),
+                    view=view)
         else:
             await ctx.send_response('you are not allowed to use this command')
 

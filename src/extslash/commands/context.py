@@ -19,7 +19,7 @@ def _handle_message_prams(
         allowed_mentions: Optional[discord.AllowedMentions] = None,
         view: Optional[discord.ui.View] = None,
         views: Optional[List[discord.ui.View]] = None,
-        wait: bool = True,
+        wait: bool = None,
 ):
     if files and file:
         raise TypeError('Cannot mix file and files keyword arguments.')
@@ -121,14 +121,6 @@ class ApplicationContext:
         return self._ia.data.get('id')
 
     @property
-    def responded(self):
-        """
-        returns whether the interaction is deferred
-        :return: bool
-        """
-        return self._deferred
-
-    @property
     def command_name(self) -> str:
         """
         returns the command name used to invoke the interaction
@@ -181,6 +173,14 @@ class ApplicationContext:
         return self._ia.application_id
 
     @property
+    def responded(self):
+        """
+        returns whether the interaction is deferred
+        :return: bool
+        """
+        return self._deferred
+
+    @property
     def channel(self):
         """
         returns the channel where the interaction was created
@@ -204,6 +204,46 @@ class ApplicationContext:
         """
         return self._ia.user
 
+    async def send_message(
+            self,
+            content: Optional[Union[str, Any]] = None,
+            *,
+            tts: bool = False,
+            file: Optional[discord.File] = None,
+            files: Sequence[discord.File] = None,
+            embed: Optional[discord.Embed] = None,
+            embeds: Optional[List[Optional[discord.Embed]]] = None,
+            allowed_mentions: Optional[discord.AllowedMentions] = None,
+            view: Optional[discord.ui.View] = None,
+            views: Optional[List[discord.ui.View]] = None,
+            stickers: Optional[List[discord.Sticker]] = None,
+            reference: Optional[Union[discord.Message, discord.PartialMessage, discord.MessageReference]] = None,
+            nonce: Optional[int] = None,
+            delete_after: Optional[float] = None,
+            mention_author: bool = False,
+    ):
+        if embed and embeds:
+            raise TypeError('Can not mix embed and embeds')
+        if file and files:
+            raise TypeError('Can not mix file and files')
+        if view and views:
+            raise TypeError('Can not mix view and views')
+
+        await self.channel.send(
+            content=content,
+            tts=tts,
+            file=file,
+            files=files,
+            embed=embed,
+            embeds=embeds,
+            allowed_mentions=allowed_mentions,
+            view=view,
+            stickers=stickers,
+            reference=reference,
+            nonce=nonce,
+            delete_after=delete_after,
+            mention_author=mention_author)
+
     async def send_response(
             self,
             content: Optional[Union[str, Any]] = None,
@@ -218,21 +258,6 @@ class ApplicationContext:
             view: Optional[discord.ui.View] = None,
             views: Optional[List[discord.ui.View]] = None
     ):
-        """
-        sends a response to the interaction
-        :param content: (str) the content of the message
-        :param tts: (book) whether the message should be read aloud
-        :param file: (discord.File) a file to send
-        :param files: (Sequence[discord.File]) a list of files to send
-        :param embed: (discord.Embed) an embed to send
-        :param embeds: (Iterable[discord.Embed]) a list of embeds to send
-        :param allowed_mentions: (discord.AllowedMentions) the mentions to allow
-        :param view: (discord.ui.View) a view to send
-        :param views: (Iterable[discord.ui.View]) a list of views to send
-        :param ephemeral: (bool) whether the message should be sent as ephemeral
-        :return: None
-        """
-
         payload, form = _handle_message_prams(
             content=content,
             tts=tts,
@@ -364,20 +389,6 @@ class Response:
             view: Optional[discord.ui.View] = None,
             views: Optional[List[discord.ui.View]] = None,
     ):
-        """
-        edits an interaction response message
-        :param content: (str) the content of the message
-        :param tts: (book) whether the message should be read aloud
-        :param file: (discord.File) a file to send
-        :param files: (Sequence[discord.File]) a list of files to send
-        :param embed: (discord.Embed) an embed to send
-        :param embeds: (Iterable[discord.Embed]) a list of embeds to send
-        :param allowed_mentions: (discord.AllowedMentions) the mentions to allow
-        :param view: (discord.ui.View) a view to send
-        :param views: (Iterable[discord.ui.View]) a list of views to send
-        :param ephemeral: (bool) whether the message should only visible to the invoker
-        :return: None
-        """
         payload, form = _handle_message_prams(
             content=content,
             tts=tts,

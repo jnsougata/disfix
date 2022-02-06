@@ -58,8 +58,8 @@ class Bot(commands.Bot):
             ctx = ApplicationContext(interaction, self)
             try:
                 await self._connection.call_hooks(ctx.command_name, ctx)
-            except Exception as exc:
-                await self._connection.call_hooks(f'{ctx.command_name}_on_error', ctx, exc)
+            except Exception as excp:
+                await self._connection.call_hooks(f'{ctx.command_name}_on_error', ctx, excp)
 
     def add_slash_cog(self, cog: SlashCog, guild_id:  Optional[int] = None):
         cog_name = cog.__class__.__name__
@@ -140,12 +140,7 @@ class Bot(commands.Bot):
         resp = await self.http.request(route, json=payload)
         return SlashOverwrite(**resp)
 
-    async def batch_update_slash_permission(
-            self,
-            guild_id: int,
-            command_ids: [int],
-            permissions: [[SlashPermission]]
-    ):
+    async def batch_update_slash_permission(self, guild_id: int, command_ids: [int], permissions: [[SlashPermission]]):
         if len(command_ids) != len(permissions):
             raise ValueError('Command IDs and Permissions must be the same length')
         payload = []
