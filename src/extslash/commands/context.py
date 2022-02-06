@@ -250,6 +250,25 @@ class ApplicationContext:
         """
         return self._deferred
 
+    async def defer(self):
+        route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
+        await self._client.http.request(route, json={'type': '5'})
+        self._deferred = True
+
+    async def think_for(self, time: float):
+        if not self._deferred:
+            await self.defer()
+            await asyncio.sleep(time)
+
+    @property
+    def permissions(self):
+        return self._ia.permissions
+
+    @property
+    def me(self):
+        if self.guild:
+            return self.guild.me
+
     @property
     def channel(self):
         """
@@ -326,7 +345,7 @@ class ApplicationContext:
             embeds: Optional[List[Optional[discord.Embed]]] = None,
             allowed_mentions: Optional[discord.AllowedMentions] = None,
             view: Optional[discord.ui.View] = None,
-            views: Optional[List[discord.ui.View]] = None
+            views: Optional[List[discord.ui.View]] = None,
     ):
         payload, form = _handle_send_prams(
             content=content,
@@ -361,7 +380,6 @@ class ApplicationContext:
         if views:
             for view in views:
                 self._client._connection.store_view(view, message_id)
-        return Response(self, ephemeral=ephemeral)
 
     async def send_followup(
             self,
@@ -414,38 +432,7 @@ class ApplicationContext:
 
         return Followup(self, resp, ephemeral)
 
-    async def defer(self):
-        route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
-        await self._client.http.request(route, json={'type': '5'})
-        self._deferred = True
-
-    async def think_for(self, time: float):
-        if not self._deferred:
-            await self.defer()
-            await asyncio.sleep(time)
-
-    @property
-    def permissions(self):
-        return self._ia.permissions
-
-    @property
-    def me(self):
-        if self.guild:
-            return self.guild.me
-
-
-# noinspection PyTypeChecker
-class Response:
-    def __init__(self, parent: ApplicationContext, ephemeral=False):
-        self._parent = parent
-        self._eph = ephemeral
-
-    async def delete(self):
-        route = Route('DELETE', f'/webhooks/{self._parent.application_id}/{self._parent.token}/messages/@original')
-        if self._eph is not True:
-            await self._parent._client.http.request(route)
-
-    async def edit(
+    async def edit_response(
             self,
             content: Optional[Union[str, Any]] = MISSING,
             *,
@@ -471,16 +458,20 @@ class Response:
             'value': json.dumps(payload)
         }
         form.insert(0, data)  # type: ignore
-        r = Route('PATCH', f'/webhooks/{self._parent.application_id}/{self._parent.token}/messages/@original')
-        payload = await self._parent._client.http.request(r, form=form, files=files)
+        r = Route('PATCH', f'/webhooks/{self.application_id}/{self.token}/messages/@original')
+        payload = await self._client.http.request(r, form=form, files=files)
         message_id = int(payload.get('id'))
         if view is not MISSING and view is not None:
-            self._parent._client._connection.store_view(view, message_id)
+            self._client._connection.store_view(view, message_id)
         elif views is not MISSING and views is not None:
             for v in views:
-                self._parent._client._connection.store_view(v, message_id)
+                self._client._connection.store_view(v, message_id)
         return discord.Message(
-            state=self._parent._client._connection, data=payload, channel=self._parent.channel)
+            state=self._client._connection, data=payload, channel=self.channel)  # type: ignore
+
+    async def delete_response(self):
+        route = Route('DELETE', f'/webhooks/{self.application_id}/{self.token}/messages/@original')
+        await self._client.http.request(route)
 
 
 class Followup:

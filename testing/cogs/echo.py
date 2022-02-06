@@ -57,12 +57,13 @@ class Echo(SlashCog):
         if ctx.permissions.administrator:
             value = ctx.options[0].value
             view = BaseView()
-            resp = await ctx.send_response(
-                embed=discord.Embed(description=f'Value: **{value}**'),
-                view=view)
+            await ctx.send_response(embed=discord.Embed(description=f'Value: **{value}**'), view=view, delete_after=5)
             await view.wait()
             if view.value == 1:
-                await resp.edit(embed=discord.Embed(description=f'Edited Value: **{value}**'), view=None)
+                await ctx.edit_response(
+                    embed=discord.Embed(description=f'Edited Value: **{value}**'), view=None)
+                await asyncio.sleep(5)
+                await ctx.delete_response()
             elif view.value == 2:
                 await resp.edit(
                     embed=discord.Embed(description=f'Edited: **{value}**'), view=None)
