@@ -30,7 +30,7 @@ class MyBot(Bot):
         print('------')
         
 bot = MyBot()
-# here you can pass in both command cog and slash cog
+# here you can pass in both command cog and slash cog extension
 bot.load_extension('your_extension_name')
 bot.run('YOUR_TOKEN')
 ```
@@ -53,8 +53,7 @@ from extslash import (
     NumberOption,
     MentionableOption,
     SlashPermission,
-    Choice,
-)  # rather use: from extslash import *
+    Choice)
 from extslash.commands import Bot, SlashCog, ApplicationContext
 
 # Create a new cog class subclassing from SlashCog
