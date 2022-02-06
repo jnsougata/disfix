@@ -62,10 +62,10 @@ class Echo(SlashCog):
                 view=view)
             await view.wait()
             if view.value == 1:
-                await resp.delete()
+                await resp.edit(embed=discord.Embed(description=f'Edited Value: **{value}**'), view=None)
             elif view.value == 2:
                 await resp.edit(
-                    embed=discord.Embed(description=f'Edited: **{value}**'))
+                    embed=discord.Embed(description=f'Edited: **{value}**'), view=None)
         else:
             await ctx.send_response('you are not allowed to use this command')
 

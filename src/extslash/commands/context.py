@@ -2,12 +2,91 @@ import sys
 import asyncio
 import json
 import discord
+from discord.utils import MISSING
 from .base import InteractionData, InteractionDataOption, InteractionDataResolved
 from discord.http import Route
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List
 
 
-def _handle_message_prams(
+def _handle_edit_params(
+        *,
+        content: Optional[str] = MISSING,
+        embed: Optional[discord.Embed] = MISSING,
+        embeds: List[discord.Embed] = MISSING,
+        view: Optional[discord.ui.View] = MISSING,
+        views: List[discord.ui.View] = MISSING,
+        file: Optional[discord.File] = MISSING,
+        files: List[discord.File] = MISSING,
+        allowed_mentions: Optional[discord.AllowedMentions] = MISSING,
+):
+    payload: Dict[str, Any] = {}
+
+    if content is not MISSING:
+        if content is not None:
+            payload['content'] = str(content)  # type: ignore
+        else:
+            payload['content'] = None
+
+    if embed is not MISSING:
+        if embed is None:
+            payload['embeds'] = []
+        else:
+            payload['embeds'] = [embed.to_dict()]
+    elif embeds is not MISSING:
+        if len(embeds) > 10:
+            raise discord.errors.InvalidArgument('embeds has a maximum of 10 elements.')
+        payload['embeds'] = [e.to_dict() for e in embeds]
+
+    if allowed_mentions is MISSING:
+        payload['allowed_mentions'] = None  # type: ignore
+    else:
+        payload['allowed_mentions'] = allowed_mentions.to_dict()
+
+    if view is not MISSING:
+        if view:
+            payload['components'] = view.to_components()
+        else:
+            payload['components'] = []
+    elif views is not MISSING:
+        container = []
+        _all = [v.to_components() for v in views]
+        for components in _all:
+            container.extend(components)
+        payload['components'] = container
+
+    if file is not MISSING:
+        fs = [file]
+    elif files is not MISSING:
+        fs = files
+    else:
+        fs = []
+
+    form = []
+
+    if len(fs) == 1:
+        file_ = fs[0]
+        form.append(
+            {
+                'name': 'file',
+                'value': file_.fp,
+                'filename': file_.filename,
+                'content_type': 'application/octet-stream',
+            }
+        )
+    else:
+        for index, file_ in enumerate(fs):
+            form.append(
+                {
+                    'name': f'file{index}',
+                    'value': file_.fp,
+                    'filename': file_.filename,
+                    'content_type': 'application/octet-stream',
+                }
+            )
+    return payload, form
+
+
+def _handle_send_prams(
         *,
         content: Optional[Union[str, Any]] = None,
         tts: bool = False,
@@ -19,7 +98,6 @@ def _handle_message_prams(
         allowed_mentions: Optional[discord.AllowedMentions] = None,
         view: Optional[discord.ui.View] = None,
         views: Optional[List[discord.ui.View]] = None,
-        wait: bool = None,
 ):
     if files and file:
         raise TypeError('Cannot mix file and files keyword arguments.')
@@ -30,9 +108,6 @@ def _handle_message_prams(
 
     payload = {}
 
-    if wait:
-        payload['wait'] = True  # for followups only
-
     if tts:
         payload['tts'] = tts
 
@@ -41,8 +116,7 @@ def _handle_message_prams(
 
     if embed:
         payload['embeds'] = [embed.to_dict()]
-
-    if embeds:
+    elif embeds:
         if len(embeds) > 10:
             raise discord.errors.InvalidArgument('embeds has a maximum of 10 elements.')
         payload['embeds'] = [embed.to_dict() for embed in embeds]
@@ -52,31 +126,27 @@ def _handle_message_prams(
 
     if view:
         payload['components'] = view.to_components()
-
-    if views:
-        components = []
-        views_ = [view.to_components() for view in views]
-        for view_ in views_:
-            components.extend(view_)
-        payload['components'] = components
+    elif views:
+        container = []
+        _all = [view.to_components() for view in views]
+        for components in _all:
+            container.extend(components)
+        payload['components'] = concurrent
 
     if ephemeral:
         payload['flags'] = 64
 
     if file:
-        files_ = [file]
+        fs = [file]
+    elif files:
+        fs = files
     else:
-        files_ = []
-
-    if files:
-        files_ = files
-    else:
-        files_ = []
+        fs = []
 
     form = []
 
-    if len(files_) == 1:
-        file_ = files_[0]
+    if len(fs) == 1:
+        file_ = fs[0]
         form.append(
             {
                 'name': 'file',
@@ -86,7 +156,7 @@ def _handle_message_prams(
             }
         )
     else:
-        for index, file_ in enumerate(files_):
+        for index, file_ in enumerate(fs):
             form.append(
                 {
                     'name': f'file{index}',
@@ -258,7 +328,7 @@ class ApplicationContext:
             view: Optional[discord.ui.View] = None,
             views: Optional[List[discord.ui.View]] = None
     ):
-        payload, form = _handle_message_prams(
+        payload, form = _handle_send_prams(
             content=content,
             tts=tts,
             file=file,
@@ -268,8 +338,7 @@ class ApplicationContext:
             allowed_mentions=allowed_mentions,
             view=view,
             views=views,
-            ephemeral=ephemeral,
-        )
+            ephemeral=ephemeral)
         data = {
                 'name': 'payload_json',
                 'value': json.dumps({
@@ -308,7 +377,7 @@ class ApplicationContext:
             view: Optional[discord.ui.View] = None,
             views: Optional[List[discord.ui.View]] = None
     ):
-        payload, form = _handle_message_prams(
+        payload, form = _handle_send_prams(
             content=content,
             tts=tts,
             file=file,
@@ -318,9 +387,10 @@ class ApplicationContext:
             allowed_mentions=allowed_mentions,
             view=view,
             views=views,
-            ephemeral=ephemeral,
-            wait=True,
-        )
+            ephemeral=ephemeral)
+
+        payload['wait'] = True
+
         data = {
                 'name': 'payload_json',
                 'value': json.dumps(payload),
@@ -377,30 +447,25 @@ class Response:
 
     async def edit(
             self,
-            content: Optional[Union[str, Any]] = None,
+            content: Optional[Union[str, Any]] = MISSING,
             *,
-            tts: bool = False,
-            ephemeral: bool = False,
-            embed: Optional[discord.Embed] = None,
-            embeds: Optional[List[discord.Embed]] = None,
-            allowed_mentions: Optional[discord.AllowedMentions] = None,
-            file: Optional[discord.File] = None,
-            files: Optional[List[discord.File]] = None,
-            view: Optional[discord.ui.View] = None,
-            views: Optional[List[discord.ui.View]] = None,
+            embed: Optional[discord.Embed] = MISSING,
+            embeds: Optional[List[discord.Embed]] = MISSING,
+            allowed_mentions: Optional[discord.AllowedMentions] = MISSING,
+            file: Optional[discord.File] = MISSING,
+            files: Optional[List[discord.File]] = MISSING,
+            view: Optional[discord.ui.View] = MISSING,
+            views: Optional[List[discord.ui.View]] = MISSING
     ):
-        payload, form = _handle_message_prams(
+        payload, form = _handle_edit_params(
             content=content,
-            tts=tts,
             file=file,
             files=files,
             embed=embed,
             embeds=embeds,
             allowed_mentions=allowed_mentions,
             view=view,
-            views=views,
-            ephemeral=ephemeral,
-        )
+            views=views)
         data = {
             'name': 'payload_json',
             'value': json.dumps(payload)
@@ -409,11 +474,11 @@ class Response:
         r = Route('PATCH', f'/webhooks/{self._parent.application_id}/{self._parent.token}/messages/@original')
         payload = await self._parent._client.http.request(r, form=form, files=files)
         message_id = int(payload.get('id'))
-        if view:
+        if view is not MISSING:
             self._parent._client._connection.store_view(view, message_id)
-        if views:
-            for view in views:
-                self._parent._client._connection.store_view(view, message_id)
+        elif views is not MISSING:
+            for v in views:
+                self._parent._client._connection.store_view(v, message_id)
         return discord.Message(
             state=self._parent._client._connection, data=payload, channel=self._parent.channel)
 
@@ -434,31 +499,27 @@ class Followup:
 
     async def edit(
             self,
-            content: Optional[Union[str, Any]] = None,
+            content: Optional[Union[str, Any]] = MISSING,
             *,
-            tts: bool = False,
-            ephemeral: bool = False,
-            embed: Optional[discord.Embed] = None,
-            embeds: Optional[List[discord.Embed]] = None,
-            allowed_mentions: Optional[discord.AllowedMentions] = None,
-            file: Optional[discord.File] = None,
-            files: Optional[List[discord.File]] = None,
-            view: Optional[discord.ui.View] = None,
-            views: Optional[List[discord.ui.View]] = None,
+            embed: Optional[discord.Embed] = MISSING,
+            embeds: Optional[List[discord.Embed]] = MISSING,
+            allowed_mentions: Optional[discord.AllowedMentions] = MISSING,
+            file: Optional[discord.File] = MISSING,
+            files: Optional[List[discord.File]] = MISSING,
+            view: Optional[discord.ui.View] = MISSING,
+            views: Optional[List[discord.ui.View]] = MISSING,
     ):
-        payload, form = _handle_message_prams(
+        payload, form = _handle_edit_params(
             content=content,
-            tts=tts,
             file=file,
             files=files,
             embed=embed,
             embeds=embeds,
             allowed_mentions=allowed_mentions,
             view=view,
-            views=views,
-            ephemeral=ephemeral,
-            wait=True,
-        )
+            views=views)
+
+        payload['wait'] = True
 
         data = {
                 'name': 'payload_json',
@@ -467,8 +528,8 @@ class Followup:
         form.insert(0, data)  # type: ignore
         route = Route('PATCH', f'/webhooks/{self.application_id}/{self.token}/messages/{self.message_id}')
         resp = await self._parent._client.http.request(route, form=form, files=files)
-        if view:
+        if view is not MISSING:
             self._parent._client._connection.store_view(view, self.message_id)
-        if views:
+        elif views is not MISSING:
             for view in views:
                 self._parent._client._connection.store_view(view, self.message_id)
