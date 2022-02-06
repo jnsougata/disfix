@@ -403,10 +403,7 @@ class Response:
         )
         data = {
             'name': 'payload_json',
-            'value': json.dumps({
-                'type': 3,
-                'data': payload
-            })
+            'value': json.dumps(payload)
         }
         form.insert(0, data)  # type: ignore
         r = Route('PATCH', f'/webhooks/{self._parent.application_id}/{self._parent.token}/messages/@original')
