@@ -5,7 +5,98 @@ import discord
 from .base import InteractionData, InteractionDataOption, InteractionDataResolved
 from discord.http import Route
 from discord.utils import _to_json
-from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple
+from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List
+
+
+def _handle_message_prams(
+        *,
+        content: Optional[Union[str, Any]] = None,
+        tts: bool = False,
+        ephemeral: bool = False,
+        file: Optional[discord.File] = None,
+        files: Sequence[discord.File] = None,
+        embed: Optional[discord.Embed] = None,
+        embeds: Optional[List[Optional[discord.Embed]]] = None,
+        allowed_mentions: Optional[discord.AllowedMentions] = None,
+        view: Optional[discord.ui.View] = None,
+        views: Optional[List[discord.ui.View]] = None,
+        wait: bool = True,
+):
+    if files and file:
+        raise TypeError('Cannot mix file and files keyword arguments.')
+    if embeds and embed:
+        raise TypeError('Cannot mix embed and embeds keyword arguments.')
+    if views and view:
+        raise TypeError('Cannot mix view and views keyword arguments.')
+
+    payload = {}
+
+    if wait:
+        payload['wait'] = True  # for followups only
+
+    if tts:
+        payload['tts'] = tts
+
+    if content:
+        payload['content'] = content
+
+    if embed:
+        payload['embeds'] = [embed.to_dict()]
+
+    if embeds:
+        if len(embeds) > 10:
+            raise discord.errors.InvalidArgument('embeds has a maximum of 10 elements.')
+        payload['embeds'] = [embed.to_dict() for embed in embeds]
+
+    if allowed_mentions:
+        payload['allowed_mentions'] = allowed_mentions
+
+    if view:
+        payload['components'] = view.to_components()
+
+    if views:
+        components = []
+        views_ = [view.to_components() for view in views]
+        for view_ in views_:
+            components.extend(view_)
+        payload['components'] = components
+
+    if ephemeral:
+        payload['flags'] = 64
+
+    if file:
+        files_ = [file]
+    else:
+        files_ = []
+
+    if files:
+        files_ = files
+    else:
+        files_ = []
+
+    form = []
+
+    if len(files_) == 1:
+        file_ = files_[0]
+        form.append(
+            {
+                'name': 'file',
+                'value': file_.fp,
+                'filename': file_.filename,
+                'content_type': 'application/octet-stream',
+            }
+        )
+    else:
+        for index, file_ in enumerate(files_):
+            form.append(
+                {
+                    'name': f'file{index}',
+                    'value': file_.fp,
+                    'filename': file_.filename,
+                    'content_type': 'application/octet-stream',
+                }
+            )
+    return payload, form
 
 
 class ApplicationContext:
@@ -116,17 +207,17 @@ class ApplicationContext:
 
     async def send_response(
             self,
-            content: Union[str, Any] = None,
+            content: Optional[Union[str, Any]] = None,
             *,
             tts: bool = False,
+            ephemeral: bool = False,
             file: Optional[discord.File] = None,
             files: Sequence[discord.File] = None,
             embed: Optional[discord.Embed] = None,
-            embeds: Optional[Iterable[Optional[discord.Embed]]] = None,
+            embeds: Optional[List[Optional[discord.Embed]]] = None,
             allowed_mentions: Optional[discord.AllowedMentions] = None,
             view: Optional[discord.ui.View] = None,
-            views: Optional[Iterable[discord.ui.View]] = None,
-            ephemeral: bool = False
+            views: Optional[List[discord.ui.View]] = None
     ):
         """
         sends a response to the interaction
@@ -143,87 +234,27 @@ class ApplicationContext:
         :return: None
         """
 
-        if view and views:
-            raise TypeError('Can not mix views and views')
-
-        if embed and embeds:
-            raise TypeError('Can not mix embeds and embeds')
-
-        if file and files:
-            raise TypeError('Can not mix files and files')
-
-        payload = {}
-
-        if tts:
-            payload['tts'] = tts
-
-        if content:
-            payload['content'] = content
-
-        if embed:
-            payload['embeds'] = [embed.to_dict()]
-
-        if embeds:
-            payload['embeds'] = [embed.to_dict() for embed in embeds]
-
-        if allowed_mentions:
-            payload['allowed_mentions'] = allowed_mentions
-
-        if view:
-            payload['components'] = view.to_components()
-
-        if views:
-            components = []
-            views_ = [view.to_components() for view in views]
-            for view_ in views_:
-                components.extend(view_)
-            payload['components'] = components
-
-        if ephemeral:
-            payload['flags'] = 64
-
-        if file:
-            files_ = [file]
-        else:
-            files_ = []
-
-        if files:
-            files_ = files
-        else:
-            files_ = []
-
-        form = []
-
-        form.append(
-            {
+        payload, form = _handle_message_prams(
+            content=content,
+            tts=tts,
+            file=file,
+            files=files,
+            embed=embed,
+            embeds=embeds,
+            allowed_mentions=allowed_mentions,
+            view=view,
+            views=views,
+            ephemeral=ephemeral,
+        )
+        data = {
                 'name': 'payload_json',
                 'value': json.dumps({
                     'type': 4,
                     'data': payload
                 })
             }
-        )
+        form.insert(0, data)  # type: ignore
 
-        if len(files_) == 1:
-            file_ = files_[0]
-            form.append(
-                {
-                    'name': 'file',
-                    'value': file_.fp,
-                    'filename': file_.filename,
-                    'content_type': 'application/octet-stream',
-                }
-            )
-        else:
-            for index, file_ in enumerate(files_):
-                form.append(
-                    {
-                        'name': f'file{index}',
-                        'value': file_.fp,
-                        'filename': file_.filename,
-                        'content_type': 'application/octet-stream',
-                    }
-                )
         route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
         await self._client.http.request(route, form=form, files=files)
         self._deferred = True
@@ -241,92 +272,53 @@ class ApplicationContext:
 
     async def send_followup(
             self,
-            content: str = None,
+            content: Optional[Union[str, Any]] = None,
             *,
             tts: bool = False,
             ephemeral: bool = False,
             embed: Optional[discord.Embed] = None,
-            embeds: Optional[list[discord.Embed]] = None,
+            embeds: Optional[List[discord.Embed]] = None,
             allowed_mentions: Optional[discord.AllowedMentions] = None,
             file: Optional[discord.File] = None,
-            files: Sequence[discord.File] = None,
-            view: Optional[discord.ui.View] = None
+            files: Optional[List[discord.File]] = None,
+            view: Optional[discord.ui.View] = None,
+            views: Optional[List[discord.ui.View]] = None
     ):
-        if files and file:
-            raise TypeError('Cannot mix file and files keyword arguments.')
-        if embeds and embed:
-            raise TypeError('Cannot mix embed and embeds keyword arguments.')
-
-        payload = {}
-
-        payload['content'] = str(content) if content else None
-
-        if embeds:
-            if len(embeds) > 10:
-                raise discord.errors.InvalidArgument('embeds has a maximum of 10 elements.')
-            payload['embeds'] = [e.to_dict() for e in embeds]
-        if embed:
-            payload['embeds'] = [embed.to_dict()]
-        else:
-            payload['embeds'] = []
-
-        if view:
-            payload['components'] = view.to_components()
-        else:
-            payload['components'] = []
-
-        payload['tts'] = tts
-
-        if ephemeral:
-            payload['flags'] = 64
-
-        if allowed_mentions:
-            payload['allowed_mentions'] = allowed_mentions.to_dict()
-
-        payload['wait'] = True
-
-        form = []
-        if file:
-            files = [file]
-        if not files:
-            files = []
-
-        form.append(
-            {
+        payload, form = _handle_message_prams(
+            content=content,
+            tts=tts,
+            file=file,
+            files=files,
+            embed=embed,
+            embeds=embeds,
+            allowed_mentions=allowed_mentions,
+            view=view,
+            views=views,
+            ephemeral=ephemeral,
+            wait=True,
+        )
+        data = {
                 'name': 'payload_json',
                 'value': json.dumps(payload),
             }
-        )
+        form.insert(0, data)  # type: ignore
 
-        if len(files) == 1:
-            file = files[0]
-            form.append(
-                {
-                    'name': 'file',
-                    'value': file.fp,
-                    'filename': file.filename,
-                    'content_type': 'application/octet-stream',
-                }
-            )
-        else:
-            for index, file in enumerate(files):
-                form.append(
-                    {
-                        'name': f'file{index}',
-                        'value': file.fp,
-                        'filename': file.filename,
-                        'content_type': 'application/octet-stream',
-                    }
-                )
         r = Route('POST', f'/webhooks/{self.application_id}/{self.token}')
         if self._deferred:
             resp = await self._client.http.request(r, form=form, files=files)
         else:
             await self.defer()
             resp = await self._client.http.request(r, form=form, files=files)
+
+        message_id = int(resp.get('id'))
+
         if view:
-            self._client._connection.store_view(view, int(resp.get('id')))
-        return FollowupResponse(self, resp, ephemeral)
+            self._client._connection.store_view(view, message_id)
+        if views:
+            for view in views:
+                self._client._connection.store_view(view, message_id)
+
+        return Followup(self, resp, ephemeral)
 
     async def defer(self):
         route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
@@ -361,16 +353,17 @@ class Response:
 
     async def edit(
             self,
-            content: Union[str, Any] = None,
+            content: Optional[Union[str, Any]] = None,
             *,
             tts: bool = False,
-            file: Optional[discord.File] = None,
-            files: Sequence[discord.File] = None,
+            ephemeral: bool = False,
             embed: Optional[discord.Embed] = None,
-            embeds: Optional[Iterable[Optional[discord.Embed]]] = None,
+            embeds: Optional[List[discord.Embed]] = None,
             allowed_mentions: Optional[discord.AllowedMentions] = None,
+            file: Optional[discord.File] = None,
+            files: Optional[List[discord.File]] = None,
             view: Optional[discord.ui.View] = None,
-            views: Optional[Iterable[discord.ui.View]] = None,
+            views: Optional[List[discord.ui.View]] = None,
     ):
         """
         edits an interaction response message
@@ -383,158 +376,92 @@ class Response:
         :param allowed_mentions: (discord.AllowedMentions) the mentions to allow
         :param view: (discord.ui.View) a view to send
         :param views: (Iterable[discord.ui.View]) a list of views to send
+        :param ephemeral: (bool) whether the message should only visible to the invoker
         :return: None
         """
-        form = []
-
-        payload: Dict[str, Any] = {'tts': tts}
-        if content:
-            payload['content'] = content
-        if embed:
-            payload['embeds'] = [embed.to_dict()]
-        if embeds:
-            payload['embeds'] = [embed.to_dict() for embed in embeds]
-        if allowed_mentions:
-            payload['allowed_mentions'] = allowed_mentions
-        if view:
-            payload['components'] = view.to_components()
-
-        if file:
-            files = [file]
-        if not files:
-            files = []
-
-        # handling non-attachment data
-        form.append(
-            {
-                'name': 'payload_json',
-                'value': json.dumps({'data': json.loads(_to_json(payload)), 'type': 3})
-            }
+        payload, form = _handle_message_prams(
+            content=content,
+            tts=tts,
+            file=file,
+            files=files,
+            embed=embed,
+            embeds=embeds,
+            allowed_mentions=allowed_mentions,
+            view=view,
+            views=views,
+            ephemeral=ephemeral,
         )
-
-        # handling attachment data
-        if len(files) == 1:
-            file = files[0]
-            form.append(
-                {
-                    'name': 'file',
-                    'value': file.fp,
-                    'filename': file.filename,
-                    'content_type': 'application/octet-stream',
-                }
-            )
-        else:
-            for index, file in enumerate(files):
-                form.append(
-                    {
-                        'name': f'file{index}',
-                        'value': file.fp,
-                        'filename': file.filename,
-                        'content_type': 'application/octet-stream',
-                    }
-                )
+        data = {
+            'name': 'payload_json',
+            'value': json.dumps({
+                'type': 3,
+                'data': payload
+            })
+        }
+        form.insert(0, data)  # type: ignore
         r = Route('PATCH', f'/webhooks/{self._parent.application_id}/{self._parent.token}/messages/@original')
         payload = await self._parent._client.http.request(r, form=form, files=files)
+        message_id = int(payload.get('id'))
         if view:
-            self._parent._client._connection.store_view(view, int(payload['id']))
+            self._parent._client._connection.store_view(view, message_id)
+        if views:
+            for view in views:
+                self._parent._client._connection.store_view(view, message_id)
         return discord.Message(
             state=self._parent._client._connection, data=payload, channel=self._parent.channel)
 
 
-class FollowupResponse:
+class Followup:
     def __init__(self, parent: ApplicationContext, payload: dict, ephemeral: bool = False):
         self._data = payload
         self._parent = parent
         self._eph = ephemeral
-        self.id = int(payload['id'])
+        self.message_id = int(payload.get('id'))
         self.application_id = parent.application_id
         self.token = parent.token
 
     async def delete(self):
-        route = Route('DELETE', f'/webhooks/{self.application_id}/{self.token}/messages/{self.id}')
+        route = Route('DELETE', f'/webhooks/{self.application_id}/{self.token}/messages/{self.message_id}')
         if not self._eph:
             await self._parent._client.http.request(route)
 
     async def edit(
             self,
-            content: str = None,
+            content: Optional[Union[str, Any]] = None,
             *,
             tts: bool = False,
             ephemeral: bool = False,
             embed: Optional[discord.Embed] = None,
-            embeds: Optional[list[discord.Embed]] = None,
+            embeds: Optional[List[discord.Embed]] = None,
             allowed_mentions: Optional[discord.AllowedMentions] = None,
             file: Optional[discord.File] = None,
-            files: Sequence[discord.File] = None,
-            view: Optional[discord.ui.View] = None
+            files: Optional[List[discord.File]] = None,
+            view: Optional[discord.ui.View] = None,
+            views: Optional[List[discord.ui.View]] = None,
     ):
-        if files and file:
-            raise TypeError('Cannot mix file and files keyword arguments.')
-        if embeds and embed:
-            raise TypeError('Cannot mix embed and embeds keyword arguments.')
-
-        payload = {}
-
-        payload['content'] = str(content) if content else None
-
-        if embeds:
-            if len(embeds) > 10:
-                raise discord.errors.InvalidArgument('embeds has a maximum of 10 elements.')
-            payload['embeds'] = [e.to_dict() for e in embeds]
-        if embed:
-            payload['embeds'] = [embed.to_dict()]
-        else:
-            payload['embeds'] = []
-
-        if view:
-            payload['components'] = view.to_components()
-        else:
-            payload['components'] = []
-
-        payload['tts'] = tts
-
-        if ephemeral:
-            payload['flags'] = 64
-
-        if allowed_mentions:
-            payload['allowed_mentions'] = allowed_mentions.to_dict()
-
-        payload['wait'] = True
-
-        form = []
-        if file:
-            files = [file]
-        if not files:
-            files = []
-
-        form.append(
-            {
-                'name': 'payload_json',
-                'value': _to_json(payload),
-            }
+        payload, form = _handle_message_prams(
+            content=content,
+            tts=tts,
+            file=file,
+            files=files,
+            embed=embed,
+            embeds=embeds,
+            allowed_mentions=allowed_mentions,
+            view=view,
+            views=views,
+            ephemeral=ephemeral,
+            wait=True,
         )
 
-        if len(files) == 1:
-            file = files[0]
-            form.append(
-                {
-                    'name': 'file',
-                    'value': file.fp,
-                    'filename': file.filename,
-                    'content_type': 'application/octet-stream',
-                }
-            )
-        else:
-            for index, file in enumerate(files):
-                form.append(
-                    {
-                        'name': f'file{index}',
-                        'value': file.fp,
-                        'filename': file.filename,
-                        'content_type': 'application/octet-stream',
-                    }
-                )
-        route = Route('PATCH', f'/webhooks/{self.application_id}/{self.token}/messages/{self.id}')
+        data = {
+                'name': 'payload_json',
+                'value': json.dumps(payload)
+        }
+        form.insert(0, data)  # type: ignore
+        route = Route('PATCH', f'/webhooks/{self.application_id}/{self.token}/messages/{self.message_id}')
         resp = await self._parent._client.http.request(route, form=form, files=files)
         if view:
-            self._parent._client._connection.store_view(view, self.id)
+            self._parent._client._connection.store_view(view, self.message_id)
+        if views:
+            for view in views:
+                self._parent._client._connection.store_view(view, self.message_id)

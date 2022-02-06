@@ -53,7 +53,7 @@ class Echo(SlashCog):
             value = ctx.options[0].value
             view = BaseView()
             view2 = BaseView()
-            resp = await ctx.send_response(f'Value: **{value}**', views=[view, view2])
+            resp = await ctx.send_followup(f'Value: **{value}**', views=[view, view2])
             await view.wait()
             if view.delete:
                 await resp.delete()
