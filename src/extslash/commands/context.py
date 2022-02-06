@@ -355,6 +355,7 @@ class ApplicationContext:
         # getting this message is a bit of a hack, but it works if you want to refresh the view
         re_route = Route('GET', f'/webhooks/{self.application_id}/{self.token}/messages/@original')
         original = await self._client.http.request(re_route)
+        print(original)
         message_id = int(original.get('id'))
         if view:
             self._client._connection.store_view(view, message_id)
@@ -474,9 +475,9 @@ class Response:
         r = Route('PATCH', f'/webhooks/{self._parent.application_id}/{self._parent.token}/messages/@original')
         payload = await self._parent._client.http.request(r, form=form, files=files)
         message_id = int(payload.get('id'))
-        if view is not MISSING:
+        if view is not MISSING and view is not None:
             self._parent._client._connection.store_view(view, message_id)
-        elif views is not MISSING:
+        elif views is not MISSING and views is not None:
             for v in views:
                 self._parent._client._connection.store_view(v, message_id)
         return discord.Message(
@@ -528,8 +529,8 @@ class Followup:
         form.insert(0, data)  # type: ignore
         route = Route('PATCH', f'/webhooks/{self.application_id}/{self.token}/messages/{self.message_id}')
         resp = await self._parent._client.http.request(route, form=form, files=files)
-        if view is not MISSING:
+        if view is not MISSING and view is not None:
             self._parent._client._connection.store_view(view, self.message_id)
-        elif views is not MISSING:
+        elif views is not MISSING and views is not None:
             for view in views:
                 self._parent._client._connection.store_view(view, self.message_id)

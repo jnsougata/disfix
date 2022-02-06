@@ -25,12 +25,12 @@ class BaseView(discord.ui.View):
         self.value = 0
         self.timeout = 10
 
-    @discord.ui.button(label='DELETE', style=discord.ButtonStyle.red)
+    @discord.ui.button(label='EDIT', style=discord.ButtonStyle.red)
     async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = 1
         self.stop()
 
-    @discord.ui.button(label='EDIT', style=discord.ButtonStyle.green)
+    @discord.ui.button(label='SHIT', style=discord.ButtonStyle.green)
     async def edit(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = 2
         self.stop()
