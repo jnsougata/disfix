@@ -22,12 +22,17 @@ import traceback
 class BaseView(discord.ui.View):
     def __init__(self):
         super().__init__()
-        self.delete = False
+        self.value = 0
         self.timeout = 10
 
     @discord.ui.button(label='DELETE', style=discord.ButtonStyle.red)
     async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
-        self.delete = True
+        self.value = 1
+        self.stop()
+
+    @discord.ui.button(label='EDIT', style=discord.ButtonStyle.green)
+    async def edit(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.value = 2
         self.stop()
 
 
@@ -52,12 +57,13 @@ class Echo(SlashCog):
         if ctx.permissions.administrator:
             value = ctx.options[0].value
             view = BaseView()
-            view2 = BaseView()
-            resp = await ctx.send_followup(f'Value: **{value}**', views=[view, view2])
+            resp = await ctx.send_followup(f'Value: **{value}**', view=view)
             await view.wait()
-            if view.delete:
+            if view.value == 1:
                 await resp.delete()
-                await ctx.channel.send('Done')
+            elif view.value == 2:
+                view.clear_items()
+                await resp.edit(content=f'Edited: **{value}**', view=view)
         else:
             await ctx.send_response('you are not allowed to use this command')
 

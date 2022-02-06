@@ -4,7 +4,6 @@ import json
 import discord
 from .base import InteractionData, InteractionDataOption, InteractionDataResolved
 from discord.http import Route
-from discord.utils import _to_json
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List
 
 
