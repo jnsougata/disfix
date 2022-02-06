@@ -8,7 +8,7 @@ long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 setup(
     name='extslash',
-    version='0.0.8',
+    version='0.1.0',
     description='Integrates slash commands with discord.py 2.0',
     long_description=long_description,
     long_description_content_type='text/markdown',

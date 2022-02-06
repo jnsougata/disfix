@@ -355,7 +355,6 @@ class ApplicationContext:
         # getting this message is a bit of a hack, but it works if you want to refresh the view
         re_route = Route('GET', f'/webhooks/{self.application_id}/{self.token}/messages/@original')
         original = await self._client.http.request(re_route)
-        print(original)
         message_id = int(original.get('id'))
         if view:
             self._client._connection.store_view(view, message_id)
