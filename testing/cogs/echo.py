@@ -54,7 +54,7 @@ class Echo(SlashCog):
         )
 
     async def command(self, ctx: ApplicationContext):
-        if ctx.permissions.administrator:
+        if ctx.channel.permissions_for(ctx.me).use_slash_commands:
             value = ctx.options[0].value
             view = BaseView()
             await ctx.send_response(embed=discord.Embed(description=f'Value: **{value}**'), view=view)

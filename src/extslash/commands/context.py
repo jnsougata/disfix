@@ -271,11 +271,11 @@ class ApplicationContext:
 
     @property
     def channel(self):
-        """
-        returns the channel where the interaction was created
-        :return:
-        """
-        return self._ia.channel
+        channel = self._ia.channel
+        # since the channel is partial messageable
+        # we won't be able to check user/role permissions
+        # rather we will use the channel id and get channel from cache
+        return self.guild.get_channel(channel.id)
 
     @property
     def guild(self):
@@ -318,7 +318,7 @@ class ApplicationContext:
         if view and views:
             raise TypeError('Can not mix view and views')
 
-        await self.channel.send(
+        return await self._ia.channel.send(
             content=content,
             tts=tts,
             file=file,
