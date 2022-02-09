@@ -68,7 +68,5 @@ class Embed(SlashCog):
 
 
 
-
-
 def setup(bot: Bot):
     bot.add_slash_cog(Embed(bot), 877399405056102431)
