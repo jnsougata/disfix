@@ -1,4 +1,20 @@
 from typing import Any, Union, List, Dict, Optional
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class ChannelType:
+    GUILD_TEXT = 0
+    DM = 1
+    GUILD_VOICE = 2
+    GROUP_DM = 3
+    GUILD_CATEGORY = 4
+    GUILD_NEWS = 5
+    GUILD_STORE = 6
+    GUILD_NEWS_THREAD = 10
+    GUILD_PUBLIC_THREAD = 11
+    GUILD_PRIVATE_THREAD = 12
+    GUILD_STAGE_VOICE = 13
 
 
 class _Option:
@@ -58,13 +74,21 @@ class UserOption(_Option):
 
 
 class ChannelOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
+    def __init__(
+            self,
+            name: str,
+            description: str,
+            required: bool = True,
+            choices: list[Choice] = None,
+            channel_types: [int] = None
+    ):
         self.data = {
             "name": name,
             "description": description,
             "type": 7,
             "required": required,
-            "choices": [choice.data for choice in choices] if choices else []
+            "choices": [choice.data for choice in choices] if choices else [],
+            "channel_types": channel_types if channel_types else []
         }
 
 
