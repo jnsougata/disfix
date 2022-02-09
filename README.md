@@ -37,9 +37,6 @@ bot.run('YOUR_TOKEN')
 ### Making a slash cog:
 ```python
 import discord
-# this import for showing the options
-# use: from extslash import *
-# for cleaner code
 from extslash import (
     SlashCommand,
     SubCommandGroup,
@@ -77,7 +74,7 @@ class Echo(SlashCog):
             ],
             # adding permissions to the command
             # by default, this will be accessible to everyone
-            # if you limit the command to certain roles/users, you can add them here,
+            # if you want to limit the command to certain roles/users, you can add them here,
             # for example,
             permissions=[
                 SlashPermission.for_user(516649677001719819),
@@ -93,7 +90,7 @@ class Echo(SlashCog):
     # and the user that executed it
     # you can use it to get the arguments, the message, the channel, etc.
     async def command(self, ctx: ApplicationContext):
-        # as we used on option we will receive only one argument
+        # as we used one option we will receive only one argument
         # we can get all options by calling `ctx.options`
         # and then get the first one by calling `ctx.options[0]`
         # every option contains a `value` property that contains the value
@@ -106,7 +103,7 @@ class Echo(SlashCog):
 # this setup method is mandatory for loading the cog
 def setup(bot: Bot):
     # `add_slash_cog` will add the cog to the bot
-    # it takes the cog class as an argument and guild_id as an optional argument
+    # it takes the SlashCog class as an argument and guild_id as an optional argument
     # guild_id is the id of the guild where the command will be available
     # if you don't pass it, the command will be available in all guilds i.e. globally
     bot.add_slash_cog(Echo(bot), 877399405056102431)
