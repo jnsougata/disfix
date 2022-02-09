@@ -125,6 +125,16 @@ class NumberOption(_Option):
         }
 
 
+class AttachmentOption(_Option):
+    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
+        self.data = {
+            "name": name,
+            "type": 11,
+            "required": required,
+            "description": description,
+        }
+
+
 class SubCommand:
     def __init__(self, name: str, description: str, options: [_Option] = None):
         self.data = {

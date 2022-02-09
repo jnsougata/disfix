@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Optional, Union, Any
 import discord
-from .enums import *
+from .enums import OptionType, ResolvedAttachment
 
 
 @dataclass(frozen=True)
@@ -27,6 +27,7 @@ class InteractionDataResolved:
     roles: Optional[dict] = None
     channels: Optional[dict] = None
     messages: Optional[dict] = None
+    attachments: Optional[dict] = None
 
 
 class InteractionDataOption:
@@ -67,6 +68,7 @@ class InteractionDataOption:
             discord.CategoryChannel,
             discord.StoreChannel,
             discord.ChannelType,
+            ResolvedAttachment
     ]:
 
         if self.type == OptionType.SUBCOMMAND:
@@ -98,6 +100,10 @@ class InteractionDataOption:
                 return self._guild.get_role(int(some_id))
         elif self.type == OptionType.NUMBER:
             return self._data.get('value')
+        elif self.type == OptionType.ATTACHMENT:
+            attachment_id = self._data.get('value')
+            payload = self._resolved.attachments.get(attachment_id)
+            return ResolvedAttachment(**payload)
         else:
             return self._data.get('value')
 

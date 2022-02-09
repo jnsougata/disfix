@@ -26,8 +26,8 @@ class Embed(SlashCog):
                 extslash.StrOption('color', 'color hex of the embed', required=False),
                 extslash.UserOption('author', 'author of the embed', required=False),
                 extslash.StrOption('footer', 'footer text of the embed', required=False),
-                extslash.StrOption('thumbnail', 'url of the thumbnail to set', required=False),
-                extslash.StrOption('image', 'url of the image to set', required=False),
+                extslash.AttachmentOption('thumbnail', 'image file for thumbnail', required=False),
+                extslash.AttachmentOption('image', 'image file for embed image', required=False),
             ],
         )
 
@@ -43,9 +43,9 @@ class Embed(SlashCog):
             elif option.name == 'footer':
                 slots['footer'] = {'text': option.value}
             elif option.name == 'thumbnail':
-                slots['thumbnail'] = {'url': option.value}
+                slots['thumbnail'] = {'url': option.value.url}
             elif option.name == 'image':
-                slots['image'] = {'url': option.value}
+                slots['image'] = {'url': option.value.url}
             elif option.name == 'color':
                 slots['color'] = int(f'0x{option.value}', 16)
             elif option.name == 'author':
@@ -72,6 +72,3 @@ class Embed(SlashCog):
 
 def setup(bot: Bot):
     bot.add_slash_cog(Embed(bot), 877399405056102431)
-    # add guild if you want to limit the command to a specific guild
-    # if you to register the command to all guilds, you can leave it empty
-    # global commands take 1hour to register for the first time for all guilds
