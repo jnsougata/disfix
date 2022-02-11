@@ -116,25 +116,73 @@ class InteractionDataOption:
         return self._data.get('focused')
 
 
-@dataclass(frozen=True)
-class BaseAppCommand:
-    id: int
-    name: str
-    description: str
-    type: int
-    application_id: Optional[Union[int, str]]
-    guild_id: Optional[Union[int, str]] = None
-    options: Optional[list] = None
-    default_permission: Optional[bool] = None
-    version: Optional[Union[int, str]] = None
-    default_member_permissions: Optional[list] = None
-    dm_permission: Optional[bool] = None
-    name_localizations: Optional = None
-    description_localizations: Optional = None
+class AppCommand:
+    def __init__(self, data: dict):
+        self._payload = data
+
+    @property
+    def id(self) -> int:
+        id_ = self._payload.get('id')
+        if id_:
+            return int(id_)
+
+    @property
+    def name(self) -> str:
+        return self._payload.get('name')
+
+    @property
+    def description(self) -> str:
+        return self._payload.get('description')
+
+    @property
+    def type(self) -> int:
+        return self._payload.get('type')
+
+    @property
+    def application_id(self) -> int:
+        return int(self._payload.get('application_id'))
+
+    @property
+    def guild_id(self) -> int:
+        guild_id = self._payload.get('guild_id')
+        if guild_id:
+            return int(guild_id)
+
+    @property
+    def options(self) -> list:
+        return self._payload.get('options')
+
+    @property
+    def default_permission(self) -> bool:
+        return self._payload.get('default_permission')
+
+    @property
+    def version(self) -> int:
+        return int(self._payload.get('version'))
+
+    @property
+    def default_member_permissions(self) -> list:
+        return self._payload.get('default_member_permissions')
+
+    @property
+    def dm_permission(self) -> bool:
+        return self._payload.get('dm_permission')
+
+    @property
+    def name_localizations(self):
+        return self._payload.get('name_localizations')
+
+    @property
+    def description_localizations(self):
+        return self._payload.get('description_localizations')
+
+    @property
+    def permissions(self):  # TODO: implement
+        return self._payload.get('permissions')
 
 
 @dataclass(frozen=True)
-class BaseSlashPermission:
+class BasePermission:
     id: Union[int, str]
     application_id: Union[int, str]
     guild_id: [Union[int, str]]
@@ -142,15 +190,15 @@ class BaseSlashPermission:
 
 
 @dataclass(frozen=True)
-class SlashPermissionData:
+class PermissionData:
     id: Union[int, str]
     type: int
     permission: bool
 
 
-class SlashOverwrite:
+class Overwrite:
     def __init__(self, data: dict):
-        self._perms = BaseSlashPermission(**data)
+        self._perms = BasePermission(**data)
 
     @property
     def command_id(self):
@@ -166,4 +214,4 @@ class SlashOverwrite:
 
     @property
     def permissions(self):
-        return [SlashPermissionData(**perm) for perm in self._perms.permissions]
+        return [PermissionData(**perm) for perm in self._perms.permissions]

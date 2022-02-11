@@ -155,7 +155,7 @@ class SubCommandGroup:
         }
 
 
-class SlashPermission:
+class SlashOverwrite:
     def __init__(self, payload: dict):
         self._payload = payload
 
@@ -187,9 +187,10 @@ class SlashCommand:
             description: str,
             options: list[Union[_Option, SubCommand, SubCommandGroup, Choice]] = None,
             everyone: bool = True,
-            permissions: list[SlashPermission] = None,
+            overwrites: list[SlashOverwrite] = None,
     ) -> None:
         self.name = name
+        self._overwrites = overwrites
         self._payload = {
             "name": name,
             "description": description,
@@ -197,13 +198,13 @@ class SlashCommand:
             "options": [option.data for option in options] if options else [],
             "default_permission": everyone,
         }
-        self._permissions = permissions
+
 
     @property
-    def permissions(self):
-        if self._permissions:
-            perms_list = [perm.to_dict() for perm in self._permissions]
-            return {"permissions": perms_list}
+    def overwrites(self):
+        if self._overwrites:
+            overwrites = [perm.to_dict() for perm in self._overwrites]
+            return {"permissions": overwrites}
 
     def to_dict(self):
         return self._payload

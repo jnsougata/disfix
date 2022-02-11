@@ -29,6 +29,7 @@ class Embed(SlashCog):
                 extslash.AttachmentOption('thumbnail', 'image file for thumbnail', required=False),
                 extslash.AttachmentOption('image', 'image file for embed image', required=False),
             ],
+            overwrites=[extslash.SlashOverwrite.for_role(879281380306067486)],
         )
 
     async def command(self, ctx: ApplicationContext):

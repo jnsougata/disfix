@@ -2,6 +2,7 @@ import sys
 import asyncio
 import json
 import discord
+from .base import AppCommand
 from discord.utils import MISSING
 from .base import InteractionData, InteractionDataOption, InteractionDataResolved
 from discord.http import Route
@@ -181,6 +182,10 @@ class ApplicationContext:
     @property
     def id(self):
         return self._ia.id
+
+    @property
+    def command(self):
+        return AppCommand(self._ia.data)
 
     @property
     def command_id(self):
