@@ -250,14 +250,17 @@ class ApplicationContext:
         """
         return self._deferred
 
-    async def defer(self):
+    async def defer(self, ephemeral: bool = False):
         route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
-        await self._client.http.request(route, json={'type': '5'})
+        payload = {'type': 5}
+        if ephemeral:
+            payload['data'] = {'flags': 64}
+        await self._client.http.request(route, json=payload)
         self._deferred = True
 
-    async def think_for(self, time: float):
+    async def think_for(self, time: float, ephemeral: bool = False):
         if not self._deferred:
-            await self.defer()
+            await self.defer(ephemeral=ephemeral)
             await asyncio.sleep(time)
 
     @property
