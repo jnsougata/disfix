@@ -1,27 +1,44 @@
 import sys
 import traceback
-from abc import ABC, abstractmethod
+import asyncio
+from typing import Optional, ClassVar, Callable
+from abc import ABC
+from functools import wraps
+from .errors import NonCoroutine
+from ..builder import SlashCommand
 from .context import ApplicationContext
 
 
 class SlashCog(ABC):
 
-    @abstractmethod
-    def register(self):
-        pass
+    __cog_commands__ = []
+    __cog_functions__ = {}
+    __cog_listener__ = None
 
-    @abstractmethod
-    async def command(self, ctx: ApplicationContext):
-        pass
 
-    async def on_error(self, ctx: ApplicationContext, error: Exception):
+    def __new__(cls, *args, **kwargs):
+        self = super().__new__(cls)
+        return self
+
+
+    @classmethod
+    def command(cls, command: SlashCommand, guild_id: int = None):
         """
-        This method is called when an error is raised while executing a command.
-        :param ctx: the application command context
-        :param error: exception raised
-        :return: Exception
+        Decorator for registering a slash command
         """
-        print(f'Ignoring exception in command {ctx.command_name} (ID:{ctx.command_id})'
-              f' from cog {self.__class__.__name__}', file=sys.stderr)
-        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
-        print(f'-----\n', file=sys.stderr)
+        cls.__cog_commands__.append((command, guild_id))
+
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                return func
+
+            cls.__cog_functions__[command.name] = wrapper()
+        return decorator
+
+    @classmethod
+    def listener(cls, function: Callable):
+        """
+        Decorator for registering an error listener
+        """
+        cls.__cog_listener__ = function

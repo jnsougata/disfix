@@ -3,16 +3,19 @@ import asyncio
 import traceback
 import discord
 import src.extslash as extslash
+from src.extslash import commands
+from discord.ext.commands import Cog
 from src.extslash.commands import Bot, SlashCog, ApplicationContext
 
 
-class Embed(SlashCog):
+class Embed(commands.SlashCog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    def register(self):
-        return extslash.SlashCommand(
-            name='embed',
+
+    @commands.SlashCog.command(
+        command=extslash.SlashCommand(
+            name='xembed',
             description='creates an embed to a channel',
             options=[
                 extslash.ChannelOption(
@@ -30,9 +33,11 @@ class Embed(SlashCog):
                 extslash.AttachmentOption('image', 'image file for embed image', required=False),
             ],
             overwrites=[extslash.SlashOverwrite.for_role(879281380306067486)],
-        )
-
-    async def command(self, ctx: ApplicationContext):
+        ),
+        guild_id=877399405056102431
+    )
+    async def embed(self, ctx: ApplicationContext):
+        await ctx.defer(ephemeral=True)
         slots = {}
         channel = ctx.options[0].value
         ctx.options.pop(0)
@@ -60,14 +65,19 @@ class Embed(SlashCog):
 
         embed = discord.Embed.from_dict(slots)
         await channel.send(embed=embed)
-        await ctx.send_response(f'Embed sent successfully to {channel.mention}', ephemeral=True)
+        await ctx.send_followup(f'Embed sent successfully to {channel.mention}')
 
 
-    async def on_error(self, ctx: ApplicationContext, error: Exception):
-        stack = traceback.format_exception(type(error), error, error.__traceback__)
-        print(''.join(stack), file=sys.stderr)
-
+    @commands.SlashCog.command(
+        command=extslash.SlashCommand(
+            name='cog',
+            description='accessing from same slash cog'
+        ),
+        guild_id=877399405056102431
+    )
+    async def cog_command(self, ctx: ApplicationContext):
+        await ctx.send_response('hello')
 
 
 def setup(bot: Bot):
-    bot.add_slash_cog(Embed(bot), 877399405056102431)
+    bot.add_slash_cog(Embed(bot))
