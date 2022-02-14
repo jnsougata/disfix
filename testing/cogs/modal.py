@@ -3,10 +3,10 @@ import asyncio
 import traceback
 import discord
 import src.extslash as extslash
-from src.extslash.commands import Bot, SlashCog, ApplicationContext
+from src.extslash.commands import Bot, AppCog, ApplicationContext
 
 
-class Modal(SlashCog):
+class Modal(AppCog):
     def __init__(self, bot: Bot):
         self.bot = bot
 

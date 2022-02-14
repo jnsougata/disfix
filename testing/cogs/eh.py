@@ -3,20 +3,30 @@ import asyncio
 import traceback
 import discord
 import src.extslash as extslash
-from src.extslash import commands
-from src.extslash.commands import Bot, SlashCog, ApplicationContext
 
 
-class Error(commands.SlashCog):
-    def __init__(self, bot: Bot):
+
+class Error(extslash.Cog):
+    def __init__(self, bot: extslash.Bot):
         self.bot = bot
 
-    @commands.SlashCog.listener
-    async def on_slash_error(self, ctx: ApplicationContext, error: Exception):
+    @extslash.Cog.listener
+    async def on_slash_error(self, ctx: extslash.ApplicationContext, error: Exception):
         stack = traceback.format_exception(type(error), error, error.__traceback__)
         tb = ''.join(stack)
         await ctx.send_followup(f'```py\n{tb}\n```')
 
+    @extslash.Cog.command(
+        command=extslash.SlashCommand(
+            name='xcog',
+            description='accessing from same slash cog'
+        ),
+        guild_id=877399405056102431
+    )
+    async def cog_command(self, ctx: extslash.ApplicationContext):
+        print(1/0)
+        await ctx.send_response('hello')
 
-def setup(bot: Bot):
+
+def setup(bot: extslash.Bot):
     bot.add_slash_cog(Error(bot))

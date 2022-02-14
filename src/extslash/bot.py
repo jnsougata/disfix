@@ -4,8 +4,8 @@ import json
 import asyncio
 import traceback
 from .errors import *
-from .cog import SlashCog
-from ..builder import SlashCommand, SlashOverwrite
+from .cog import Cog
+from .builder import SlashCommand, SlashOverwrite
 from discord.http import Route
 from functools import wraps
 from .context import ApplicationContext
@@ -35,7 +35,7 @@ class Bot(commands.Bot):
             description=description,
             **options
         )
-        self.__cmd_queue = []
+        self.__cmd_queue = {}
         self.__cached_commands = {}
 
 
@@ -59,7 +59,7 @@ class Bot(commands.Bot):
         if interaction.type == InteractionType.application_command:
             ctx = ApplicationContext(interaction, self)
             try:
-                await self._connection.call_hooks(ctx.command_name, self.__self, ctx)
+                await self._connection.call_hooks(ctx.command_name, Cog, ctx)
             except Exception as error:
                 handler = self._connection.hooks.get('on_slash_error')
                 if handler:
@@ -68,28 +68,26 @@ class Bot(commands.Bot):
                     print(f'Ignoring exception in `{ctx.command_name}`', file=sys.stderr)
                     traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
-    def _walk_slash_commands(self, cog: SlashCog):
-        self.__self = cog
-        eh = cog.__cog_listener__
-        for command, guild_id in cog.__cog_commands__:
-            if (guild_id, command) not in self.__cmd_queue:
-                func = cog.__cog_functions__[command.name]
-                if asyncio.iscoroutinefunction(func):
-                    self.__cmd_queue.append((guild_id, command))
-                    self._connection.hooks[command.name] = func
-                    if eh:
-                        if asyncio.iscoroutinefunction(eh):
-                            self._connection.hooks[eh.__name__] = eh
-                        else:
-                            raise NonCoroutine(f'listener `{eh.__name__}` must be a coroutine function')
-                else:
-                    raise NonCoroutine(f'`{func.__name__}` must be a coroutine function')
+    def _walk_slash_commands(self, cog: Cog):
+        for name, data in cog.__cog_commands__.items():
+            func = cog.__cog_functions__[name]
+            if asyncio.iscoroutinefunction(func):
+                self.__cmd_queue[name] = data
+                self._connection.hooks[name] = func
+                error_handler = cog.__cog_listener__
+                if error_handler:
+                    if asyncio.iscoroutinefunction(error_handler):
+                        self._connection.hooks[error_handler.__name__] = error_handler
+                    else:
+                        raise NonCoroutine(f'listener `{error_handler.__name__}` must be a coroutine function')
+            else:
+                raise NonCoroutine(f'`{func.__name__}` must be a coroutine function')
 
-    def add_slash_cog(self, cog: SlashCog):
+    def add_slash_cog(self, cog: Cog):
         self._walk_slash_commands(cog)
 
     async def sync_slash(self):
-        for guild_id, slash_command in self.__cmd_queue:
+        for slash_command, guild_id in self.__cmd_queue.values():
             if guild_id:
                 route = Route('POST', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
                 resp = await self.http.request(route, json=slash_command.to_dict())

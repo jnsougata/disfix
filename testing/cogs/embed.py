@@ -3,17 +3,14 @@ import asyncio
 import traceback
 import discord
 import src.extslash as extslash
-from src.extslash import commands
-from discord.ext.commands import Cog
-from src.extslash.commands import Bot, SlashCog, ApplicationContext
 
 
-class Embed(commands.SlashCog):
-    def __init__(self, bot: Bot):
+class Embed(extslash.Cog):
+    def __init__(self, bot: extslash.Bot):
         self.bot = bot
 
 
-    @commands.SlashCog.command(
+    @extslash.Cog.command(
         command=extslash.SlashCommand(
             name='xembed',
             description='creates an embed to a channel',
@@ -34,9 +31,9 @@ class Embed(commands.SlashCog):
             ],
             overwrites=[extslash.SlashOverwrite.for_role(879281380306067486)],
         ),
-        guild_id=877399405056102431
+        guild_id=None
     )
-    async def embed(self, ctx: ApplicationContext):
+    async def embed(self, ctx: extslash.ApplicationContext):
         await ctx.defer(ephemeral=True)
         slots = {}
         channel = ctx.options[0].value
@@ -68,16 +65,16 @@ class Embed(commands.SlashCog):
         await ctx.send_followup(f'Embed sent successfully to {channel.mention}')
 
 
-    @commands.SlashCog.command(
+    @extslash.Cog.command(
         command=extslash.SlashCommand(
             name='cog',
             description='accessing from same slash cog'
         ),
         guild_id=877399405056102431
     )
-    async def cog_command(self, ctx: ApplicationContext):
+    async def cog_command(self, ctx: extslash.ApplicationContext):
         await ctx.send_response('hello')
 
 
-def setup(bot: Bot):
+def setup(bot: extslash.Bot):
     bot.add_slash_cog(Embed(bot))
