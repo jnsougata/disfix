@@ -11,7 +11,7 @@ class Error(extslash.Cog):
         self.bot = bot
 
     @extslash.Cog.listener
-    async def on_slash_error(self, ctx: extslash.ApplicationContext, error: Exception):
+    async def on_command_error(self, ctx: extslash.ApplicationContext, error: Exception):
         stack = traceback.format_exception(type(error), error, error.__traceback__)
         tb = ''.join(stack)
         await ctx.send_followup(f'```py\n{tb}\n```')

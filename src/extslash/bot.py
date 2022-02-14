@@ -61,7 +61,7 @@ class Bot(commands.Bot):
             try:
                 await self._connection.call_hooks(ctx.command_name, Cog, ctx)
             except Exception as error:
-                handler = self._connection.hooks.get('on_slash_error')
+                handler = self._connection.hooks.get('on_command_error')
                 if handler:
                     await handler(ctx, error)
                 else:
