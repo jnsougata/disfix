@@ -46,7 +46,7 @@ class Bot(commands.Bot):
         :param guild_id:
         :return:
         """
-        self.__cmd_queue.append((guild_id, command))
+        self.__cmd_queue[command.name] = (command, guild_id)
 
         def decorator(func):
             @wraps(func)
