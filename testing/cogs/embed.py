@@ -6,9 +6,6 @@ import src.extslash as extslash
 
 
 class Embed(extslash.Cog):
-    def __init__(self, bot: extslash.Bot):
-        self.bot = bot
-
 
     @extslash.Cog.command(
         command=extslash.SlashCommand(
@@ -74,7 +71,9 @@ class Embed(extslash.Cog):
     )
     async def cog_command(self, ctx: extslash.ApplicationContext):
         await ctx.send_response('hello')
+        resp = await ctx.bot.wait_for('message', check=lambda m: m.author == ctx.author)
+        await ctx.send_followup(f'{resp.content}')
 
 
 def setup(bot: extslash.Bot):
-    bot.add_slash_cog(Embed(bot))
+    bot.add_slash_cog(Embed())

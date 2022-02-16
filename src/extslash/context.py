@@ -176,6 +176,10 @@ class ApplicationContext:
         self._deferred = False
 
     @property
+    def bot(self) -> discord.Client:
+        return self._client
+
+    @property
     def token(self):
         return self._ia.token
 

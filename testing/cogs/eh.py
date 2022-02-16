@@ -7,8 +7,6 @@ import src.extslash as extslash
 
 
 class Error(extslash.Cog):
-    def __init__(self, bot: extslash.Bot):
-        self.bot = bot
 
     @extslash.Cog.listener
     async def on_command_error(self, ctx: extslash.ApplicationContext, error: Exception):
@@ -29,4 +27,4 @@ class Error(extslash.Cog):
 
 
 def setup(bot: extslash.Bot):
-    bot.add_slash_cog(Error(bot))
+    bot.add_slash_cog(Error())

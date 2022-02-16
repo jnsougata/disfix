@@ -9,8 +9,7 @@ from .context import ApplicationContext
 from typing import Optional, ClassVar, Callable, List, Union, Dict, Any
 
 
-
-class Cog(ABC):
+class Cog:
 
     __cog_commands__ = {}
     __cog_functions__ = {}
