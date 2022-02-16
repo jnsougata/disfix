@@ -41,8 +41,6 @@ import extslash
 
 # Create a new cog class subclassing from extslash.Cog
 class Echo(extslash.Cog):
-    def __init__(self, bot: extslash.Bot):
-        self.bot = bot
     
     @extslash.Cog.command(
         command =  SlashCommand(
@@ -79,6 +77,6 @@ class Echo(extslash.Cog):
 def setup(bot: extslash.Bot):
     # `add_slash_cog` will add the cog to the bot
     # it takes the SlashCog class as an argument
-    bot.add_slash_cog(Echo(bot))
+    bot.add_slash_cog(Echo())
 
 ```
