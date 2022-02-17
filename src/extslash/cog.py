@@ -1,8 +1,8 @@
 import sys
-import traceback
-import asyncio
-from abc import ABC, ABCMeta
 import inspect
+import asyncio
+import traceback
+from abc import ABC, ABCMeta
 from functools import wraps
 from .errors import NonCoroutine
 from .builder import SlashCommand
