@@ -35,8 +35,8 @@ class Bot(commands.Bot):
             description=description,
             **options
         )
+        self.__queue = {}
         self.__parent = {}
-        self.__cmd_queue = {}
         self.__cached_commands = {}
 
 
@@ -47,7 +47,7 @@ class Bot(commands.Bot):
         :param guild_id:
         :return:
         """
-        self.__cmd_queue[command.name] = (command, guild_id)
+        self.__queue[command.name] = (command, guild_id)
 
         def decorator(func):
             @wraps(func)
@@ -71,13 +71,13 @@ class Bot(commands.Bot):
                     traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
     def _walk_slash_commands(self, cog: Cog):
-        for name, data in cog.__cog_based_commands__.items():
-            self.__parent[name] = data['class']
-            func = cog.__cog_functions__[name]
+        for name, data in cog.__mapped_container__.items():
+            self.__parent[name] = data['parent']
+            func = cog.__method_container__[name]
             if asyncio.iscoroutinefunction(func):
-                self.__cmd_queue[name] = (data['command'], data['guild_id'])
+                self.__queue[name] = (data['object'], data['guild_id'])
                 self._connection.hooks[name] = func
-                error_handler = cog.__cog_listener__
+                error_handler = cog.__error_listener__
                 if error_handler:
                     if asyncio.iscoroutinefunction(error_handler):
                         self._connection.hooks[error_handler.__name__] = error_handler
@@ -90,7 +90,7 @@ class Bot(commands.Bot):
         self._walk_slash_commands(cog)
 
     async def sync_slash(self):
-        for slash_command, guild_id in self.__cmd_queue.values():
+        for slash_command, guild_id in self.__queue.values():
             if guild_id:
                 route = Route('POST', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
                 resp = await self.http.request(route, json=slash_command.to_dict())

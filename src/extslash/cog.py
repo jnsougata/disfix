@@ -13,11 +13,10 @@ from typing import Optional, ClassVar, Callable, List, Union, Dict, Any
 
 class Cog(metaclass=type):
 
-
-    __cog_commands__: dict = {}
-    __cog_functions__: dict = {}
-    __cog_listener__: Callable = None
-    __cog_based_commands__: dict = {}
+    __method_container__: dict = {}
+    __object_container__: dict = {}
+    __mapped_container__: dict = {}
+    __error_listener__: Callable = None
 
     def __new__(cls, *args, **kwargs):
         elems = inspect.getfullargspec(cls).args
@@ -26,12 +25,15 @@ class Cog(metaclass=type):
         arg_list = list(args)
         for arg, value in zip(arg_names, arg_list):
             setattr(cls, arg, value)
-        copied_commands = cls.__cog_commands__.copy()
-        for name, data in copied_commands.items():
-            cls.__cog_based_commands__[name] = {"class": cls, "command": data[0], "guild_id": data[1]}
-            cls.__cog_commands__.pop(name)
-        instance = super().__new__(cls)
-        return instance
+        copied = cls.__object_container__.copy()
+        for name, data in copied.items():
+            cls.__mapped_container__[name] = {
+                "parent": cls,
+                "object": data[0],
+                "guild_id": data[1]
+            }
+            cls.__object_container__.pop(name)
+        return cls
 
 
     @classmethod
@@ -39,18 +41,18 @@ class Cog(metaclass=type):
         """
         Decorator for registering a slash command
         """
-        cls.__cog_commands__[command.name] = (command, guild_id)
+        cls.__object_container__[command.name] = (command, guild_id)
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            cls.__cog_functions__[command.name] = wrapper()
+            cls.__method_container__[command.name] = wrapper()
         return decorator
 
     @classmethod
-    def listener(cls, function: Callable):
+    def listener(cls, func: Callable):
         """
         Decorator for registering an error listener
         """
-        cls.__cog_listener__ = function
+        cls.__error_listener__ = func
