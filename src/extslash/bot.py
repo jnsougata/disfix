@@ -35,6 +35,7 @@ class Bot(commands.Bot):
             description=description,
             **options
         )
+        self.__parent = {}
         self.__cmd_queue = {}
         self.__cached_commands = {}
 
@@ -59,7 +60,8 @@ class Bot(commands.Bot):
         if interaction.type == InteractionType.application_command:
             ctx = ApplicationContext(interaction, self)
             try:
-                await self._connection.call_hooks(ctx.command_name, Cog, ctx)
+                name = ctx.command_name
+                await self._connection.call_hooks(name, self.__parent[name], ctx)
             except Exception as error:
                 handler = self._connection.hooks.get('on_command_error')
                 if handler:
@@ -69,10 +71,11 @@ class Bot(commands.Bot):
                     traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
     def _walk_slash_commands(self, cog: Cog):
-        for name, data in cog.__cog_commands__.items():
+        for name, data in cog.__cog_based_commands__.items():
+            self.__parent[name] = data['class']
             func = cog.__cog_functions__[name]
             if asyncio.iscoroutinefunction(func):
-                self.__cmd_queue[name] = data
+                self.__cmd_queue[name] = (data['command'], data['guild_id'])
                 self._connection.hooks[name] = func
                 error_handler = cog.__cog_listener__
                 if error_handler:

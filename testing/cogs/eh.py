@@ -8,6 +8,9 @@ import src.extslash as extslash
 
 class Error(extslash.Cog):
 
+    def __init__(self, bot: extslash.Bot):
+        self.bot = bot
+
     @extslash.Cog.listener
     async def on_command_error(self, ctx: extslash.ApplicationContext, error: Exception):
         stack = traceback.format_exception(type(error), error, error.__traceback__)
@@ -21,10 +24,9 @@ class Error(extslash.Cog):
         ),
         guild_id=877399405056102431
     )
-    async def cog_command(self, ctx: extslash.ApplicationContext):
-        print(1/0)
-        await ctx.send_response('hello')
+    async def xcog(self, ctx: extslash.ApplicationContext):
+        await ctx.send_response(f'hello {self.bot.user.id}')
 
 
 def setup(bot: extslash.Bot):
-    bot.add_slash_cog(Error())
+    bot.add_slash_cog(Error(bot))

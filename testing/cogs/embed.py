@@ -7,6 +7,9 @@ import src.extslash as extslash
 
 class Embed(extslash.Cog):
 
+    def __init__(self, bot: extslash.Bot):
+        self.bot = bot
+
     @extslash.Cog.command(
         command=extslash.SlashCommand(
             name='xembed',
@@ -76,4 +79,4 @@ class Embed(extslash.Cog):
 
 
 def setup(bot: extslash.Bot):
-    bot.add_slash_cog(Embed())
+    bot.add_slash_cog(Embed(bot))
