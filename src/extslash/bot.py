@@ -91,7 +91,7 @@ class Bot(commands.Bot):
     def add_slash_cog(self, cog: Cog):
         self._walk_slash_commands(cog)
 
-    async def sync_slash(self):
+    async def sync(self, silent: bool = False):
         for slash_command, guild_id in self.__queue.values():
             if guild_id:
                 route = Route('POST', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
@@ -108,26 +108,16 @@ class Bot(commands.Bot):
 
             cmd = AppCommand(resp)
             self.__cached_commands[cmd.id] = cmd
+            if not silent:
+                prompt = f'[{"GLOBAL" if not guild_id else "GUILD"}] registered /{slash_command.name}'
+                print(f'{prompt} ... ID: {resp.get("id")} ... Guild: {guild_id if guild_id else "NA"}')
 
-            prompt = f'[{"GLOBAL" if not guild_id else "GUILD"}] registered /{slash_command.name}'
-            print(f'{prompt} ... ID: {resp.get("id")} ... Guild: {guild_id if guild_id else "NA"}')
-
-    async def _cache_global_commands(self):
+    async def _sync_global(self):
         route = Route('GET', f'/applications/{self.application_id}/commands')
         resp = await self.http.request(route)
         for data in resp:
             cmd = AppCommand(data)
             self.__cached_commands[cmd.id] = cmd
-
-    async def _cache_guild_commands(self):
-        await self.wait_until_ready()
-        ids = [guild.id for guild in self.guilds]
-        for guild_id in ids:
-            route = Route('GET', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
-            resp = await self.http.request(route)
-            for data in resp:
-                cmd = AppCommand(data)
-                self.__cached_commands[cmd.id] = cmd
 
     async def fetch_slash_command(self, command_id: int, guild_id: int = None):
         if guild_id:
@@ -166,6 +156,6 @@ class Bot(commands.Bot):
         await self.login(token)
         app_info = await self.application_info()
         self._connection.application_id = app_info.id
-        await self._cache_global_commands()
-        await self.sync_slash()
+        await self.sync()
+        await self._sync_global()
         await self.connect(reconnect=reconnect)

@@ -17,6 +17,5 @@ class MyBot(extslash.Bot):
 
 
 bot = MyBot()
-bot.load_extension('cogs.eh')
 bot.load_extension('cogs.embed')
 bot.run(os.getenv('DISCORD_TOKEN'))
