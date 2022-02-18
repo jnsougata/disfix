@@ -17,6 +17,19 @@ class Error(extslash.Cog):
         tb = ''.join(stack)
         await ctx.send_followup(f'```py\n{tb}\n```')
 
+    @extslash.Cog.command(
+        command=extslash.SlashCommand(
+            name='all',
+            description='get all commands'),
+        guild_id=877399405056102431
+    )
+    async def all_command(self, ctx: extslash.ApplicationContext):
+        await ctx.defer()
+        await self.bot.sync_global_commands()
+        await ctx.send_followup(f'```py\n{self.bot.application_commands}\n```')
+
+
+
 
 def setup(bot: extslash.Bot):
     bot.add_slash_cog(Error(bot))

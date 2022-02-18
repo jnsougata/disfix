@@ -9,8 +9,8 @@ from .builder import SlashCommand, SlashOverwrite
 from discord.http import Route
 from functools import wraps
 from .context import ApplicationContext
-from .base import AppCommand, Overwrite
-from typing import Callable, Optional, Any, Union
+from .base import ApplicationCommand, Overwrite
+from typing import Callable, Optional, Any, Union, List, Dict, Tuple
 from discord.ext import commands
 from discord.http import Route
 from discord.enums import InteractionType
@@ -40,8 +40,11 @@ class Bot(commands.Bot):
         )
         self.__queue = {}
         self.__parent = {}
-        self.__cached_commands = {}
+        self._application_commands: Dict[int, ApplicationCommand] = {}
 
+    @property
+    def application_commands(self):
+        return list(self._application_commands.values())
 
     def slash_command(self, command: SlashCommand, guild_id: Optional[int] = None):
         """
@@ -67,7 +70,7 @@ class Bot(commands.Bot):
             except Exception as error:
                 handler = self._connection.hooks.get('on_command_error')
                 if handler:
-                    await handler(ctx, error)
+                    await handler(self.__parent['eh'], ctx, error)
                 else:
                     print(f'Ignoring exception in `{ctx.name}`', file=sys.stderr)
                     traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
@@ -79,10 +82,11 @@ class Bot(commands.Bot):
             if asyncio.iscoroutinefunction(func):
                 self.__queue[name] = (data['object'], data['guild_id'])
                 self._connection.hooks[name] = func
-                error_handler = cog.__error_listener__
+                error_handler = cog.__error_listener__.get('fn')
                 if error_handler:
                     if asyncio.iscoroutinefunction(error_handler):
                         self._connection.hooks[error_handler.__name__] = error_handler
+                        self.__parent['eh'] = cog.__error_listener__.get('parent')
                     else:
                         raise NonCoroutine(f'listener `{error_handler.__name__}` must be a coroutine function')
             else:
@@ -91,7 +95,7 @@ class Bot(commands.Bot):
     def add_slash_cog(self, cog: Cog):
         self._walk_slash_commands(cog)
 
-    async def sync(self, silent: bool = False):
+    async def sync_current_commands(self, silent: bool = False):
         for slash_command, guild_id in self.__queue.values():
             if guild_id:
                 route = Route('POST', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
@@ -106,26 +110,36 @@ class Bot(commands.Bot):
                 route = Route('POST', f'/applications/{self.application_id}/commands')
                 resp = await self.http.request(route, json=slash_command.to_dict())
 
-            cmd = AppCommand(resp)
-            self.__cached_commands[cmd.id] = cmd
+            cmd = ApplicationCommand(resp, self)
+            self._application_commands[cmd.id] = cmd
             if not silent:
                 prompt = f'[{"GLOBAL" if not guild_id else "GUILD"}] registered /{slash_command.name}'
                 print(f'{prompt} ... ID: {resp.get("id")} ... Guild: {guild_id if guild_id else "NA"}')
 
-    async def _sync_global(self):
+    async def sync_global_commands(self):
         route = Route('GET', f'/applications/{self.application_id}/commands')
         resp = await self.http.request(route)
         for data in resp:
-            cmd = AppCommand(data)
-            self.__cached_commands[cmd.id] = cmd
+            cmd = ApplicationCommand(data, self)
+            self._application_commands[cmd.id] = cmd
 
-    async def fetch_slash_command(self, command_id: int, guild_id: int = None):
+    async def sync_guild_commands(self, guild: discord.Guild):
+        route = Route('GET', f'/applications/{self.application_id}/guilds/{guild.id}/commands')
+        resp = await self.http.request(route)
+        for data in resp:
+            cmd = ApplicationCommand(data, self)
+            self._application_commands[cmd.id] = cmd
+
+    async def fetch_application_command(self, command_id: int, guild_id: int = None):
         if guild_id:
             route = Route('GET', f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}')
         else:
             route = Route('GET', f'/applications/{self.application_id}/commands/{command_id}')
         resp = await self.http.request(route)
-        return AppCommand(resp)
+        return ApplicationCommand(resp, self)
+
+    def get_application_command(self, command_id: int):
+        return self._application_commands.get(command_id)
 
     async def delete_slash_command(self, command_id: int, guild_id: int = None):
         if guild_id:
@@ -140,8 +154,8 @@ class Bot(commands.Bot):
         else:
             route = Route('PATCH', f'/applications/{self.application_id}/commands/{command_id}')
         resp = await self.http.request(route, json=updated.to_dict())
-        cmd = AppCommand(resp)
-        self.__cached_commands[cmd.id] = cmd
+        cmd = ApplicationCommand(resp, self)
+        self._application_commands[cmd.id] = cmd
         return cmd
 
     async def update_slash_permission(self, guild_id: int, command_id: int, overwrites: [SlashOverwrite]):
@@ -156,6 +170,6 @@ class Bot(commands.Bot):
         await self.login(token)
         app_info = await self.application_info()
         self._connection.application_id = app_info.id
-        await self.sync()
-        await self._sync_global()
+        await self.sync_global_commands()
+        await self.sync_current_commands()
         await self.connect(reconnect=reconnect)

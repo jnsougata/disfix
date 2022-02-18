@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import List, Optional, Union, Any
 import discord
+from enum import Enum
+from discord.http import Route
 from .enums import OptionType, ResolvedAttachment
 
 
@@ -116,15 +118,20 @@ class InteractionDataOption:
         return self._data.get('focused')
 
 
-class AppCommand:
-    def __init__(self, data: dict):
+class ApplicationCommand:
+    def __init__(self, data: dict, client: discord.Client):
         self._payload = data
+        self._client = client
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __repr__(self):
+        return f'<ApplicationCommand id = {self.id} name = {self.name}>'
 
     @property
     def id(self) -> int:
-        id_ = self._payload.get('id')
-        if id_:
-            return int(id_)
+        return self._payload.get('id')
 
     @property
     def name(self) -> str:
@@ -143,10 +150,12 @@ class AppCommand:
         return int(self._payload.get('application_id'))
 
     @property
-    def guild_id(self) -> int:
+    def guild(self):
         guild_id = self._payload.get('guild_id')
         if guild_id:
-            return int(guild_id)
+            return self._client.get_guild(int(guild_id))
+        else:
+            return None
 
     @property
     def options(self) -> list:
@@ -179,6 +188,14 @@ class AppCommand:
     @property
     def permissions(self):  # TODO: implement
         return self._payload.get('permissions')
+
+    async def delete(self):
+        if self.guild:
+            route = Route('DELETE', f'/applications/{self.application_id}/guilds/{self.guild}/commands/{self.id}')
+        else:
+            route = Route('DELETE', f'/applications/{self.application_id}/commands/{self.id}')
+        await self._client.http.request(route)
+
 
 
 @dataclass(frozen=True)
@@ -215,3 +232,9 @@ class Overwrite:
     @property
     def permissions(self):
         return [PermissionData(**perm) for perm in self._perms.permissions]
+
+
+class ApplicationCommandType(Enum):
+    USER = 2
+    MESSAGE = 3
+    CHAT_INPUT = 1

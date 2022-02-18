@@ -16,7 +16,7 @@ class Cog(metaclass=type):
     __method_container__: dict = {}
     __object_container__: dict = {}
     __mapped_container__: dict = {}
-    __error_listener__: Callable = None
+    __error_listener__: dict = {'fn': None, 'parent': None}
 
     def __new__(cls, *args, **kwargs):
         elems = inspect.getfullargspec(cls).args
@@ -55,4 +55,4 @@ class Cog(metaclass=type):
         """
         Decorator for registering an error listener
         """
-        cls.__error_listener__ = func
+        cls.__error_listener__ = {'fn': func, 'parent': cls}

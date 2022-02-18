@@ -4,7 +4,12 @@ import json
 import discord
 from discord.http import Route
 from discord.utils import MISSING
-from .base import InteractionData, InteractionDataOption, InteractionDataResolved
+from .base import (
+    InteractionData,
+    InteractionDataOption,
+    InteractionDataResolved,
+    ApplicationCommandType
+)
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List
 
 
@@ -174,6 +179,17 @@ class ApplicationContext:
         self._client = client
         self._deferred = False
 
+
+    @property
+    def type(self):
+        raw_type = self._ia.data.get('type')
+        if raw_type == ApplicationCommandType.CHAT_INPUT.value:
+            return ApplicationCommandType.CHAT_INPUT
+        elif raw_type == ApplicationCommandType.USER.value:
+            return ApplicationCommandType.USER
+        elif raw_type == ApplicationCommandType.MESSAGE.value:
+            return ApplicationCommandType.MESSAGE
+
     @property
     def name(self) -> str:
         return self._ia.data.get('name')
@@ -188,7 +204,7 @@ class ApplicationContext:
 
     @property
     def id(self):
-        return self._ia.id
+        return self._ia.data.get('id')
 
     @property
     def version(self):
