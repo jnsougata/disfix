@@ -12,10 +12,13 @@ from .context import ApplicationContext
 from .base import AppCommand, Overwrite
 from typing import Callable, Optional, Any, Union
 from discord.ext import commands
+from discord.http import Route
 from discord.enums import InteractionType
 
 
 __all__ = ['Bot']
+
+Route.BASE = 'https://discord.com/api/v10'  # override the default route
 
 
 class Bot(commands.Bot):
@@ -60,14 +63,13 @@ class Bot(commands.Bot):
         if interaction.type == InteractionType.application_command:
             ctx = ApplicationContext(interaction, self)
             try:
-                name = ctx.command_name
-                await self._connection.call_hooks(name, self.__parent[name], ctx)
+                await self._connection.call_hooks(ctx.name, self.__parent[ctx.name], ctx)
             except Exception as error:
                 handler = self._connection.hooks.get('on_command_error')
                 if handler:
                     await handler(ctx, error)
                 else:
-                    print(f'Ignoring exception in `{ctx.command_name}`', file=sys.stderr)
+                    print(f'Ignoring exception in `{ctx.name}`', file=sys.stderr)
                     traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
     def _walk_slash_commands(self, cog: Cog):

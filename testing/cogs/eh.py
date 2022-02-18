@@ -17,16 +17,6 @@ class Error(extslash.Cog):
         tb = ''.join(stack)
         await ctx.send_followup(f'```py\n{tb}\n```')
 
-    @extslash.Cog.command(
-        command=extslash.SlashCommand(
-            name='xcog',
-            description='accessing from same slash cog'
-        ),
-        guild_id=877399405056102431
-    )
-    async def xcog(self, ctx: extslash.ApplicationContext):
-        await ctx.send_response(f'hello {self.bot.user.id}')
-
 
 def setup(bot: extslash.Bot):
     bot.add_slash_cog(Error(bot))

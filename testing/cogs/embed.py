@@ -12,7 +12,7 @@ class Embed(extslash.Cog):
 
     @extslash.Cog.command(
         command=extslash.SlashCommand(
-            name='xembed',
+            name='embed',
             description='creates an embed to a channel',
             options=[
                 extslash.ChannelOption(
@@ -31,7 +31,7 @@ class Embed(extslash.Cog):
             ],
             overwrites=[extslash.SlashOverwrite.for_role(879281380306067486)],
         ),
-        guild_id=None
+        guild_id=877399405056102431
     )
     async def embed(self, ctx: extslash.ApplicationContext):
         await ctx.defer(ephemeral=True)
@@ -63,19 +63,6 @@ class Embed(extslash.Cog):
         embed = discord.Embed.from_dict(slots)
         await channel.send(embed=embed)
         await ctx.send_followup(f'Embed sent successfully to {channel.mention}')
-
-
-    @extslash.Cog.command(
-        command=extslash.SlashCommand(
-            name='cog',
-            description='accessing from same slash cog'
-        ),
-        guild_id=877399405056102431
-    )
-    async def cog_command(self, ctx: extslash.ApplicationContext):
-        await ctx.send_response('hello')
-        resp = await ctx.bot.wait_for('message', check=lambda m: m.author == ctx.author)
-        await ctx.send_followup(f'{resp.content}')
 
 
 def setup(bot: extslash.Bot):

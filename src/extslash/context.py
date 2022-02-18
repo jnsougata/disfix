@@ -2,10 +2,9 @@ import sys
 import asyncio
 import json
 import discord
-from .base import AppCommand
+from discord.http import Route
 from discord.utils import MISSING
 from .base import InteractionData, InteractionDataOption, InteractionDataResolved
-from discord.http import Route
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List
 
 
@@ -176,8 +175,12 @@ class ApplicationContext:
         self._deferred = False
 
     @property
-    def bot(self) -> discord.Client:
-        return self._client
+    def name(self) -> str:
+        return self._ia.data.get('name')
+
+    @property
+    def description(self) -> str:
+        return self._ia.data.get('description')
 
     @property
     def token(self):
@@ -186,26 +189,6 @@ class ApplicationContext:
     @property
     def id(self):
         return self._ia.id
-
-    @property
-    def command(self):
-        return AppCommand(self._ia.data)
-
-    @property
-    def command_id(self):
-        """
-        returns the command id of the application command
-        :return:
-        """
-        return self._ia.data.get('id')
-
-    @property
-    def command_name(self) -> str:
-        """
-        returns the command name used to invoke the interaction
-        :return:
-        """
-        return self._ia.data.get('name')
 
     @property
     def version(self):
@@ -518,9 +501,9 @@ class Followup:
             files=files,
             embed=embed,
             embeds=embeds,
-            allowed_mentions=allowed_mentions,
             view=view,
-            views=views)
+            views=views,
+            allowed_mentions=allowed_mentions)
 
         payload['wait'] = True
 
