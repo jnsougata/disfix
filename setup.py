@@ -12,7 +12,7 @@ setup(
     description='Integrates application commands with discord.py 2.0',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/jnsougata/ExtSlash',
+    url='https://github.com/jnsougata/app_util',
     author='jnsougata',
     author_email='jnsougata@gmail.com',
     classifiers=[
@@ -31,7 +31,7 @@ setup(
     python_requires='>=3.6, <4',
     install_requires=[],
     project_urls={
-        'Bug Reports': 'https://github.com/jnsougata/ExtSlash/issues',
-        'Source': 'https://github.com/jnsougata/ExtSlash',
+        'Bug Reports': 'https://github.com/jnsougata/app_util/issues',
+        'Source': 'https://github.com/jnsougata/app_util',
     },
 )
