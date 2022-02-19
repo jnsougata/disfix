@@ -237,6 +237,26 @@ class Context:
             return InteractionDataResolved(**d)
 
     @property
+    def resolved_message(self):
+        """
+        returns the resolved message of the interaction
+        :return:
+        """
+        if self.type is ApplicationCommandType.MESSAGE:
+            data = list(self.resolved.messages.values())[0]
+            return discord.Message(state=self._client._connection, channel=self.channel, data=data)
+
+    @property
+    def resolved_user(self):
+        """
+        returns the resolved user of the interaction
+        :return:
+        """
+        if self.type is ApplicationCommandType.USER:
+            data = list(self.resolved.users.values())[0]
+            return discord.User(state=self._client._connection, data=data)
+
+    @property
     def options(self):
         """
         returns the options of the interaction
