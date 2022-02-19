@@ -1,7 +1,7 @@
 from .app import Overwrite
 
 
-class UserCommand:
+class MessageCommand:
     def __init__(
             self,
             *,
@@ -9,10 +9,10 @@ class UserCommand:
             default_access: bool = True,
             overwrites: [Overwrite] = None,
     ):
-        self._map = 'USER_' + name.replace(" ", "_").upper()  # name for mapping
+        self._map = 'MESSAGE_' + name.replace(" ", "_").upper()  # name for mapping
         self._payload = {
             'name': name,
-            'type': 2,
+            'type': 3,
             'default_permission': default_access,
         }
         self._overwrites = {}

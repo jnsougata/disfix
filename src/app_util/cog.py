@@ -5,9 +5,9 @@ import traceback
 from abc import ABC, ABCMeta
 from functools import wraps
 from .errors import NonCoroutine
-from .chat_input import SlashCommand
+from .slash_input import SlashCommand
 from .user_input import UserCommand
-from .message_input import MessageCommand
+from .msg_input import MessageCommand
 from .context import Context
 from typing import Optional, ClassVar, Callable, List, Union, Dict, Any
 
@@ -43,13 +43,13 @@ class Cog(metaclass=type):
         """
         Decorator for registering a slash command
         """
-        cls.__object_container__[command.name] = (command, guild_id)
+        cls.__object_container__[command._map] = (command, guild_id)
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            cls.__method_container__[command.name] = wrapper()
+            cls.__method_container__[command._map] = wrapper()
         return decorator
 
     @classmethod
@@ -57,5 +57,5 @@ class Cog(metaclass=type):
         """
         Decorator for registering an error listener
         """
-        cls.__error_listener__ = {'fn': func, 'parent': cls}
+        cls.__error_listener__ = {'callable': func, 'parent': cls}
         return func

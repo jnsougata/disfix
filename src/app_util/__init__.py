@@ -15,12 +15,12 @@ __license__ = 'MIT'
 __version__ = '0.0.3'
 __copyright__ = 'Copyright 2022-present jnsougata'
 
-from .chat_input import *
-from .user_input import UserCommand
-from .message_input import MessageCommand
+
 from .bot import Bot
 from .cog import Cog
 from .errors import *
 from .app import Overwrite
 from .context import Context
-
+from .slash_input import *
+from .user_input import UserCommand
+from .msg_input import MessageCommand

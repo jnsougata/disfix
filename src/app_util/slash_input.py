@@ -242,7 +242,7 @@ class SlashCommand:
             default_access: bool = True,
             overwrites: list[Overwrite] = None,
     ) -> None:
-        self.name = name
+        self._map = 'SLASH_' + name.upper()
         self._overwrites = overwrites
         self._payload = {
             "name": name,

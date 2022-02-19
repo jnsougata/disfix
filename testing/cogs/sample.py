@@ -49,6 +49,16 @@ class Error(app_util.Cog):
         await ctx.send_response(f'User promoted by {ctx.author.mention}'
                                 f'\n**Resolved:**```py\n{ctx.resolved.users}\n```')
 
+    @app_util.Cog.command(
+        command=app_util.MessageCommand(
+            name='Pin',
+        ),
+        guild_id=877399405056102431
+    )
+    async def pin_command(self, ctx: app_util.Context):
+        await ctx.send_response(f'Message pinned by {ctx.author.mention}'
+                                f'\n**Resolved:**```py\n{ctx.resolved.messages}\n```')
+
 
 def setup(bot: app_util.Bot):
     bot.add_application_cog(Error(bot))

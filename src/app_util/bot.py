@@ -5,9 +5,9 @@ import asyncio
 import traceback
 from .errors import *
 from .cog import Cog
-from .chat_input import SlashCommand
+from .slash_input import SlashCommand
 from .user_input import UserCommand
-from .message_input import MessageCommand
+from .msg_input import MessageCommand
 from .app import Overwrite
 from discord.http import Route
 from functools import wraps
@@ -69,40 +69,40 @@ class Bot(commands.Bot):
         if interaction.type == InteractionType.application_command:
             ctx = Context(interaction, self)
             if ctx.type is ApplicationCommandType.CHAT_INPUT:
-                command_name = ctx.name
+                lookup_name = 'SLASH_' + ctx.name.upper()
             elif ctx.type is ApplicationCommandType.MESSAGE:
-                command_name = ctx.name
+                lookup_name = 'MESSAGE_' + ctx.name.replace(' ', '_').upper()
             elif ctx.type is ApplicationCommandType.USER:
-                command_name = ctx.name.replace(' ', '_').lower()
+                lookup_name = 'USER_' + ctx.name.replace(' ', '_').upper()
             else:
                 raise TypeError(f'Unknown command type: {ctx.type}')
             try:
-                await self._connection.call_hooks(command_name, self.__parent[command_name], ctx)
+                await self._connection.call_hooks(lookup_name, self.__parent[lookup_name], ctx)
             except Exception as error:
                 handler = self._connection.hooks.get('on_command_error')
                 if handler:
-                    await handler(self.__parent['eh'], ctx, error)
+                    await handler(self.__parent['handler'], ctx, error)
                 else:
                     print(f'Ignoring exception in `{ctx.name}`', file=sys.stderr)
                     traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 
     def _walk_app_commands(self, cog: Cog):
-        for name, data in cog.__mapped_container__.items():
-            self.__parent[name] = data['parent']
-            func = cog.__method_container__[name]
-            if asyncio.iscoroutinefunction(func):
-                self.__queue[name] = (data['object'], data['guild_id'])
-                self._connection.hooks[name] = func
-                error_handler = cog.__error_listener__.get('fn')
+        for lookup_name, data in cog.__mapped_container__.items():
+            self.__parent[lookup_name] = data['parent']
+            method = cog.__method_container__[lookup_name]
+            if asyncio.iscoroutinefunction(method):
+                self.__queue[lookup_name] = (data['object'], data['guild_id'])
+                self._connection.hooks[lookup_name] = method
+                error_handler = cog.__error_listener__.get('callable')
                 if error_handler:
                     if asyncio.iscoroutinefunction(error_handler):
                         self._connection.hooks[error_handler.__name__] = error_handler
-                        self.__parent['eh'] = cog.__error_listener__.get('parent')
+                        self.__parent['handler'] = cog.__error_listener__.get('parent')
                     else:
                         raise NonCoroutine(f'listener `{error_handler.__name__}` must be a coroutine function')
             else:
-                raise NonCoroutine(f'`{func.__name__}` must be a coroutine function')
+                raise NonCoroutine(f'`{method.__name__}` must be a coroutine function')
 
     def add_application_cog(self, cog: Cog):
         self._walk_app_commands(cog)
