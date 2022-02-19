@@ -1,4 +1,4 @@
-# ExtSlash 
+# app_util 
 A module to integrate Slash Commands into your bot written in *discord.py 2.0*
 
 ### Installation:
@@ -8,7 +8,7 @@ Before working with it, you need to install the core dependency - **discord.py(2
 
 Then you can install the module:
 
-`pip install extslash`
+`pip install app_util`
 
 ### Create a new instance of the bot:
 
