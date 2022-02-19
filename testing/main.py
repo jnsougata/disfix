@@ -1,6 +1,6 @@
 import os
 import discord
-import src.app_utils as app
+import src.app_util as app
 
 
 intents = discord.Intents.default()

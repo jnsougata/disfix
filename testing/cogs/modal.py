@@ -2,8 +2,8 @@ import sys
 import asyncio
 import traceback
 import discord
-import src.app_utils as extslash
-from src.app_utils.commands import Bot, AppCog, ApplicationContext
+import src.app_util as extslash
+from src.app_util.commands import Bot, AppCog, ApplicationContext
 
 
 class Modal(AppCog):

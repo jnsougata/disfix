@@ -2,7 +2,7 @@ import sys
 import asyncio
 import traceback
 import discord
-import src.app_utils as extslash
+import src.app_util as extslash
 
 
 class Embed(app_utils.Cog):

@@ -30,7 +30,7 @@ class InteractionData:
 
 @dataclass(frozen=True)
 class InteractionDataResolved:
-    # only for app_utils command
+    # only for app_util command
     users: Optional[dict] = None
     members: Optional[dict] = None
     roles: Optional[dict] = None
