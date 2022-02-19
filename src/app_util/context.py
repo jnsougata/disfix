@@ -4,11 +4,7 @@ import json
 import discord
 from discord.http import Route
 from discord.utils import MISSING
-from .base import (
-    InteractionData,
-    InteractionDataOption,
-    InteractionDataResolved,
-)
+from .base import InteractionData, InteractionDataOption, Resolved
 from .enums import ApplicationCommandType
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List
 
@@ -233,28 +229,25 @@ class Context:
         :return:
         """
         d = self.data.resolved
-        if d:
-            return InteractionDataResolved(**d)
+        return Resolved(d, self) if d else None
 
     @property
     def resolved_message(self):
         """
-        returns the resolved message of the interaction
+        returns the resolved message of the MESSAGE COMMAND
         :return:
         """
         if self.type is ApplicationCommandType.MESSAGE:
-            data = list(self.resolved.messages.values())[0]
-            return discord.Message(state=self._client._connection, channel=self.channel, data=data)
+            return self.resolved.message[0]
 
     @property
     def resolved_user(self):
         """
-        returns the resolved user of the interaction
+        returns the resolved user of the USER COMMAND
         :return:
         """
         if self.type is ApplicationCommandType.USER:
-            data = list(self.resolved.users.values())[0]
-            return discord.User(state=self._client._connection, data=data)
+            return self.resolved.users[0]
 
     @property
     def options(self):

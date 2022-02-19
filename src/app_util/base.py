@@ -28,15 +28,53 @@ class InteractionData:
     target_id: Optional[str] = None
 
 
-@dataclass(frozen=True)
-class InteractionDataResolved:
-    # only for app_util command
-    users: Optional[dict] = None
-    members: Optional[dict] = None
-    roles: Optional[dict] = None
-    channels: Optional[dict] = None
-    messages: Optional[dict] = None
-    attachments: Optional[dict] = None
+class Resolved:
+    def __init__(self, payload: dict, ctx):
+        self._ctx = ctx
+        self._payload = payload
+        self._client = ctx._client
+
+    @property
+    def users(self) -> List[discord.User]:
+        if self._payload.get('users'):
+            return [
+                discord.User(data=payload, state=self._client._connection)
+                for payload in self._payload['users'].values()]
+
+    @property
+    def members(self) -> List[discord.Member]:
+        if self._payload.get('members'):
+            return [
+                discord.Member(data=payload, state=self._client._connection)
+                for payload in self._payload['members'].values()]
+
+    @property
+    def roles(self) -> List[discord.Role]:
+        if self._payload.get('roles'):
+            return [
+                discord.Role(guild=self._ctx.guild, data=payload, state=self._client._connection)
+                for payload in self._payload['roles'].values()]
+
+    @property
+    def channels(self):
+        if self._payload.get('channels'):
+            return [
+                discord.abc.GuildChannel(data=payload, state=self._client._connection, guild=self._ctx.guild)
+                for payload in self._payload['channels'].values()]
+
+    @property
+    def messages(self):
+        if self._payload.get('messages'):
+            return [
+                discord.Message(data=payload, state=self._client._connection, channel=self._ctx.channel)
+                for payload in self._payload['guilds'].values()]
+
+    @property
+    def attachments(self):
+        if self._payload.get('attachments'):
+            return [
+                discord.Attachment(data=payload, state=self._client._connection)
+                for payload in self._payload['attachments'].values()]
 
 
 @dataclass(frozen=True)
@@ -60,7 +98,7 @@ class InteractionDataOption:
             data: dict,
             guild: discord.Guild,
             client: discord.Client,
-            resolved: InteractionDataResolved,
+            resolved: Resolved,
     ):
         self._data = data
         self._guild = guild
