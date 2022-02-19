@@ -7,7 +7,7 @@ here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 setup(
-    name='extslash',
+    name='app_utils',
     version='0.1.8',
     description='Integrates slash commands with discord.py 2.0',
     long_description=long_description,
@@ -25,7 +25,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         'Programming Language :: Python :: 3 :: Only',
     ],
-    keywords='discord.py, slash-commands, extslash-commands, python-discord-bot',
+    keywords='discord.py, slash-commands, app_utils-commands, python-discord-bot',
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
     python_requires='>=3.6, <4',

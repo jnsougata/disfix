@@ -30,7 +30,7 @@ class InteractionData:
 
 @dataclass(frozen=True)
 class InteractionDataResolved:
-    # only for extslash command
+    # only for app_utils command
     users: Optional[dict] = None
     members: Optional[dict] = None
     roles: Optional[dict] = None
@@ -195,7 +195,7 @@ class PermissionData:
     permission: bool
 
 
-class Overwrite:
+class BaseOverwrite:
     def __init__(self, data: dict):
         self._perms = BasePermission(**data)
 

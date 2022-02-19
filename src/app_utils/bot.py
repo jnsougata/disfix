@@ -5,11 +5,15 @@ import asyncio
 import traceback
 from .errors import *
 from .cog import Cog
-from .builder import SlashCommand, SlashOverwrite
+from .chat_input import SlashCommand
+from .user_input import UserCommand
+from .message_input import MessageCommand
+from .app import Overwrite
 from discord.http import Route
 from functools import wraps
-from .context import ApplicationContext
-from .base import ApplicationCommand, Overwrite
+from .context import Context
+from .enums import ApplicationCommandType
+from .base import ApplicationCommand, BaseOverwrite
 from typing import Callable, Optional, Any, Union, List, Dict, Tuple
 from discord.ext import commands
 from discord.http import Route
@@ -61,11 +65,19 @@ class Bot(commands.Bot):
             self._connection.hooks[command.name] = wrapper()
         return decorator
 
-    async def _invoke_slash(self, interaction: discord.Interaction):
+    async def _invoke_app_command(self, interaction: discord.Interaction):
         if interaction.type == InteractionType.application_command:
-            ctx = ApplicationContext(interaction, self)
+            ctx = Context(interaction, self)
+            if ctx.type is ApplicationCommandType.CHAT_INPUT:
+                command_name = ctx.name
+            elif ctx.type is ApplicationCommandType.MESSAGE:
+                command_name = ctx.name
+            elif ctx.type is ApplicationCommandType.USER:
+                command_name = ctx.name.replace(' ', '_').lower()
+            else:
+                raise TypeError(f'Unknown command type: {ctx.type}')
             try:
-                await self._connection.call_hooks(ctx.name, self.__parent[ctx.name], ctx)
+                await self._connection.call_hooks(command_name, self.__parent[command_name], ctx)
             except Exception as error:
                 handler = self._connection.hooks.get('on_command_error')
                 if handler:
@@ -74,7 +86,8 @@ class Bot(commands.Bot):
                     print(f'Ignoring exception in `{ctx.name}`', file=sys.stderr)
                     traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
-    def _walk_slash_commands(self, cog: Cog):
+
+    def _walk_app_commands(self, cog: Cog):
         for name, data in cog.__mapped_container__.items():
             self.__parent[name] = data['parent']
             func = cog.__method_container__[name]
@@ -91,8 +104,8 @@ class Bot(commands.Bot):
             else:
                 raise NonCoroutine(f'`{func.__name__}` must be a coroutine function')
 
-    def add_slash_cog(self, cog: Cog):
-        self._walk_slash_commands(cog)
+    def add_application_cog(self, cog: Cog):
+        self._walk_app_commands(cog)
 
     async def sync_current_commands(self, silent: bool = False):
         for command, guild_id in self.__queue.values():
@@ -157,7 +170,7 @@ class Bot(commands.Bot):
         self._application_commands[cmd.id] = cmd
         return cmd
 
-    async def update_slash_permission(self, guild_id: int, command_id: int, overwrites: [SlashOverwrite]):
+    async def update_slash_permission(self, guild_id: int, command_id: int, overwrites: [Overwrite]):
         payload = [perm.to_dict() for perm in overwrites]
         route = Route('PATCH',
                       f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}/permissions')
@@ -165,7 +178,7 @@ class Bot(commands.Bot):
 
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
-        self.add_listener(self._invoke_slash, 'on_interaction')
+        self.add_listener(self._invoke_app_command, 'on_interaction')
         await self.login(token)
         app_info = await self.application_info()
         self._connection.application_id = app_info.id

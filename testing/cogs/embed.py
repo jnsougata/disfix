@@ -2,38 +2,38 @@ import sys
 import asyncio
 import traceback
 import discord
-import src.extslash as extslash
+import src.app_utils as extslash
 
 
-class Embed(extslash.Cog):
+class Embed(app_utils.Cog):
 
-    def __init__(self, bot: extslash.Bot):
+    def __init__(self, bot: app_utils.Bot):
         self.bot = bot
 
-    @extslash.Cog.command(
-        command=extslash.SlashCommand(
+    @app_utils.Cog.command(
+        command=app_utils.SlashCommand(
             name='embed',
             description='creates an embed to a channel',
             options=[
-                extslash.ChannelOption(
+                app_utils.ChannelOption(
                     name='channel',
                     description='text channel to send the embed to',
-                    channel_types=[extslash.ChannelType.GUILD_TEXT],
+                    channel_types=[app_utils.ChannelType.GUILD_TEXT],
                     required=True),
-                extslash.StrOption('title', 'title of the embed', required=False),
-                extslash.StrOption('description', 'description of the embed', required=False),
-                extslash.StrOption('url', 'url of the embed', required=False),
-                extslash.StrOption('color', 'color hex of the embed', required=False),
-                extslash.UserOption('author', 'author of the embed', required=False),
-                extslash.StrOption('footer', 'footer text of the embed', required=False),
-                extslash.AttachmentOption('thumbnail', 'image file for thumbnail', required=False),
-                extslash.AttachmentOption('image', 'image file for embed image', required=False),
+                app_utils.StrOption('title', 'title of the embed', required=False),
+                app_utils.StrOption('description', 'description of the embed', required=False),
+                app_utils.StrOption('url', 'url of the embed', required=False),
+                app_utils.StrOption('color', 'color hex of the embed', required=False),
+                app_utils.UserOption('author', 'author of the embed', required=False),
+                app_utils.StrOption('footer', 'footer text of the embed', required=False),
+                app_utils.AttachmentOption('thumbnail', 'image file for thumbnail', required=False),
+                app_utils.AttachmentOption('image', 'image file for embed image', required=False),
             ],
-            overwrites=[extslash.SlashOverwrite.for_role(879281380306067486)],
+            overwrites=[app_utils.SlashOverwrite.for_role(879281380306067486)],
         ),
         guild_id=877399405056102431
     )
-    async def embed(self, ctx: extslash.ApplicationContext):
+    async def embed(self, ctx: app_utils.Context):
         await ctx.defer(ephemeral=True)
         slots = {}
         channel = ctx.options[0].value
@@ -65,5 +65,5 @@ class Embed(extslash.Cog):
         await ctx.send_followup(f'Embed sent successfully to {channel.mention}')
 
 
-def setup(bot: extslash.Bot):
-    bot.add_slash_cog(Embed(bot))
+def setup(bot: app_utils.Bot):
+    bot.add_application_cog(Embed(bot))

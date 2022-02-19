@@ -173,7 +173,7 @@ def _handle_send_prams(
     return payload, form
 
 
-class ApplicationContext:
+class Context:
     def __init__(self, action: discord.Interaction, client: discord.Client):
         self._ia = action
         self._client = client
@@ -242,9 +242,14 @@ class ApplicationContext:
         returns the options of the interaction
         :return: InteractionDataOption
         """
+        if self.type is ApplicationCommandType.CHAT_INPUT:
+            return None
+        if self.type is ApplicationCommandType.MESSAGE:
+            return None
         options = self.data.options
         if options:
-            return [InteractionDataOption(option, self.guild, self._client, self.resolved) for option in options]
+            return [InteractionDataOption(option, self.guild, self._client, self.resolved)
+                    for option in options]
 
     @property
     def application_id(self):
@@ -490,7 +495,7 @@ class ApplicationContext:
 
 
 class Followup:
-    def __init__(self, parent: ApplicationContext, payload: dict, ephemeral: bool = False):
+    def __init__(self, parent: Context, payload: dict, ephemeral: bool = False):
         self._data = payload
         self._parent = parent
         self._eph = ephemeral

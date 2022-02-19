@@ -2,8 +2,8 @@ import sys
 import asyncio
 import traceback
 import discord
-import src.extslash as extslash
-from src.extslash.commands import Bot, AppCog, ApplicationContext
+import src.app_utils as extslash
+from src.app_utils.commands import Bot, AppCog, ApplicationContext
 
 
 class Modal(AppCog):
@@ -11,7 +11,7 @@ class Modal(AppCog):
         self.bot = bot
 
     def register(self):
-        return extslash.SlashCommand(
+        return app_utils.SlashCommand(
             name='modal',
             description='testing a modal',
         )
@@ -64,4 +64,4 @@ class Modal(AppCog):
 
 
 def setup(bot: Bot):
-    bot.add_slash_cog(Modal(bot), 877399405056102431)
+    bot.add_application_cog(Modal(bot), 877399405056102431)

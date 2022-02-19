@@ -1,5 +1,6 @@
 from typing import Any, Union, List, Dict, Optional
 from dataclasses import dataclass
+from .app import Overwrite
 
 
 @dataclass(frozen=True)
@@ -230,40 +231,16 @@ class SubCommandGroup:
         }
 
 
-class SlashOverwrite:
-    def __init__(self, payload: dict):
-        self._payload = payload
-
-    def to_dict(self):
-        return self._payload
-
-    @classmethod
-    def for_role(cls, role_id: int, allow: bool = True):
-        return cls({
-            'id': str(role_id),
-            'type': 1,
-            'permission': allow
-        })
-
-    @classmethod
-    def for_user(cls, user_id: int, allow: bool = True):
-        return cls({
-            'id': str(user_id),
-            'type': 2,
-            'permission': allow
-        })
-
-
 class SlashCommand:
 
     def __init__(
             self,
+            *,
             name: str,
             description: str,
-            *,
             options: List[Union[_Option, SubCommand, SubCommandGroup]] = None,
             default_access: bool = True,
-            overwrites: list[SlashOverwrite] = None,
+            overwrites: list[Overwrite] = None,
     ) -> None:
         self.name = name
         self._overwrites = overwrites
@@ -275,12 +252,10 @@ class SlashCommand:
             "default_permission": default_access,
         }
 
-
     @property
     def overwrites(self):
         if self._overwrites:
-            overwrites = [perm.to_dict() for perm in self._overwrites]
-            return {"permissions": overwrites}
+            return {"permissions": [perm.to_dict() for perm in self._overwrites]}
 
     def to_dict(self):
         return self._payload
