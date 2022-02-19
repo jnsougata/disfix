@@ -14,14 +14,14 @@ Then you can install the module:
 
 ```python
 import discord
-import app_utils
+import app_util
 
 
 intents = discord.Intents.default()
 intents.members = True
 
 
-class MyBot(app_utils.Bot):
+class MyBot(app_util.Bot):
     def __init__(self):
         super().__init__(command_prefix='-', intents=intents)
 
