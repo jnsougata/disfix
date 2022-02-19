@@ -1,9 +1,9 @@
+import discord
 from dataclasses import dataclass
 from typing import List, Optional, Union, Any
-import discord
 from enum import Enum
 from discord.http import Route
-from .enums import OptionType, ResolvedAttachment, ApplicationCommandType
+from .enums import OptionType, ApplicationCommandType
 
 
 def try_enum(enum_class, value):
@@ -37,6 +37,20 @@ class InteractionDataResolved:
     channels: Optional[dict] = None
     messages: Optional[dict] = None
     attachments: Optional[dict] = None
+
+
+@dataclass(frozen=True)
+class ResolvedAttachment:
+    id: str = None
+    filename: str = None
+    description: str = None
+    content_type: str = None
+    size: int = None
+    url: str = None
+    proxy_url: str = None
+    height: int = None
+    width: int = None
+    ephemeral: bool = None
 
 
 class InteractionDataOption:
@@ -156,7 +170,7 @@ class ApplicationCommand:
         if self.guild:
             route = Route(
                 'DELETE',
-                f'/applications/{self.application_id}/guilds/{self.guild}/commands/{self.id}')
+                f'/applications/{self.application_id}/guilds/{self.guild.id}/commands/{self.id}')
         else:
             route = Route(
                 'DELETE',
