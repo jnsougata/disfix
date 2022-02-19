@@ -30,7 +30,13 @@ class Choice:
 
 
 class StrOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
+    def __init__(
+            self, name: str,
+            description: str,
+            *,
+            required: bool = True,
+            choices: list[Choice] = None
+    ):
         self.data = {
             "name": name,
             "description": description,
@@ -41,7 +47,15 @@ class StrOption(_Option):
 
 
 class IntOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
+    def __init__(
+            self, name: str,
+            description: str,
+            *,
+            min_value: int = None,
+            max_value: int = None,
+            required: bool = True,
+            choices: list[Choice] = None
+    ):
         self.data = {
             "name": name,
             "description": description,
@@ -49,10 +63,20 @@ class IntOption(_Option):
             "required": required,
             "choices": [choice.data for choice in choices] if choices else []
         }
+        if min_value:
+            self.data["min_value"] = min_value
+        if max_value:
+            self.data["max_value"] = max_value
 
 
 class BoolOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
+    def __init__(
+            self, name: str,
+            description: str,
+            *,
+            required: bool = True,
+            choices: list[Choice] = None
+    ):
         self.data = {
             "name": name,
             "description": description,
@@ -63,7 +87,13 @@ class BoolOption(_Option):
 
 
 class UserOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
+    def __init__(
+            self, name: str,
+            description: str,
+            *,
+            required: bool = True,
+            choices: list[Choice] = None
+    ):
         self.data = {
             "name": name,
             "description": description,
@@ -78,6 +108,7 @@ class ChannelOption(_Option):
             self,
             name: str,
             description: str,
+            *,
             required: bool = True,
             choices: list[Choice] = None,
             channel_types: [int] = None
@@ -93,7 +124,13 @@ class ChannelOption(_Option):
 
 
 class RoleOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
+    def __init__(
+            self, name: str,
+            description: str,
+            *,
+            required: bool = True,
+            choices: list[Choice] = None
+    ):
         self.data = {
             "name": name,
             "description": description,
@@ -104,7 +141,13 @@ class RoleOption(_Option):
 
 
 class MentionableOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
+    def __init__(
+            self, name: str,
+            description: str,
+            *,
+            required: bool = True,
+            choices: list[Choice] = None
+    ):
         self.data = {
             "name": name,
             "description": description,
@@ -115,7 +158,16 @@ class MentionableOption(_Option):
 
 
 class NumberOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
+    def __init__(
+            self,
+            name: str,
+            description: str,
+            *,
+            min_value: float = None,
+            max_value: float = None,
+            required: bool = True,
+            choices: list[Choice] = None
+    ):
         self.data = {
             "name": name,
             "description": description,
@@ -123,10 +175,21 @@ class NumberOption(_Option):
             "required": required,
             "choices": [choice.data for choice in choices] if choices else []
         }
+        if min_value:
+            self.data["min_value"] = min_value
+        if max_value:
+            self.data["max_value"] = max_value
 
 
 class AttachmentOption(_Option):
-    def __init__(self, name: str, description: str, required: bool = True, choices: list[Choice] = None):
+    def __init__(
+            self,
+            name: str,
+            description: str,
+            *,
+            required: bool = True,
+            choices: list[Choice] = None
+    ):
         self.data = {
             "name": name,
             "type": 11,
@@ -136,7 +199,13 @@ class AttachmentOption(_Option):
 
 
 class SubCommand:
-    def __init__(self, name: str, description: str, options: [_Option] = None):
+    def __init__(
+            self,
+            name: str,
+            *,
+            description: str,
+            options: [_Option] = None
+    ):
         self.data = {
             "name": name,
             "description": description,
@@ -146,7 +215,13 @@ class SubCommand:
 
 
 class SubCommandGroup:
-    def __init__(self, name: str, description: str, options: [SubCommand] = None):
+    def __init__(
+            self,
+            name: str,
+            description: str,
+            *,
+            options: [SubCommand] = None
+    ):
         self.data = {
             "name": name,
             "description": description,
@@ -185,8 +260,9 @@ class SlashCommand:
             self,
             name: str,
             description: str,
-            options: list[Union[_Option, SubCommand, SubCommandGroup, Choice]] = None,
-            everyone: bool = True,
+            *,
+            options: List[Union[_Option, SubCommand, SubCommandGroup]] = None,
+            default_access: bool = True,
             overwrites: list[SlashOverwrite] = None,
     ) -> None:
         self.name = name
@@ -196,7 +272,7 @@ class SlashCommand:
             "description": description,
             "type": 1,
             "options": [option.data for option in options] if options else [],
-            "default_permission": everyone,
+            "default_permission": default_access,
         }
 
 

@@ -18,7 +18,7 @@ from discord.enums import InteractionType
 
 __all__ = ['Bot']
 
-Route.BASE = 'https://discord.com/api/v10'  # override the default route
+#  # override the default route
 
 
 class Bot(commands.Bot):
@@ -29,6 +29,7 @@ class Bot(commands.Bot):
             intents: discord.Intents = discord.Intents.default(),
             help_command: Optional[discord.ext.commands.HelpCommand] = discord.ext.commands.DefaultHelpCommand(),
             description: Optional[str] = None,
+            api_version: int = 10,
             **options
     ):
         super().__init__(
@@ -41,6 +42,7 @@ class Bot(commands.Bot):
         self.__queue = {}
         self.__parent = {}
         self._application_commands: Dict[int, ApplicationCommand] = {}
+        self.__route = Route.BASE = f'https://discord.com/api/v{api_version}'
 
     @property
     def application_commands(self):
@@ -48,10 +50,7 @@ class Bot(commands.Bot):
 
     def slash_command(self, command: SlashCommand, guild_id: Optional[int] = None):
         """
-        Decorator for registering a slash command
-        :param command:
-        :param guild_id:
-        :return:
+        Decorator for registering a slash command.
         """
         self.__queue[command.name] = (command, guild_id)
 
@@ -96,24 +95,24 @@ class Bot(commands.Bot):
         self._walk_slash_commands(cog)
 
     async def sync_current_commands(self, silent: bool = False):
-        for slash_command, guild_id in self.__queue.values():
+        for command, guild_id in self.__queue.values():
             if guild_id:
                 route = Route('POST', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
-                resp = await self.http.request(route, json=slash_command.to_dict())
-                if slash_command.overwrites:
+                resp = await self.http.request(route, json=command.to_dict())
+                if command.overwrites:
                     perm_route = Route(
                         'PUT',
                         f'/applications/{self.application_id}/guilds/{guild_id}/commands/{resp.get("id")}/permissions')
-                    perms = await self.http.request(perm_route, json=slash_command.overwrites)
+                    perms = await self.http.request(perm_route, json=command.overwrites)
                     resp['permissions'] = perms
             else:
                 route = Route('POST', f'/applications/{self.application_id}/commands')
-                resp = await self.http.request(route, json=slash_command.to_dict())
+                resp = await self.http.request(route, json=command.to_dict())
 
-            cmd = ApplicationCommand(resp, self)
-            self._application_commands[cmd.id] = cmd
+            apc = ApplicationCommand(resp, self)
+            self._application_commands[apc.id] = apc
             if not silent:
-                prompt = f'[{"GLOBAL" if not guild_id else "GUILD"}] registered /{slash_command.name}'
+                prompt = f'[{"GLOBAL" if not guild_id else "GUILD"}] registered /{apc.name}'
                 print(f'{prompt} ... ID: {resp.get("id")} ... Guild: {guild_id if guild_id else "NA"}')
 
     async def sync_global_commands(self):

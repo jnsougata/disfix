@@ -204,7 +204,11 @@ class ApplicationContext:
 
     @property
     def id(self):
-        return self._ia.data.get('id')
+        return int(self._ia.data['id'])
+
+    @property
+    def command(self):
+        return self._client.get_application_command(self.id)
 
     @property
     def version(self):

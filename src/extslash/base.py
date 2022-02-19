@@ -120,8 +120,20 @@ class InteractionDataOption:
 
 class ApplicationCommand:
     def __init__(self, data: dict, client: discord.Client):
-        self._payload = data
-        self._client = client
+        self.__payload = data
+        self.__client = client
+        self.id = int(data['id'])
+        self.name = data['name']
+        self.description = data['description']
+        self.type = data['type']
+        self.application_id = int(data['application_id'])
+        self.options = data.get('options')
+        self.version = int(data['version'])
+        self.default_access = data['default_permission']
+        self.dm_access = self.default_access or False
+        self.permissions = data.get('permissions')
+        self.name_locale = data['name_localizations']
+        self.description_locale = data['description_localizations']
 
     def __eq__(self, other):
         return self.id == other.id
@@ -130,71 +142,23 @@ class ApplicationCommand:
         return f'<ApplicationCommand id = {self.id} name = {self.name}>'
 
     @property
-    def id(self) -> int:
-        return self._payload.get('id')
-
-    @property
-    def name(self) -> str:
-        return self._payload.get('name')
-
-    @property
-    def description(self) -> str:
-        return self._payload.get('description')
-
-    @property
-    def type(self) -> int:
-        return self._payload.get('type')
-
-    @property
-    def application_id(self) -> int:
-        return int(self._payload.get('application_id'))
-
-    @property
     def guild(self):
-        guild_id = self._payload.get('guild_id')
+        guild_id = self.__payload.get('guild_id')
         if guild_id:
-            return self._client.get_guild(int(guild_id))
-        else:
-            return None
-
-    @property
-    def options(self) -> list:
-        return self._payload.get('options')
-
-    @property
-    def default_permission(self) -> bool:
-        return self._payload.get('default_permission')
-
-    @property
-    def version(self) -> int:
-        return int(self._payload.get('version'))
-
-    @property
-    def default_member_permissions(self) -> list:
-        return self._payload.get('default_member_permissions')
-
-    @property
-    def dm_permission(self) -> bool:
-        return self._payload.get('dm_permission')
-
-    @property
-    def name_localizations(self):
-        return self._payload.get('name_localizations')
-
-    @property
-    def description_localizations(self):
-        return self._payload.get('description_localizations')
-
-    @property
-    def permissions(self):  # TODO: implement
-        return self._payload.get('permissions')
+            return self.__client.get_guild(int(guild_id))
+        return None
 
     async def delete(self):
         if self.guild:
-            route = Route('DELETE', f'/applications/{self.application_id}/guilds/{self.guild}/commands/{self.id}')
+            route = Route(
+                'DELETE',
+                f'/applications/{self.application_id}/guilds/{self.guild}/commands/{self.id}')
         else:
-            route = Route('DELETE', f'/applications/{self.application_id}/commands/{self.id}')
-        await self._client.http.request(route)
+            route = Route(
+                'DELETE',
+                f'/applications/{self.application_id}/commands/{self.id}')
+
+        await self.__client.http.request(route)
 
 
 

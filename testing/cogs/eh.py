@@ -20,12 +20,23 @@ class Error(extslash.Cog):
     @extslash.Cog.command(
         command=extslash.SlashCommand(
             name='all',
-            description='get all commands'),
+            description='get all commands',
+            options=[
+                extslash.IntOption(
+                    name='page',
+                    description='page number',
+                    max_value=10,
+                    min_value=1,
+                    required=True,
+                )
+            ]
+        ),
         guild_id=877399405056102431
     )
     async def all_command(self, ctx: extslash.ApplicationContext):
         await ctx.defer()
         await self.bot.sync_global_commands()
+        print(ctx.command.default_access)
         await ctx.send_followup(f'```py\n{self.bot.application_commands}\n```')
 
 
