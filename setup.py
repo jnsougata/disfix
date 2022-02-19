@@ -8,8 +8,8 @@ long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 setup(
     name='app_utils',
-    version='0.1.8',
-    description='Integrates slash commands with discord.py 2.0',
+    version='0.0.1',
+    description='Integrates application commands with discord.py 2.0',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/jnsougata/ExtSlash',
