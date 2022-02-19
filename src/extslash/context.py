@@ -8,8 +8,8 @@ from .base import (
     InteractionData,
     InteractionDataOption,
     InteractionDataResolved,
-    ApplicationCommandType
 )
+from .enums import ApplicationCommandType
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List
 
 

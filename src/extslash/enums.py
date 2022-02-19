@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum
 
 
 class OptionType:
@@ -27,3 +28,9 @@ class ResolvedAttachment:
     height: int = None
     width: int = None
     ephemeral: bool = None
+
+
+class ApplicationCommandType(Enum):
+    USER = 2
+    MESSAGE = 3
+    CHAT_INPUT = 1

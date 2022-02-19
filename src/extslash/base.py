@@ -3,7 +3,14 @@ from typing import List, Optional, Union, Any
 import discord
 from enum import Enum
 from discord.http import Route
-from .enums import OptionType, ResolvedAttachment
+from .enums import OptionType, ResolvedAttachment, ApplicationCommandType
+
+
+def try_enum(enum_class, value):
+    try:
+        return enum_class(value)
+    except ValueError:
+        return None
 
 
 @dataclass(frozen=True)
@@ -58,19 +65,16 @@ class InteractionDataOption:
     def value(
             self
     ) -> Union[
-            str,
-            int,
-            float,
-            bool,
-            discord.User,
-            discord.Role,
-            discord.TextChannel,
-            discord.VoiceChannel,
-            discord.StageChannel,
-            discord.CategoryChannel,
-            discord.StoreChannel,
-            discord.ChannelType,
-            ResolvedAttachment
+        str, int, float, bool,
+        discord.User,
+        discord.Role,
+        discord.TextChannel,
+        discord.VoiceChannel,
+        discord.StageChannel,
+        discord.CategoryChannel,
+        discord.StoreChannel,
+        discord.ChannelType,
+        ResolvedAttachment
     ]:
 
         if self.type == OptionType.SUBCOMMAND:
@@ -125,7 +129,7 @@ class ApplicationCommand:
         self.id = int(data['id'])
         self.name = data['name']
         self.description = data['description']
-        self.type = data['type']
+        self.type = try_enum(ApplicationCommandType, data['type'])
         self.application_id = int(data['application_id'])
         self.options = data.get('options')
         self.version = int(data['version'])
@@ -196,9 +200,3 @@ class Overwrite:
     @property
     def permissions(self):
         return [PermissionData(**perm) for perm in self._perms.permissions]
-
-
-class ApplicationCommandType(Enum):
-    USER = 2
-    MESSAGE = 3
-    CHAT_INPUT = 1
