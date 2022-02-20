@@ -22,12 +22,9 @@ class Error(app_util.Cog):
             name='all',
             description='get all commands',
             options=[
-                app_util.IntOption(
-                    name='page',
-                    description='page number',
-                    max_value=10,
-                    min_value=1,
-                    required=True,
+                app_util.MentionalbaleOption(
+                    name='mentionable',
+                    description='mention user or role',
                 )
             ]
         ),

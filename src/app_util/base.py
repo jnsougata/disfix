@@ -120,13 +120,8 @@ class InteractionDataOption:
         str, int, float, bool,
         discord.User,
         discord.Role,
-        discord.TextChannel,
-        discord.VoiceChannel,
-        discord.StageChannel,
-        discord.CategoryChannel,
-        discord.StoreChannel,
-        discord.ChannelType,
-        ResolvedAttachment
+        discord.Attachment,
+        discord.abc.GuildChannel,
     ]:
 
         if self.type == OptionType.SUBCOMMAND:
@@ -140,28 +135,20 @@ class InteractionDataOption:
         elif self.type == OptionType.BOOLEAN:
             return self._data.get('value')
         elif self.type == OptionType.USER:
-            user_id = int(self._data.get('value'))
-            return self._client.get_user(user_id)
+            return self._resolved.users[0]
         elif self.type == OptionType.CHANNEL:
-            channel_id = int(self._data.get('value'))
-            return self._guild.get_channel(channel_id)
+            return self._resolved.channels[0]
         elif self.type == OptionType.ROLE:
-            role_id = int(self._data.get('value'))
-            return self._guild.get_role(role_id)
+            return self._resolved.roles[0]
         elif self.type == OptionType.MENTIONABLE:
-            some_id = self._data.get('value')
-            user_data = self._resolved.users
-            role_data = self._resolved.roles
-            if user_data and user_data.get(some_id):
-                return self._client.get_user(int(some_id))
-            else:
-                return self._guild.get_role(int(some_id))
+            bucket = self._resolved.users
+            bucket.extend(self._resolved.members)  # type: ignore
+            bucket.extend(self._resolved.roles)  # type: ignore
+            return bucket   # type: ignore # more info required
         elif self.type == OptionType.NUMBER:
             return self._data.get('value')
         elif self.type == OptionType.ATTACHMENT:
-            attachment_id = self._data.get('value')
-            payload = self._resolved.attachments.get(attachment_id)
-            return ResolvedAttachment(**payload)
+            return self._resolved.attachments[0]
         else:
             return self._data.get('value')
 

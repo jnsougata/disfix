@@ -12,7 +12,6 @@ A basic slash command extension for discord.py.
 __title__ = 'app_util'
 __author__ = 'jnsougata'
 __license__ = 'MIT'
-__version__ = '0.0.3'
 __copyright__ = 'Copyright 2022-present jnsougata'
 
 
