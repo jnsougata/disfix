@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class OptionType:
+class OptionType(Enum):
     SUBCOMMAND = 1
     SUBCOMMAND_GROUP = 2
     STRING = 3

@@ -1,8 +1,8 @@
 import discord
-from dataclasses import dataclass
-from typing import List, Optional, Union, Any, Dict
 from enum import Enum
 from discord.http import Route
+from dataclasses import dataclass
+from typing import List, Optional, Union, Any, Dict
 from .enums import OptionType, ApplicationCommandType
 
 
@@ -19,7 +19,7 @@ class InteractionData:
     name: str
     type: int
     resolved: Optional[dict] = None
-    options: Optional[dict] = None
+    options: Optional[List[dict]] = None
     # below are only used for type != 2
     custom_id: Optional[str] = None
     component_type: Optional[int] = None
@@ -55,7 +55,7 @@ class Resolved:
                 for key, payload in self._payload['roles'].items()}
 
     @property
-    def channels(self) -> Dict[int, discord.TextChannel]:
+    def channels(self) -> Dict[int, discord.abc.GuildChannel]:
         if self._payload.get('channels'):
             return {
                 int(key): discord.abc.GuildChannel(
@@ -75,7 +75,7 @@ class Resolved:
         if self._payload.get('attachments'):
             return {
                 int(key): discord.Attachment(data=payload, state=self._client._connection)
-                for key, payload in self._payload['attachments'].values()}
+                for key, payload in self._payload['attachments'].items()}
 
 
 @dataclass(frozen=True)
@@ -96,7 +96,7 @@ class InteractionDataOption:
 
     def __init__(
             self,
-            data: dict,
+            data: Dict[str, Any],
             guild: discord.Guild,
             client: discord.Client,
             resolved: Resolved,
@@ -106,18 +106,20 @@ class InteractionDataOption:
         self._client = client
         self._resolved = resolved
 
+    def __repr__(self):
+        return f'<InteractionDataOption type={self.type} name={self.name}>'
+
     @property
     def name(self) -> str:
         return self._data.get('name')
 
     @property
-    def type(self) -> int:
-        return self._data.get('type')
+    def type(self):
+        value = self._data.get('type')
+        return try_enum(OptionType, value)
 
     @property
-    def value(
-            self
-    ) -> Union[
+    def value(self) -> Union[
         str, int, float, bool,
         discord.User,
         discord.Role,
@@ -125,47 +127,56 @@ class InteractionDataOption:
         discord.abc.GuildChannel,
     ]:
 
-        if self.type == OptionType.SUBCOMMAND:
+        if self.type is OptionType.SUBCOMMAND:
             # TODO: parse subcommand
             return self._data.get('value')
 
-        elif self.type == OptionType.SUBCOMMAND_GROUP:
+        elif self.type is OptionType.SUBCOMMAND_GROUP:
             # TODO: parse subcommand group
             return self._data.get('value')
 
-        elif self.type == OptionType.STRING:
+        elif self.type is OptionType.STRING:
             return self._data.get('value')
 
-        elif self.type == OptionType.INTEGER:
+        elif self.type is OptionType.INTEGER:
             return self._data.get('value')
 
-        elif self.type == OptionType.BOOLEAN:
+        elif self.type is OptionType.BOOLEAN:
             return self._data.get('value')
 
-        elif self.type == OptionType.USER:
+        elif self.type is OptionType.USER:
             user_id = int(self._data.get('value'))
             return self._resolved.users[user_id]
 
-        elif self.type == OptionType.CHANNEL:
+        elif self.type is OptionType.CHANNEL:
             channel_id = int(self._data.get('value'))
             return self._resolved.channels[channel_id]
 
-        elif self.type == OptionType.ROLE:
+        elif self.type is OptionType.ROLE:
             role_id = int(self._data.get('value'))
             return self._resolved.roles[role_id]
 
-        elif self.type == OptionType.MENTIONABLE:
+        elif self.type is OptionType.MENTIONABLE:
             target_id = int(self._data.get('value'))
+            map = {}
             if not self._guild:
-                mentionable_map = {**self._resolved.users, **self._resolved.roles}
+                if self._resolved.users:
+                    map.update(self._resolved.users)
+                if self._resolved.roles:
+                    map.update(self._resolved.roles)
             else:
-                mentionable_map = {**self._resolved.users, **self._resolved.roles, **self._resolved.members}
-            return mentionable_map[target_id]
+                if self._resolved.users:
+                    map.update(self._resolved.users)
+                if self._resolved.roles:
+                    map.update(self._resolved.roles)
+                if self._resolved.members:
+                    map.update(self._resolved.members)
+            return map[target_id]
 
-        elif self.type == OptionType.NUMBER:
+        elif self.type is OptionType.NUMBER:
             return self._data.get('value')
 
-        elif self.type == OptionType.ATTACHMENT:
+        elif self.type is OptionType.ATTACHMENT:
             attachment_id = int(self._data.get('value'))
             return self._resolved.attachments[attachment_id]
 
