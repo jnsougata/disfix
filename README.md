@@ -31,7 +31,7 @@ class MyBot(app_util.Bot):
         
 bot = MyBot()
 # here you can pass in both command cog and slash cog extension
-bot.load_extension('your_extension_name')
+bot.load_extension('extension_name')
 bot.run('YOUR_TOKEN')
 ```
 
@@ -46,7 +46,7 @@ import app_util
 
 
 
-class Error(app_util.Cog):
+class Sample(app_util.Cog):
 
     def __init__(self, bot: app_util.Bot):
         self.bot = bot
@@ -109,5 +109,5 @@ class Error(app_util.Cog):
 
 
 def setup(bot: app_util.Bot):
-    bot.add_application_cog(Error(bot))
+    bot.add_application_cog(Sample(bot))
 ```
