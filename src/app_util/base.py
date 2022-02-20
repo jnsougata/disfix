@@ -188,8 +188,8 @@ class ApplicationCommand:
         self.default_access = data['default_permission']
         self.dm_access = self.default_access or False
         self.permissions = data.get('permissions')
-        self.name_locale = data['name_localizations']
-        self.description_locale = data['description_localizations']
+        self.name_locale = data.get('name_localizations')
+        self.description_locale = data.get('description_localizations')
 
     def __eq__(self, other):
         return self.id == other.id
