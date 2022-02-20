@@ -255,7 +255,7 @@ class Context:
         returns the options of the interaction
         :return: InteractionDataOption
         """
-        if self.type is ApplicationCommandType.CHAT_INPUT:
+        if self.type is ApplicationCommandType.USER:
             return None
         if self.type is ApplicationCommandType.MESSAGE:
             return None
