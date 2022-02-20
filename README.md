@@ -1,5 +1,5 @@
 # app_util 
-A module to integrate Slash Commands into your bot written in *discord.py 2.0*
+A module to integrate Application Commands into your bot written with *discord.py 2.0*
 
 ### Installation:
 Before working with it, you need to install the core dependency - **discord.py(2.0)**
