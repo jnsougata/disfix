@@ -1,6 +1,6 @@
 import discord
 from dataclasses import dataclass
-from typing import List, Optional, Union, Any
+from typing import List, Optional, Union, Any, Dict
 from enum import Enum
 from discord.http import Route
 from .enums import OptionType, ApplicationCommandType
@@ -35,46 +35,47 @@ class Resolved:
         self._client = ctx._client
 
     @property
-    def users(self) -> List[discord.User]:
+    def users(self) -> Dict[int, discord.User]:
         if self._payload.get('users'):
-            return [
-                discord.User(data=payload, state=self._client._connection)
-                for payload in self._payload['users'].values()]
+            return {
+                int(key): discord.User(data=payload, state=self._client._connection)
+                for key, payload in self._payload['users'].items()}
 
     @property
-    def members(self) -> List[discord.Member]:
+    def members(self) -> Dict[int, discord.Member]:
         if self._payload.get('members'):
-            return [
-                discord.Member(data=payload, state=self._client._connection)
-                for payload in self._payload['members'].values()]
+            return {
+                int(key): self._ctx.guild.get_member(int(key)) for key, _ in self._payload['members'].items()}
 
     @property
-    def roles(self) -> List[discord.Role]:
+    def roles(self) -> Dict[int, discord.Role]:
         if self._payload.get('roles'):
-            return [
-                discord.Role(guild=self._ctx.guild, data=payload, state=self._client._connection)
-                for payload in self._payload['roles'].values()]
+            return {
+                int(key): discord.Role(guild=self._ctx.guild, data=payload, state=self._client._connection)
+                for key, payload in self._payload['roles'].items()}
 
     @property
-    def channels(self):
+    def channels(self) -> Dict[int, discord.TextChannel]:
         if self._payload.get('channels'):
-            return [
-                discord.abc.GuildChannel(data=payload, state=self._client._connection, guild=self._ctx.guild)
-                for payload in self._payload['channels'].values()]
+            return {
+                int(key): discord.abc.GuildChannel(
+                    data=payload, state=self._client._connection, guild=self._ctx.guild)
+                for key, payload in self._payload['channels'].itmes()}
 
     @property
-    def messages(self):
+    def messages(self) -> Dict[int, discord.Message]:
         if self._payload.get('messages'):
-            return [
-                discord.Message(data=payload, state=self._client._connection, channel=self._ctx.channel)
-                for payload in self._payload['guilds'].values()]
+            return {
+                int(key): discord.Message(
+                    data=payload, state=self._client._connection, channel=self._ctx.channel)
+                for key, payload in self._payload['guilds'].items()}
 
     @property
-    def attachments(self):
+    def attachments(self) -> Dict[int, discord.Attachment]:
         if self._payload.get('attachments'):
-            return [
-                discord.Attachment(data=payload, state=self._client._connection)
-                for payload in self._payload['attachments'].values()]
+            return {
+                int(key): discord.Attachment(data=payload, state=self._client._connection)
+                for key, payload in self._payload['attachments'].values()}
 
 
 @dataclass(frozen=True)
@@ -125,30 +126,49 @@ class InteractionDataOption:
     ]:
 
         if self.type == OptionType.SUBCOMMAND:
-            return self._data.get('value')  # TODO: parse subcommand
+            # TODO: parse subcommand
+            return self._data.get('value')
+
         elif self.type == OptionType.SUBCOMMAND_GROUP:
-            return self._data.get('value')  # TODO: parse subcommand group
+            # TODO: parse subcommand group
+            return self._data.get('value')
+
         elif self.type == OptionType.STRING:
             return self._data.get('value')
+
         elif self.type == OptionType.INTEGER:
             return self._data.get('value')
+
         elif self.type == OptionType.BOOLEAN:
             return self._data.get('value')
+
         elif self.type == OptionType.USER:
-            return self._resolved.users[0]
+            user_id = int(self._data.get('value'))
+            return self._resolved.users[user_id]
+
         elif self.type == OptionType.CHANNEL:
-            return self._resolved.channels[0]
+            channel_id = int(self._data.get('value'))
+            return self._resolved.channels[channel_id]
+
         elif self.type == OptionType.ROLE:
-            return self._resolved.roles[0]
+            role_id = int(self._data.get('value'))
+            return self._resolved.roles[role_id]
+
         elif self.type == OptionType.MENTIONABLE:
-            bucket = self._resolved.users
-            bucket.extend(self._resolved.members)  # type: ignore
-            bucket.extend(self._resolved.roles)  # type: ignore
-            return bucket   # type: ignore # more info required
+            target_id = int(self._data.get('value'))
+            if not self._guild:
+                mentionable_map = {**self._resolved.users, **self._resolved.roles}
+            else:
+                mentionable_map = {**self._resolved.users, **self._resolved.roles, **self._resolved.members}
+            return mentionable_map[target_id]
+
         elif self.type == OptionType.NUMBER:
             return self._data.get('value')
+
         elif self.type == OptionType.ATTACHMENT:
-            return self._resolved.attachments[0]
+            attachment_id = int(self._data.get('value'))
+            return self._resolved.attachments[attachment_id]
+
         else:
             return self._data.get('value')
 

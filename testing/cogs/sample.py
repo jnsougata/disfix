@@ -20,11 +20,17 @@ class Error(app_util.Cog):
     @app_util.Cog.command(
         command=app_util.SlashCommand(
             name='all',
-            description='get all commands',
+            description='checking any mentionable data',
             options=[
-                app_util.MentionalbaleOption(
-                    name='mentionable',
-                    description='mention user or role',
+                app_util.MentionableOption(
+                    name='user',
+                    description='mention user',
+                    required=False,
+                ),
+                app_util.MentionableOption(
+                    name='role',
+                    description='mention role',
+                    required=False,
                 )
             ]
         ),
@@ -33,8 +39,7 @@ class Error(app_util.Cog):
     async def all_command(self, ctx: app_util.Context):
         await ctx.defer()
         await self.bot.sync_global_commands()
-        print(ctx.command.default_access)
-        await ctx.send_followup(f'```py\n{self.bot.application_commands}\n```')
+        await ctx.send_followup(f'```py\n{[option.value for option in ctx.options]}\n```')
 
     @app_util.Cog.command(
         command=app_util.UserCommand(
