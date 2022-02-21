@@ -38,43 +38,53 @@ class Resolved:
     def users(self) -> Dict[int, discord.User]:
         if self._payload.get('users'):
             return {
-                int(key): discord.User(data=payload, state=self._client._connection)
+                int(key): discord.User(
+                    data=payload,
+                    state=self._client._connection)
                 for key, payload in self._payload['users'].items()}
 
     @property
     def members(self) -> Dict[int, discord.Member]:
         if self._payload.get('members'):
             return {
-                int(key): self._ctx.guild.get_member(int(key)) for key, _ in self._payload['members'].items()}
+                int(key): self._ctx.guild.get_member(int(key))
+                for key, _ in self._payload['members'].items()}
 
     @property
     def roles(self) -> Dict[int, discord.Role]:
         if self._payload.get('roles'):
             return {
-                int(key): discord.Role(guild=self._ctx.guild, data=payload, state=self._client._connection)
+                int(key): discord.Role(
+                    guild=self._ctx.guild,
+                    data=payload,
+                    state=self._client._connection)
                 for key, payload in self._payload['roles'].items()}
 
     @property
     def channels(self) -> Dict[int, discord.abc.GuildChannel]:
         if self._payload.get('channels'):
             return {
-                int(key): discord.abc.GuildChannel(
-                    data=payload, state=self._client._connection, guild=self._ctx.guild)
-                for key, payload in self._payload['channels'].itmes()}
+                int(key): self._ctx.guild.get_channel(int(key))
+                for key, _ in self._payload['channels'].items()
+            }
 
     @property
     def messages(self) -> Dict[int, discord.Message]:
         if self._payload.get('messages'):
             return {
                 int(key): discord.Message(
-                    data=payload, state=self._client._connection, channel=self._ctx.channel)
-                for key, payload in self._payload['guilds'].items()}
+                    data=payload,
+                    state=self._client._connection,
+                    channel=self._ctx.channel)
+                for key, payload in self._payload['messages'].items()}
 
     @property
     def attachments(self) -> Dict[int, discord.Attachment]:
         if self._payload.get('attachments'):
             return {
-                int(key): discord.Attachment(data=payload, state=self._client._connection)
+                int(key): discord.Attachment(
+                    data=payload,
+                    state=self._client._connection)
                 for key, payload in self._payload['attachments'].items()}
 
 
@@ -92,7 +102,7 @@ class ResolvedAttachment:
     ephemeral: bool = None
 
 
-class InteractionDataOption:
+class ChatInputOption:
 
     def __init__(
             self,
@@ -107,7 +117,7 @@ class InteractionDataOption:
         self._resolved = resolved
 
     def __repr__(self):
-        return f'<InteractionDataOption type={self.type} name={self.name}>'
+        return f'<ChatInputOption name={self.name} type={self.type}>'
 
     @property
     def name(self) -> str:
@@ -119,13 +129,7 @@ class InteractionDataOption:
         return try_enum(OptionType, value)
 
     @property
-    def value(self) -> Union[
-        str, int, float, bool,
-        discord.User,
-        discord.Role,
-        discord.Attachment,
-        discord.abc.GuildChannel,
-    ]:
+    def value(self) -> Any:
 
         if self.type is OptionType.SUBCOMMAND:
             # TODO: parse subcommand
@@ -184,7 +188,7 @@ class InteractionDataOption:
             return self._data.get('value')
 
     @property
-    def options(self) -> list:
+    def sub_options(self) -> list:
         return self._data.get('options')
 
     @property

@@ -4,9 +4,9 @@ import json
 import discord
 from discord.http import Route
 from discord.utils import MISSING
-from .base import InteractionData, InteractionDataOption, Resolved
+from .base import InteractionData, ChatInputOption, Resolved
 from .enums import ApplicationCommandType, OptionType
-from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List
+from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict
 
 
 def _handle_edit_params(
@@ -228,8 +228,8 @@ class Context:
         returns the resolved data of the interaction
         :return:
         """
-        d = self.data.resolved
-        return Resolved(d, self) if d else None
+        r_data = self.data.resolved
+        return Resolved(r_data, self) if r_data else None
 
     @property
     def resolved_message(self):
@@ -238,7 +238,8 @@ class Context:
         :return:
         """
         if self.type is ApplicationCommandType.MESSAGE:
-            return self.resolved.message[0]
+            message_id = int(self.data.target_id)
+            return self.resolved.messages[message_id]
 
     @property
     def resolved_user(self):
@@ -247,84 +248,30 @@ class Context:
         :return:
         """
         if self.type is ApplicationCommandType.USER:
-            return self.resolved.users[0]
-
-    @property
-    def str_options(self) -> List[str]:
-        if self.type is ApplicationCommandType.CHAT_INPUT:
-            options = self.data.options
-            return [option.get('value') for option in options if option.get('type') == OptionType.STRING.value]
-
-    @property
-    def int_options(self) -> List[int]:
-        if self.type is ApplicationCommandType.CHAT_INPUT:
-            options = self.data.options
-            return [option.get('value') for option in options if option.get('type') == OptionType.INTEGER.value]
-
-    @property
-    def bool_options(self) -> List[bool]:
-        if self.type is ApplicationCommandType.CHAT_INPUT:
-            options = self.data.options
-            return [option.get('value') for option in options if option.get('type') == OptionType.BOOLEAN.value]
-
-    @property
-    def number_options(self) -> List[Union[int, float]]:
-        if self.type is ApplicationCommandType.CHAT_INPUT:
-            options = self.data.options
-            return [option.get('value') for option in options if option.get('type') == OptionType.NUMBER.value]
-
-    @property
-    def attachment_options(self) -> List[discord.Attachment]:
-        if self.type is ApplicationCommandType.CHAT_INPUT:
-            attachment_ids = [option.get('value') for option in self.data.options
-                              if option.get('type') == OptionType.ATTACHMENT.value]
-            return [self.resolved.attachments[int(_id)] for _id in attachment_ids]
-
-    @property
-    def channel_options(self) -> List[discord.abc.GuildChannel]:
-        if self.type is ApplicationCommandType.CHAT_INPUT:
-            channel_ids = [option.get('value') for option in self.data.options
-                           if option.get('type') == OptionType.CHANNEL.value]
-            return [self.resolved.channels[int(_id)] for _id in channel_ids]
-
-    @property
-    def role_options(self) -> List[discord.Role]:
-        if self.type is ApplicationCommandType.CHAT_INPUT:
-            role_ids = [option.get('value') for option in self.data.options
-                        if option.get('type') == OptionType.ROLE.value]
-            return [self.resolved.roles[int(_id)] for _id in role_ids]
-
-    @property
-    def user_options(self) -> List[discord.User]:
-        if self.type is ApplicationCommandType.CHAT_INPUT:
-            user_ids = [option.get('value') for option in self.data.options
-                        if option.get('type') == OptionType.USER.value]
-            return [self.resolved.users[int(_id)] for _id in user_ids]
-
-    @property
-    def member_options(self) -> List[discord.Member]:
-        if self.type is ApplicationCommandType.CHAT_INPUT and self.guild:
-            member_ids = [option.get('value') for option in self.data.options
-                          if option.get('type') == OptionType.USER.value]
-            return [self.resolved.members[int(_id)] for _id in member_ids]
-
+            user_id = int(self.data.target_id)
+            return self.resolved.users[user_id]
 
 
     @property
-    def options(self):
+    def options(self) -> Dict[str, ChatInputOption]:
         """
         returns the options of the interaction
         :return: InteractionDataOption
         """
         if self.type is ApplicationCommandType.USER:
-            return None
+            return None  # type: ignore
         if self.type is ApplicationCommandType.MESSAGE:
-            return None
+            return None  # type: ignore
         options = self.data.options
         if options:
-            return [
-                InteractionDataOption(
-                    option, self.guild, self._client, self.resolved) for option in options]
+            return {
+                option['name']: ChatInputOption(
+                    data=option,
+                    guild=self.guild,
+                    client=self._client,
+                    resolved=self.resolved
+                ) for option in options
+            }
 
     @property
     def application_id(self):

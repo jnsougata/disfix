@@ -29,34 +29,39 @@ class Embed(app_util.Cog):
                 app_util.AttachmentOption('thumbnail', 'image file for thumbnail', required=False),
                 app_util.AttachmentOption('image', 'image file for embed image', required=False),
             ],
-            overwrites=[app_util.SlashOverwrite.for_role(879281380306067486)],
+            overwrites=[app_util.Overwrite.for_role(879281380306067486)],
         ),
         guild_id=877399405056102431
     )
     async def embed(self, ctx: app_util.Context):
         await ctx.defer(ephemeral=True)
+        channel = ctx.options['channel'].value
         slots = {}
-        channel = ctx.options[0].value
-        ctx.options.pop(0)
-        for option in ctx.options:
-            special = ['author', 'footer', 'thumbnail', 'image', 'color', 'description']
-            name = option.name
+        for name, option in ctx.options.items():
+            special = [
+                'author',
+                'footer',
+                'thumbnail',
+                'image',
+                'color',
+                'description'
+            ]
             if name not in special:
-                slots[option.name] = option.value
-            elif option.name == 'footer':
+                slots[name] = option.value
+            elif name == 'footer':
                 slots['footer'] = {'text': option.value}
-            elif option.name == 'thumbnail':
+            elif name == 'thumbnail':
                 slots['thumbnail'] = {'url': option.value.url}
-            elif option.name == 'image':
+            elif name == 'image':
                 slots['image'] = {'url': option.value.url}
-            elif option.name == 'color':
+            elif name == 'color':
                 slots['color'] = int(f'0x{option.value}', 16)
-            elif option.name == 'author':
+            elif name == 'author':
                 slots['author'] = {
                     'name': option.value.name,
                     'icon_url': option.value.avatar.url
                 }
-            elif option.name == 'description':
+            elif name == 'description':
                 string = option.value.replace('$/', '\n')
                 slots['description'] = string
 

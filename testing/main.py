@@ -17,5 +17,6 @@ class MyBot(app.Bot):
 
 
 bot = MyBot()
+bot.load_extension('cogs.embed')
 bot.load_extension('cogs.sample')
 bot.run(os.getenv('DISCORD_TOKEN'))

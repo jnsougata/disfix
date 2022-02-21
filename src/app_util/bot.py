@@ -107,7 +107,7 @@ class Bot(commands.Bot):
     def add_application_cog(self, cog: Cog):
         self._walk_app_commands(cog)
 
-    async def sync_current_commands(self, silent: bool = False):
+    async def sync_current_commands(self):
         for command, guild_id in self.__queue.values():
             if guild_id:
                 route = Route('POST', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
@@ -124,9 +124,6 @@ class Bot(commands.Bot):
 
             apc = ApplicationCommand(resp, self)
             self._application_commands[apc.id] = apc
-            if not silent:
-                prompt = f'[{"GLOBAL" if not guild_id else "GUILD"}] registered /{apc.name}'
-                print(f'{prompt} ... ID: {resp.get("id")} ... Guild: {guild_id if guild_id else "NA"}')
 
     async def sync_global_commands(self):
         route = Route('GET', f'/applications/{self.application_id}/commands')

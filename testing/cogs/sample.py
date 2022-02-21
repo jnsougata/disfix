@@ -97,6 +97,7 @@ class Sample(app_util.Cog):
         guild_id=877399405056102431
     )
     async def promote_command(self, ctx: app_util.Context):
+        await ctx.send_response(f'Done promotion!')
         await ctx.resolved_user.send('You have been promoted! LOL')
 
     @app_util.Cog.command(
