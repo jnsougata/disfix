@@ -60,7 +60,7 @@ class Sample(app_util.Cog):
         tb = ''.join(stack)
         await ctx.send_followup(f'```py\n{tb}\n```')
 
-    # example slash command named `all`
+    # example slash command named `book`
     @app_util.Cog.command(
         command=app_util.SlashCommand(
             name='book',
@@ -88,7 +88,11 @@ class Sample(app_util.Cog):
         page_number = ctx.options['page']
         book_name = ctx.options['book_name']
         page_content = await imaginary_api.fetch(book_name, page_number)
-        embed = discord.Embed(title=f'{book_name}', description=page_content, color=ctx.author.color)
+        embed = discord.Embed(
+            title=f'{book_name}', 
+            description=page_content, 
+            color=ctx.author.color
+        )
         embed.set_footer(text=f'Page {page_number}')
         await ctx.send_followup(embed=embed)
 
