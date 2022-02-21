@@ -232,7 +232,7 @@ class Context:
         return Resolved(r_data, self) if r_data else None
 
     @property
-    def resolved_message(self):
+    def clicked_message(self):
         """
         returns the resolved message of the MESSAGE COMMAND
         :return:
@@ -242,7 +242,7 @@ class Context:
             return self.resolved.messages[message_id]
 
     @property
-    def resolved_user(self):
+    def clicked_user(self):
         """
         returns the resolved user of the USER COMMAND
         :return:
