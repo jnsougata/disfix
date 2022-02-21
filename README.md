@@ -102,7 +102,7 @@ class Sample(app_util.Cog):
     )
     async def bonk(self, ctx: app_util.Context):
         target = ctx.clicked_user
-        await ctx.send_followup(f'{ctx.author.mention} just bonked {target.mention}!')
+        await ctx.send_response(f'{ctx.author.mention} just bonked {target.mention}!')
 
     # example application message command named `Pin`
     # this command will pin the message to the channel
