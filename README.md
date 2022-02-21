@@ -1,6 +1,8 @@
 # app_util 
 A module to integrate Application Commands into your bot written with *discord.py 2.0*
 
+This includes **Slash Commands** **User Commands** **Message Command** 
+
 ### Installation:
 Before working with it, you need to install the core dependency - **discord.py(2.0)**
 
@@ -18,10 +20,9 @@ import app_util
 
 
 intents = discord.Intents.default()
-intents.members = True
 
 
-class MyBot(app_util.Bot):
+class SampleBot(app_util.Bot):
     def __init__(self):
         super().__init__(command_prefix='-', intents=intents)
 
@@ -29,8 +30,10 @@ class MyBot(app_util.Bot):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
         print('------')
         
-bot = MyBot()
-# here you can pass in both command cog and slash cog extension
+bot = SampleBot()
+
+# here you can pass in 
+# both dpy cog[path/extension] and app_util cog[path]
 bot.load_extension('extension_name')
 bot.run('YOUR_TOKEN')
 ```
@@ -60,12 +63,17 @@ class Sample(app_util.Cog):
     # example slash command named `all`
     @app_util.Cog.command(
         command=app_util.SlashCommand(
-            name='all',
-            description='get all commands',
+            name='book',
+            description='get a sample book',
             options=[
+                app_util.StrOption(
+                    name='book_name',
+                    description='the name of the book you want to get',
+                    required=True,
+                ),
                 app_util.IntOption(
                     name='page',
-                    description='page number',
+                    description='the page number to look for',
                     max_value=10,
                     min_value=1,
                     required=True,
@@ -76,34 +84,34 @@ class Sample(app_util.Cog):
         # if guild_id is not provided
         # it will be available globally
     )
-    async def all_command(self, ctx: app_util.Context):
-        await ctx.defer()
-        await self.bot.sync_global_commands()
-        await ctx.send_followup(f'```py\n{self.bot.application_commands}\n```')
+    async def book(self, ctx: app_util.Context):
+        page_number = ctx.options['page']
+        book_name = ctx.options['book_name']
+        page_content = await imaginary_api.fetch(book_name, page_number)
+        embed = discord.Embed(title=f'{book_name}', description=page_content, color=ctx.author.color)
+        embed.set_footer(text=f'Page {page_number}')
+        await ctx.send_followup(embed=embed)
 
-    # example application user command named `Promote It`
+    # example application user command named `Bonk`
     # this command will dm the target user with the phrase if possible
     @app_util.Cog.command(
-        command=app_util.UserCommand(
-            name='Promote It',
-        ),
-        guild_id=877399405056102431
+        command=app_util.UserCommand(name='Bonk'),
+        guild_id=None
+        # if guild_id is not provided
+        # the command will be available globally
     )
-    async def promote_command(self, ctx: app_util.Context):
-        await ctx.defer(ephemeral=True)
-        await ctx.resolved_user.send('You have been promoted! LOL')
-        await ctx.send_followup('Done!')
+    async def bonk(self, ctx: app_util.Context):
+        target = ctx.clicked_user
+        await ctx.send_followup(f'{ctx.author.mention} just bonked {target.mention}!')
 
     # example application message command named `Pin`
     # this command will pin the message to the channel
     @app_util.Cog.command(
-        command=app_util.MessageCommand(
-            name='Pin',
-        ),
+        command=app_util.MessageCommand(name='Pin'),
         guild_id=877399405056102431
     )
-    async def pin_command(self, ctx: app_util.Context):
-        await ctx.resolved_message.pin()
+    async def pin(self, ctx: app_util.Context):
+        await ctx.clicked_message.pin()
         await ctx.send_response(f'Message pinned by {ctx.author.mention}')
 
 
