@@ -88,6 +88,7 @@ class Sample(app_util.Cog):
     )
     async def all_command(self, ctx: app_util.Context):
         await ctx.defer()
+        print(1/0)
         await ctx.send_followup(f'```py\n{ctx.options}\n```')
 
     @app_util.Cog.command(
@@ -98,7 +99,7 @@ class Sample(app_util.Cog):
     )
     async def promote_command(self, ctx: app_util.Context):
         await ctx.send_response(f'Done promotion!')
-        await ctx.resolved_user.send('You have been promoted! LOL')
+        await ctx.clicked_user.send('You have been promoted! LOL')
 
     @app_util.Cog.command(
         command=app_util.MessageCommand(
@@ -107,7 +108,7 @@ class Sample(app_util.Cog):
         guild_id=877399405056102431
     )
     async def pin_command(self, ctx: app_util.Context):
-        await ctx.resolved_message.pin()
+        await ctx.clicked_message.pin()
         await ctx.send_response(f'Message pinned by {ctx.author.mention}')
 
 

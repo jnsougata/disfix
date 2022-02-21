@@ -45,19 +45,18 @@ import discord
 import app_util
 
 
-
 class Sample(app_util.Cog):
 
     def __init__(self, bot: app_util.Bot):
         self.bot = bot
-    
+
     # this is default the application command error handler
     @app_util.Cog.listener
     async def on_command_error(self, ctx: app_util.Context, error: Exception):
         stack = traceback.format_exception(type(error), error, error.__traceback__)
         tb = ''.join(stack)
         await ctx.send_followup(f'```py\n{tb}\n```')
-    
+
     # example slash command named `all`
     @app_util.Cog.command(
         command=app_util.SlashCommand(
@@ -73,7 +72,7 @@ class Sample(app_util.Cog):
                 )
             ]
         ),
-        guild_id=877399405056102431 
+        guild_id=877399405056102431
         # if guild_id is not provided
         # it will be available globally
     )
@@ -81,7 +80,7 @@ class Sample(app_util.Cog):
         await ctx.defer()
         await self.bot.sync_global_commands()
         await ctx.send_followup(f'```py\n{self.bot.application_commands}\n```')
-    
+
     # example application user command named `Promote It`
     # this command will dm the target user with the phrase if possible
     @app_util.Cog.command(
@@ -94,7 +93,7 @@ class Sample(app_util.Cog):
         await ctx.defer(ephemeral=True)
         await ctx.resolved_user.send('You have been promoted! LOL')
         await ctx.send_followup('Done!')
-    
+
     # example application message command named `Pin`
     # this command will pin the message to the channel
     @app_util.Cog.command(
