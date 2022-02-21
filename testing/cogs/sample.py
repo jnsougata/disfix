@@ -21,31 +21,6 @@ class Sample(app_util.Cog):
             name='setup',
             description='configure PixeL for your Server',
             options=[
-                app_util.IntOption(
-                    name='remove',
-                    description='remove any old configuration',
-                    choices=[
-                        app_util.Choice(name='youtube', value=0),
-                        app_util.Choice(name='receiver', value=1),
-                        app_util.Choice(name='reception', value=2),
-                        app_util.Choice(name='ping_role', value=3),
-                        app_util.Choice(name='welcome_card', value=4),
-                        app_util.Choice(name='custom_message', value=5)
-                    ],
-                    required=False),
-                app_util.IntOption(
-                    name='overview',
-                    description='overview of existing configuration',
-                    choices=[
-                        app_util.Choice(name='youtube', value=0),
-                        app_util.Choice(name='receiver', value=1),
-                        app_util.Choice(name='reception', value=2),
-                        app_util.Choice(name='ping_role', value=3),
-                        app_util.Choice(name='welcome_card', value=4),
-                        app_util.Choice(name='custom_message', value=5)
-                    ],
-                    required=False),
-
                 app_util.StrOption(
                     name='youtube',
                     description='add any youtube channel by URL / ID',
@@ -82,29 +57,52 @@ class Sample(app_util.Cog):
                         app_util.Choice(name='livestream_message', value=2),
                     ],
                     required=False),
-            ]
+                app_util.IntOption(
+                    name='remove',
+                    description='remove any old configuration',
+                    choices=[
+                        app_util.Choice(name='youtube', value=0),
+                        app_util.Choice(name='receiver', value=1),
+                        app_util.Choice(name='reception', value=2),
+                        app_util.Choice(name='ping_role', value=3),
+                        app_util.Choice(name='welcome_card', value=4),
+                        app_util.Choice(name='custom_message', value=5)
+                    ],
+                    required=False),
+                app_util.IntOption(
+                    name='overview',
+                    description='overview of existing configuration',
+                    choices=[
+                        app_util.Choice(name='youtube', value=0),
+                        app_util.Choice(name='receiver', value=1),
+                        app_util.Choice(name='reception', value=2),
+                        app_util.Choice(name='ping_role', value=3),
+                        app_util.Choice(name='welcome_card', value=4),
+                        app_util.Choice(name='custom_message', value=5)
+                    ],
+                    required=False),
+            ],
+
         ),
         guild_id=877399405056102431
     )
-    async def all_command(self, ctx: app_util.Context):
-        await ctx.defer()
-        print(1/0)
-        await ctx.send_followup(f'```py\n{ctx.options}\n```')
+    async def setup_command(self, ctx: app_util.Context):
+        await ctx.defer(ephemeral=True)
+        for name, option in ctx.options.items():
+            if name == 'welcome_card':
+                await ctx.send_followup(option.value.url)
+            else:
+                await ctx.send_followup('The selected option is not implemented yet.')
 
     @app_util.Cog.command(
-        command=app_util.UserCommand(
-            name='Promote It',
-        ),
+        command=app_util.UserCommand(name='Bonk'),
         guild_id=877399405056102431
     )
     async def promote_command(self, ctx: app_util.Context):
-        await ctx.send_response(f'Done promotion!')
-        await ctx.clicked_user.send('You have been promoted! LOL')
+        await ctx.send_response(f'LOL! {ctx.clicked_user.mention} you have been bonked by {ctx.author.mention}')
 
     @app_util.Cog.command(
-        command=app_util.MessageCommand(
-            name='Pin',
-        ),
+        command=app_util.MessageCommand(name='Pin'),
         guild_id=877399405056102431
     )
     async def pin_command(self, ctx: app_util.Context):

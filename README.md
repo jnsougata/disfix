@@ -85,8 +85,8 @@ class Sample(app_util.Cog):
         # it will be available globally
     )
     async def book(self, ctx: app_util.Context):
-        page_number = ctx.options['page']
-        book_name = ctx.options['book_name']
+        page_number = ctx.options['page'].value
+        book_name = ctx.options['book_name'].value
         page_content = await imaginary_api.fetch(book_name, page_number)
         embed = discord.Embed(
             title=f'{book_name}', 
@@ -115,8 +115,9 @@ class Sample(app_util.Cog):
         guild_id=877399405056102431
     )
     async def pin(self, ctx: app_util.Context):
-        await ctx.clicked_message.pin()
-        await ctx.send_response(f'Message pinned by {ctx.author.mention}')
+        target = ctx.clicked_message
+        await target.pin()
+        await ctx.send_response(f'Message pinned by {ctx.author}')
 
 
 def setup(bot: app_util.Bot):
