@@ -52,18 +52,6 @@ class Bot(commands.Bot):
     def application_commands(self):
         return list(self._application_commands.values())
 
-    def slash_command(self, command: SlashCommand, guild_id: Optional[int] = None):
-        """
-        Decorator for registering a slash command.
-        """
-        self.__queue[command.name] = (command, guild_id)
-
-        def decorator(func):
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                return func
-            self._connection.hooks[command.name] = wrapper()
-        return decorator
 
     async def _invoke_app_command(self, interaction: discord.Interaction):
         if interaction.type == InteractionType.application_command:
