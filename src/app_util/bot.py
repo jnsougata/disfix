@@ -44,6 +44,7 @@ class Bot(commands.Bot):
             **options
         )
         self.__queue = {}
+        self.__checks = {}
         self.__parent = {}
         self._application_commands: Dict[int, ApplicationCommand] = {}
         self.__route = Route.BASE = f'https://discord.com/api/v{api_version}'
@@ -65,17 +66,39 @@ class Bot(commands.Bot):
             else:
                 raise TypeError(f'Unknown command type: {ctx.type}')
             try:
-                await self._connection.call_hooks(lookup_name, self.__parent[lookup_name], ctx)
-            except Exception as error:
+                func = self._connection.hooks[lookup_name]
+                check = self.__checks.get(func.__name__)
+                if check:
+                    try:
+                        is_checked = check(ctx)
+                    except Exception as e:
+                        raise e
+                    if is_checked:
+                        try:
+                            await self._connection.call_hooks(lookup_name, self.__parent[lookup_name], ctx)
+                        except Exception:
+                            raise ApplicationCommandError(f'Application Command `{ctx.name}` encountered an error')
+                else:
+                    try:
+                        await self._connection.call_hooks(lookup_name, self.__parent[lookup_name], ctx)
+                    except Exception:
+                        raise ApplicationCommandError(f'Application Command `{ctx.name}` encountered an error')
+            except KeyError:
+                raise CommandNotImplemented(f'Application Command `{ctx.name}` is not implemented.')
+            except Exception as e:
                 handler = self._connection.hooks.get('on_command_error')
                 if handler:
-                    await handler(self.__parent['handler'], ctx, error)
-                else:
-                    print(f'Ignoring exception in `{ctx.name}`', file=sys.stderr)
-                    traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+                    await handler(self.__parent['handler'], ctx, e)
+                    return
+                print(f'Ignoring exception while invoking command `{ctx.name}`\n', file=sys.stderr)
+                traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
 
 
     def _walk_app_commands(self, cog: Cog):
+
+        for name, check in cog.__mapped_checks__.items():
+            self.__checks[name] = check
+
         for lookup_name, data in cog.__mapped_container__.items():
             self.__parent[lookup_name] = data['parent']
             method = cog.__method_container__[lookup_name]

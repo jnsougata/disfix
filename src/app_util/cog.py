@@ -19,6 +19,7 @@ class Cog(metaclass=type):
     __method_container__: dict = {}
     __object_container__: dict = {}
     __mapped_container__: dict = {}
+    __mapped_checks__: dict = {}
 
     def __new__(cls, *args, **kwargs):
         cls.__error_listener__['parent'] = cls
@@ -52,6 +53,23 @@ class Cog(metaclass=type):
                 return func
             cls.__method_container__[command._map] = wrapper()
         return decorator
+
+    @classmethod
+    def add_check(cls, check: Callable):
+        """
+        Decorator for adding a check to a command
+        """
+
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                cls.__mapped_checks__[func.__name__] = check
+                return func
+
+            return wrapper()
+
+        return decorator
+
 
     @classmethod
     def listener(cls, func: Callable):

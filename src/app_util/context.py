@@ -4,6 +4,7 @@ import json
 import discord
 from discord.http import Route
 from discord.utils import MISSING
+from discord.ext.commands import Bot
 from .base import InteractionData, ChatInputOption, Resolved
 from .enums import ApplicationCommandType, OptionType
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict
@@ -170,8 +171,9 @@ def _handle_send_prams(
 
 
 class Context:
-    def __init__(self, action: discord.Interaction, client: discord.Client):
+    def __init__(self, action: discord.Interaction, client: Bot):
         self._ia = action
+        self.bot = client
         self._client = client
         self._deferred = False
 

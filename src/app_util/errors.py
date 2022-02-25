@@ -6,3 +6,28 @@ class InvalidCog(Exception):
 class NonCoroutine(Exception):
     def __init__(self, message: str):
         super().__init__(message)
+
+
+class CheckFailure(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class ApplicationCommandError(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class CommandNotImplemented(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class NotAdministrator(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class OptionNotSelected(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)

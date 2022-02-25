@@ -3,6 +3,14 @@ import asyncio
 import traceback
 import discord
 import src.app_util as app_util
+from src.app_util.errors import NotAdministrator, OptionNotSelected
+
+
+def check(ctx):
+    if not ctx.author.guild_permissions.administrator:
+        raise NotAdministrator('user is not an administrator')
+    if not ctx.options:
+        raise OptionNotSelected('no option selected')
 
 
 class Sample(app_util.Cog):
@@ -12,9 +20,13 @@ class Sample(app_util.Cog):
 
     @app_util.Cog.listener
     async def on_command_error(self, ctx: app_util.Context, error: Exception):
-        stack = traceback.format_exception(type(error), error, error.__traceback__)
-        tb = ''.join(stack)
-        await ctx.send_followup(f'```py\n{tb}\n```')
+        if isinstance(error, app_util.NotAdministrator):
+            await ctx.send_followup(f'{ctx.author.mention} you are not an administrator')
+        if isinstance(error, app_util.OptionNotSelected):
+            await ctx.send_followup(f'{ctx.author.mention} you must select an option')
+        else:
+            raise error
+
 
     @app_util.Cog.command(
         command=app_util.SlashCommand(
@@ -86,6 +98,7 @@ class Sample(app_util.Cog):
         ),
         guild_id=877399405056102431
     )
+    @app_util.Cog.add_check(check=check)
     async def setup_command(self, ctx: app_util.Context):
         await ctx.defer(ephemeral=True)
         for name, option in ctx.options.items():
