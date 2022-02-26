@@ -10,8 +10,6 @@ async def job(ctx: app_util.Context):
         await ctx.send_response(f'{ctx.author.mention} please use command `{ctx.name}` inside a guild')
     elif not ctx.author.guild_permissions.administrator:
         await ctx.send_response(f'{ctx.author.mention} you are not an administrator')
-    elif not ctx.options:
-        await ctx.send_response(f'{ctx.author.mention} you must select an option')
     else:
         return True
 
@@ -23,7 +21,7 @@ class Sample(app_util.Cog):
 
     @app_util.Cog.listener
     async def on_command_error(self, ctx: app_util.Context, error: Exception):
-        raise error
+        await ctx.send_followup(error)
 
 
     @app_util.Cog.command(
@@ -97,13 +95,21 @@ class Sample(app_util.Cog):
         guild_id=877399405056102431
     )
     @app_util.Cog.before_invoke(job=job)
-    async def setup_command(self, ctx: app_util.Context):
+    async def setup_command(
+            self,
+            ctx: app_util.Context,
+            welcome_card: discord.Attachment,
+            youtube: str,
+            *,
+            receiver: discord.TextChannel,
+            reception: discord.TextChannel,
+            ping_role: discord.Role,
+            custom_message: int,
+            remove: int,
+    ):
         await ctx.defer(ephemeral=True)
-        for name, option in ctx.options.items():
-            if name == 'welcome_card':
-                await ctx.send_followup(option.value.url)
-            else:
-                await ctx.send_followup('The selected option is not implemented yet.')
+        await ctx.send_followup(welcome_card.url)
+
 
     @app_util.Cog.command(
         command=app_util.UserCommand(name='Bonk'),

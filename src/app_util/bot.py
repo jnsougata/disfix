@@ -5,6 +5,7 @@ import asyncio
 import traceback
 from .errors import *
 from .cog import Cog
+from .parser import _build_prams
 from .slash_input import SlashCommand
 from .user_input import UserCommand
 from .msg_input import MessageCommand
@@ -42,9 +43,9 @@ class Bot(commands.Bot):
             description=description,
             **options
         )
+        self.__jobs = {}
+        self.__cogs = {}
         self.__queue = {}
-        self.__checks = {}
-        self.__parent = {}
         self._application_commands: Dict[int, ApplicationCommand] = {}
         self.__route = Route.BASE = f'https://discord.com/api/v10'
 
@@ -65,29 +66,32 @@ class Bot(commands.Bot):
             else:
                 raise TypeError(f'Unknown command type: {ctx.type}')
             try:
-                func = self._connection.hooks[lookup_name]
-                check = self.__checks.get(func.__name__)
-                if check:
+                try:
+                    cog = self.__cogs[lookup_name]
+                    func = self._connection.hooks[lookup_name]
+                except KeyError:
+                    raise CommandNotImplemented(f'Application Command `{ctx.name}` is not implemented.')
+                args, kwargs = _build_prams(ctx.options, func)
+                job = self.__jobs.get(func.__name__)
+                if job:
                     try:
-                        is_checked = await check(ctx)
+                        is_done = await job(ctx)
                     except Exception as e:
                         raise CheckFailure('Check failed.')
-                    if is_checked:
+                    if is_done:
                         try:
-                            await self._connection.call_hooks(lookup_name, self.__parent[lookup_name], ctx)
+                            await self._connection.call_hooks(lookup_name, cog, ctx, *args, **kwargs)
                         except Exception:
                             raise ApplicationCommandError(f'Application Command `{ctx.name}` encountered an error.')
                 else:
                     try:
-                        await self._connection.call_hooks(lookup_name, self.__parent[lookup_name], ctx)
+                        await self._connection.call_hooks(lookup_name, cog, ctx, *args, **kwargs)
                     except Exception:
                         raise ApplicationCommandError(f'Application Command `{ctx.name}` encountered an error.')
-            except KeyError:
-                raise CommandNotImplemented(f'Application Command `{ctx.name}` is not implemented.')
             except Exception as e:
                 handler = self._connection.hooks.get('on_command_error')
                 if handler:
-                    await handler(self.__parent['handler'], ctx, e)
+                    await handler(self.__cogs['handler'], ctx, e)
                     return
                 print(f'Ignoring exception while invoking command `{ctx.name}`\n', file=sys.stderr)
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
@@ -97,12 +101,12 @@ class Bot(commands.Bot):
 
         for name, job in cog.__mapped_checks__.items():
             if asyncio.iscoroutinefunction(job):
-                self.__checks[name] = job
+                self.__jobs[name] = job
             else:
                 raise NonCoroutine(f'Job function `{name}` must be a coroutine.')
 
         for lookup_name, data in cog.__mapped_container__.items():
-            self.__parent[lookup_name] = data['parent']
+            self.__cogs[lookup_name] = data['parent']
             method = cog.__method_container__[lookup_name]
             if asyncio.iscoroutinefunction(method):
                 self.__queue[lookup_name] = (data['object'], data['guild_id'])
@@ -111,7 +115,7 @@ class Bot(commands.Bot):
                 if error_handler:
                     if asyncio.iscoroutinefunction(error_handler):
                         self._connection.hooks[error_handler.__name__] = error_handler
-                        self.__parent['handler'] = cog.__error_listener__.get('parent')
+                        self.__cogs['handler'] = cog.__error_listener__.get('parent')
                     else:
                         raise NonCoroutine(f'listener `{error_handler.__name__}` must be a coroutine function')
             else:

@@ -261,9 +261,9 @@ class Context:
         :return: InteractionDataOption
         """
         if self.type is ApplicationCommandType.USER:
-            return None  # type: ignore
+            return {}  # type: ignore
         if self.type is ApplicationCommandType.MESSAGE:
-            return None  # type: ignore
+            return {}  # type: ignore
         options = self.data.options
         if options:
             return {
@@ -274,6 +274,8 @@ class Context:
                     resolved=self.resolved
                 ) for option in options
             }
+        else:
+            return {}
 
     @property
     def application_id(self):
@@ -363,7 +365,7 @@ class Context:
             raise TypeError('Can not mix view and views')
 
         return await self._ia.channel.send(
-            content=content,
+            content=str(content),
             tts=tts,
             file=file,
             files=files,
@@ -392,7 +394,7 @@ class Context:
             views: Optional[List[discord.ui.View]] = None,
     ):
         payload, form = _handle_send_prams(
-            content=content,
+            content=str(content),
             tts=tts,
             file=file,
             files=files,
@@ -440,7 +442,7 @@ class Context:
             views: Optional[List[discord.ui.View]] = None
     ):
         payload, form = _handle_send_prams(
-            content=content,
+            content=str(content),
             tts=tts,
             file=file,
             files=files,
@@ -489,7 +491,7 @@ class Context:
             views: Optional[List[discord.ui.View]] = MISSING
     ):
         payload, form = _handle_edit_params(
-            content=content,
+            content=str(content),
             file=file,
             files=files,
             embed=embed,
@@ -545,7 +547,7 @@ class Followup:
             views: Optional[List[discord.ui.View]] = MISSING,
     ):
         payload, form = _handle_edit_params(
-            content=content,
+            content=str(content),
             file=file,
             files=files,
             embed=embed,
