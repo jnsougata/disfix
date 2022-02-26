@@ -1,4 +1,3 @@
-import sys
 import inspect
 import asyncio
 import traceback
@@ -55,15 +54,16 @@ class Cog(metaclass=type):
         return decorator
 
     @classmethod
-    def add_check(cls, check: Callable):
+    def before_invoke(cls, job: Callable):
         """
-        Decorator for adding a check to a command
+        Decorator for adding a pre-command job w.r.t checks
+        :job: The function containing the job to be executed
         """
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__mapped_checks__[func.__name__] = check
+                cls.__mapped_checks__[func.__name__] = job
                 return func
 
             return wrapper()

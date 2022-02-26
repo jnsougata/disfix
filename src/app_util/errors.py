@@ -21,13 +21,3 @@ class ApplicationCommandError(Exception):
 class CommandNotImplemented(Exception):
     def __init__(self, message: str):
         super().__init__(message)
-
-
-class NotAdministrator(Exception):
-    def __init__(self, message: str):
-        super().__init__(message)
-
-
-class OptionNotSelected(Exception):
-    def __init__(self, message: str):
-        super().__init__(message)

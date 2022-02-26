@@ -3,14 +3,17 @@ import asyncio
 import traceback
 import discord
 import src.app_util as app_util
-from src.app_util.errors import NotAdministrator, OptionNotSelected
 
 
-def check(ctx):
-    if not ctx.author.guild_permissions.administrator:
-        raise NotAdministrator('user is not an administrator')
-    if not ctx.options:
-        raise OptionNotSelected('no option selected')
+async def job(ctx: app_util.Context):
+    if not ctx.guild:
+        await ctx.send_response(f'{ctx.author.mention} please use command `{ctx.name}` inside a guild')
+    elif not ctx.author.guild_permissions.administrator:
+        await ctx.send_response(f'{ctx.author.mention} you are not an administrator')
+    elif not ctx.options:
+        await ctx.send_response(f'{ctx.author.mention} you must select an option')
+    else:
+        return True
 
 
 class Sample(app_util.Cog):
@@ -20,12 +23,7 @@ class Sample(app_util.Cog):
 
     @app_util.Cog.listener
     async def on_command_error(self, ctx: app_util.Context, error: Exception):
-        if isinstance(error, app_util.NotAdministrator):
-            await ctx.send_followup(f'{ctx.author.mention} you are not an administrator')
-        if isinstance(error, app_util.OptionNotSelected):
-            await ctx.send_followup(f'{ctx.author.mention} you must select an option')
-        else:
-            raise error
+        raise error
 
 
     @app_util.Cog.command(
@@ -98,7 +96,7 @@ class Sample(app_util.Cog):
         ),
         guild_id=877399405056102431
     )
-    @app_util.Cog.add_check(check=check)
+    @app_util.Cog.before_invoke(job=job)
     async def setup_command(self, ctx: app_util.Context):
         await ctx.defer(ephemeral=True)
         for name, option in ctx.options.items():

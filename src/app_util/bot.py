@@ -33,7 +33,6 @@ class Bot(commands.Bot):
             intents: discord.Intents = discord.Intents.default(),
             help_command: Optional[discord.ext.commands.HelpCommand] = discord.ext.commands.DefaultHelpCommand(),
             description: Optional[str] = None,
-            api_version: int = 10,
             **options
     ):
         super().__init__(
@@ -47,7 +46,7 @@ class Bot(commands.Bot):
         self.__checks = {}
         self.__parent = {}
         self._application_commands: Dict[int, ApplicationCommand] = {}
-        self.__route = Route.BASE = f'https://discord.com/api/v{api_version}'
+        self.__route = Route.BASE = f'https://discord.com/api/v10'
 
     @property
     def application_commands(self):
@@ -70,19 +69,19 @@ class Bot(commands.Bot):
                 check = self.__checks.get(func.__name__)
                 if check:
                     try:
-                        is_checked = check(ctx)
+                        is_checked = await check(ctx)
                     except Exception as e:
-                        raise e
+                        raise CheckFailure('Check failed.')
                     if is_checked:
                         try:
                             await self._connection.call_hooks(lookup_name, self.__parent[lookup_name], ctx)
                         except Exception:
-                            raise ApplicationCommandError(f'Application Command `{ctx.name}` encountered an error')
+                            raise ApplicationCommandError(f'Application Command `{ctx.name}` encountered an error.')
                 else:
                     try:
                         await self._connection.call_hooks(lookup_name, self.__parent[lookup_name], ctx)
                     except Exception:
-                        raise ApplicationCommandError(f'Application Command `{ctx.name}` encountered an error')
+                        raise ApplicationCommandError(f'Application Command `{ctx.name}` encountered an error.')
             except KeyError:
                 raise CommandNotImplemented(f'Application Command `{ctx.name}` is not implemented.')
             except Exception as e:
@@ -96,8 +95,11 @@ class Bot(commands.Bot):
 
     def _walk_app_commands(self, cog: Cog):
 
-        for name, check in cog.__mapped_checks__.items():
-            self.__checks[name] = check
+        for name, job in cog.__mapped_checks__.items():
+            if asyncio.iscoroutinefunction(job):
+                self.__checks[name] = job
+            else:
+                raise NonCoroutine(f'Job function `{name}` must be a coroutine.')
 
         for lookup_name, data in cog.__mapped_container__.items():
             self.__parent[lookup_name] = data['parent']
