@@ -14,7 +14,7 @@ from discord.http import Route
 from functools import wraps
 from .context import Context
 from .enums import ApplicationCommandType
-from .base import ApplicationCommand, BaseOverwrite
+from .core import ApplicationCommand, BaseOverwrite
 from typing import Callable, Optional, Any, Union, List, Dict, Tuple
 from discord.ext import commands
 from discord.http import Route

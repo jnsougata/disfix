@@ -188,12 +188,11 @@ class ChatInputOption:
             return map[target_id]
 
         elif self.type is OptionType.NUMBER:
-            return self._data.get('value')
+            return self._data['value']
 
         elif self.type is OptionType.ATTACHMENT:
-            attachment_id = int(self._data.get('value'))
+            attachment_id = int(self._data['value'])
             return self._resolved.attachments[attachment_id]
-
         else:
             return self._data.get('value')
 
@@ -271,14 +270,18 @@ class ApplicationCommand:
             r = Route('PUT',
                       f'/applications/{self.application_id}/guilds/{guild.id}/commands/{self.id}/permissions')
         else:
-            print(f'Warning: [guild] is required when editing global application command Overwrites'
-                  f'\nGuild must be provided to edit global command named `{self.name}`', file=sys.stderr)
+            print(f'Guild is not given while editing command named `{self.name}`'
+                  f'\nWarning: [guild] is required to edit global application command Overwrites', file=sys.stderr)
             return
 
         await self.__client.http.request(r, json=ows)
 
     async def edit(self, command: BaseApplicationCommand):
-        pass
+        if isinstance(command.type, self.type):
+            print('Command type matched')
+        else:
+            print(f'Type mismatched while editing command `{self.name}`'
+                  f'\nWarning: Command type mismatched. Expected {self.type} got {command.type}', file=sys.stderr)
 
 
 

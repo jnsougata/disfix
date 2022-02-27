@@ -1,5 +1,6 @@
 class BaseApplicationCommand:
-    pass
+    ...
+
 
 
 class Overwrite:

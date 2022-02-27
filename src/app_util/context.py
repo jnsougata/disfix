@@ -5,7 +5,7 @@ import discord
 from discord.http import Route
 from discord.utils import MISSING
 from discord.ext.commands import Bot
-from .base import InteractionData, ChatInputOption, Resolved
+from .core import InteractionData, ChatInputOption, Resolved
 from .enums import ApplicationCommandType, OptionType
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict
 

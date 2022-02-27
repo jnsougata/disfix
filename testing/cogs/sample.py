@@ -33,17 +33,13 @@ class Sample(app_util.Cog):
         )
     )
     async def global_command(self, ctx: app_util.Context):
-        await ctx.command.edit_overwrites(
-            [app_util.Overwrite.for_user(516649677001719819, allow=False)],
-            guild=ctx.guild
-        )
         await ctx.send_response(f'You have successfully used a Global Application Command')
 
 
     @app_util.Cog.command(
         command=app_util.SlashCommand(
             name='embed',
-            description='creates an embed to a channel',
+            description='creates an embed to current channel',
             options=[
                 app_util.StrOption('title', 'title of the embed', required=False),
                 app_util.StrOption('description', 'description of the embed', required=False),
@@ -56,7 +52,6 @@ class Sample(app_util.Cog):
                 app_util.StrOption('footer_text', 'footer text of the embed', required=False),
                 app_util.AttachmentOption('footer_icon', 'file for embed', required=False),
             ],
-            overwrites=[app_util.Overwrite.for_role(879281380306067486)],
         ),
         guild_id=877399405056102431
     )
@@ -124,7 +119,6 @@ class Sample(app_util.Cog):
             options=[
                 app_util.StrOption('name', 'name of command to delete', required=True),
             ],
-            overwrites=[app_util.Overwrite.for_role(879281380306067486)],
         ),
         guild_id=877399405056102431
     )
@@ -136,9 +130,6 @@ class Sample(app_util.Cog):
             if command.name == name:
                 await command.delete()
                 await ctx.send_followup(f'Application Command **`{name}`** has been deleted | (ID: {command.id})')
-                return await ctx.command.edit_overwrites(
-                    [app_util.Overwrite.for_user(516649677001719819, allow=False)]
-                )
         else:
             await ctx.send_followup(f'Application Command **`{name}`** does not exist')
 
