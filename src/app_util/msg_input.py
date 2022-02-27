@@ -1,4 +1,5 @@
 from .app import Overwrite, BaseApplicationCommand
+from .enums import ApplicationCommandType
 
 
 class MessageCommand(BaseApplicationCommand):
@@ -12,15 +13,17 @@ class MessageCommand(BaseApplicationCommand):
         self._map = 'MESSAGE_' + name.replace(" ", "_").upper()  # name for mapping
         self._payload = {
             'name': name,
-            'type': 3,
+            'type': ApplicationCommandType.MESSAGE.value,
             'default_permission': default_access,
         }
-        self._overwrites = {}
+        self._overwrites = overwrites
+        self.type = ApplicationCommandType.MESSAGE
+
 
     @property
     def overwrites(self):
         if self._overwrites:
-            return {"permissions": [perm.to_dict() for perm in self._overwrites]}
+            return {"permissions": [ow.to_dict() for ow in self._overwrites]}
 
     def to_dict(self) -> dict:
         return self._payload

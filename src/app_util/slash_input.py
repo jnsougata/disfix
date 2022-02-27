@@ -1,6 +1,6 @@
 from typing import Any, Union, List, Dict, Optional
 from .app import Overwrite, BaseApplicationCommand
-from .enums import ChannelType
+from .enums import ChannelType, ApplicationCommandType
 
 
 __all__ = [
@@ -250,10 +250,11 @@ class SlashCommand(BaseApplicationCommand):
         self._payload = {
             "name": name,
             "description": description,
-            "type": 1,
+            "type": ApplicationCommandType.CHAT_INPUT.value,
             "options": [option.data for option in options] if options else [],
             "default_permission": default_access,
         }
+        self.type = ApplicationCommandType.CHAT_INPUT
 
     @property
     def overwrites(self):
