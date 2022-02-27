@@ -8,7 +8,7 @@ class NonCoroutine(Exception):
         super().__init__(message)
 
 
-class CheckFailure(Exception):
+class JobFailure(Exception):
     def __init__(self, message: str):
         super().__init__(message)
 

@@ -19,9 +19,9 @@ class Sample(app_util.Cog):
     def __init__(self, bot: app_util.Bot):
         self.bot = bot
 
-    @app_util.Cog.listener
-    async def on_command_error(self, ctx: app_util.Context, error: Exception):
-        await ctx.send_followup(error)
+    #@app_util.Cog.listener
+    #async def on_command_error(self, ctx: app_util.Context, error: Exception):
+        #print(error, file=sys.stderr)
 
 
     @app_util.Cog.command(

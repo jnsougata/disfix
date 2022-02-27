@@ -43,8 +43,8 @@ class Bot(commands.Bot):
             description=description,
             **options
         )
+        self.__aux = {}
         self.__jobs = {}
-        self.__cogs = {}
         self.__queue = {}
         self._application_commands: Dict[int, ApplicationCommand] = {}
         self.__route = Route.BASE = f'https://discord.com/api/v10'
@@ -56,44 +56,44 @@ class Bot(commands.Bot):
 
     async def _invoke_app_command(self, interaction: discord.Interaction):
         if interaction.type == InteractionType.application_command:
-            ctx = Context(interaction, self)
-            if ctx.type is ApplicationCommandType.CHAT_INPUT:
-                lookup_name = 'SLASH_' + ctx.name.upper()
-            elif ctx.type is ApplicationCommandType.MESSAGE:
-                lookup_name = 'MESSAGE_' + ctx.name.replace(' ', '_').upper()
-            elif ctx.type is ApplicationCommandType.USER:
-                lookup_name = 'USER_' + ctx.name.replace(' ', '_').upper()
+            c = Context(interaction, self)
+            if c.type is ApplicationCommandType.CHAT_INPUT:
+                qual = 'SLASH_' + c.name.upper()
+            elif c.type is ApplicationCommandType.MESSAGE:
+                qual = 'MESSAGE_' + c.name.replace(' ', '_').upper()
+            elif c.type is ApplicationCommandType.USER:
+                qual = 'USER_' + c.name.replace(' ', '_').upper()
             else:
-                raise TypeError(f'Unknown command type: {ctx.type}')
+                raise TypeError(f'Unknown command type: {c.type}')
             try:
                 try:
-                    cog = self.__cogs[lookup_name]
-                    func = self._connection.hooks[lookup_name]
+                    cog = self.__aux[qual]
+                    func = self._connection.hooks[qual]
                 except KeyError:
-                    raise CommandNotImplemented(f'Application Command `{ctx.name}` is not implemented.')
-                args, kwargs = _build_prams(ctx.options, func)
+                    raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
+                args, kwargs = _build_prams(c.options, func)
                 job = self.__jobs.get(func.__name__)
                 if job:
                     try:
-                        is_done = await job(ctx)
+                        is_done = await job(c)
                     except Exception as e:
-                        raise CheckFailure('Check failed.')
+                        raise JobFailure(f'Before invoke job named `{job.__name__}` raised an exception: {e}')
                     if is_done:
                         try:
-                            await self._connection.call_hooks(lookup_name, cog, ctx, *args, **kwargs)
+                            await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
                         except Exception:
-                            raise ApplicationCommandError(f'Application Command `{ctx.name}` encountered an error.')
+                            raise ApplicationCommandError(f'Application Command `{c!r}` encountered an error.')
                 else:
                     try:
-                        await self._connection.call_hooks(lookup_name, cog, ctx, *args, **kwargs)
+                        await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
                     except Exception:
-                        raise ApplicationCommandError(f'Application Command `{ctx.name}` encountered an error.')
+                        raise ApplicationCommandError(f'Application Command `{c!r}` encountered an error.')
             except Exception as e:
                 handler = self._connection.hooks.get('on_command_error')
                 if handler:
-                    await handler(self.__cogs['handler'], ctx, e)
+                    await handler(self.__aux['handler'], c, e)
                     return
-                print(f'Ignoring exception while invoking command `{ctx.name}`\n', file=sys.stderr)
+                print(f'Ignoring exception while invoking command `{c!r}`\n', file=sys.stderr)
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
 
 
@@ -105,21 +105,21 @@ class Bot(commands.Bot):
             else:
                 raise NonCoroutine(f'Job function `{name}` must be a coroutine.')
 
-        for lookup_name, data in cog.__mapped_container__.items():
-            self.__cogs[lookup_name] = data['parent']
-            method = cog.__method_container__[lookup_name]
-            if asyncio.iscoroutinefunction(method):
-                self.__queue[lookup_name] = (data['object'], data['guild_id'])
-                self._connection.hooks[lookup_name] = method
-                error_handler = cog.__error_listener__.get('callable')
-                if error_handler:
-                    if asyncio.iscoroutinefunction(error_handler):
-                        self._connection.hooks[error_handler.__name__] = error_handler
-                        self.__cogs['handler'] = cog.__error_listener__.get('parent')
+        for qual, data in cog.__mapped_container__.items():
+            self.__aux[qual] = data['parent']
+            m = cog.__method_container__[qual]
+            if asyncio.iscoroutinefunction(m):
+                self.__queue[qual] = (data['object'], data['guild_id'])
+                self._connection.hooks[qual] = m
+                eh = cog.__error_listener__.get('callable')
+                if eh:
+                    if asyncio.iscoroutinefunction(eh):
+                        self._connection.hooks[eh.__name__] = eh
+                        self.__aux['handler'] = cog.__error_listener__.get('parent')
                     else:
-                        raise NonCoroutine(f'listener `{error_handler.__name__}` must be a coroutine function')
+                        raise NonCoroutine(f'listener `{eh.__name__}` must be a coroutine function')
             else:
-                raise NonCoroutine(f'`{method.__name__}` must be a coroutine function')
+                raise NonCoroutine(f'`{m.__name__}` must be a coroutine function')
 
     def add_application_cog(self, cog: Cog):
         self._walk_app_commands(cog)

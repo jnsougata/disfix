@@ -177,6 +177,9 @@ class Context:
         self._client = client
         self._deferred = False
 
+    def __repr__(self):
+        return self.name
+
 
     @property
     def type(self):
