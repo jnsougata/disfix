@@ -19,9 +19,11 @@ class Sample(app_util.Cog):
     def __init__(self, bot: app_util.Bot):
         self.bot = bot
 
-    #@app_util.Cog.listener
-    #async def on_command_error(self, ctx: app_util.Context, error: Exception):
-        #print(error, file=sys.stderr)
+    @app_util.Cog.listener
+    async def on_command_error(self, ctx: app_util.Context, error: Exception):
+        stack = traceback.format_exception(type(error), error, error.__traceback__)
+        tb = ''.join(stack)
+        await ctx.send_followup(f'```py\n{tb}\n```')
 
 
     @app_util.Cog.command(

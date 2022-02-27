@@ -77,17 +77,17 @@ class Bot(commands.Bot):
                     try:
                         is_done = await job(c)
                     except Exception as e:
-                        raise JobFailure(f'Before invoke job named `{job.__name__}` raised an exception: {e}')
+                        raise JobFailure(f'Before invoke job named `{job.__name__}` raised an exception: ({e})')
                     if is_done:
                         try:
                             await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
-                        except Exception:
-                            raise ApplicationCommandError(f'Application Command `{c!r}` encountered an error.')
+                        except Exception as e:
+                            raise ApplicationCommandError(f'Application Command `{c!r}` raised an exception: ({e})')
                 else:
                     try:
                         await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
-                    except Exception:
-                        raise ApplicationCommandError(f'Application Command `{c!r}` encountered an error.')
+                    except Exception as e:
+                        raise ApplicationCommandError(f'Application Command `{c!r}` raised an exception: ({e})')
             except Exception as e:
                 handler = self._connection.hooks.get('on_command_error')
                 if handler:
