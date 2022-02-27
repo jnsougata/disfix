@@ -1,6 +1,6 @@
 from typing import Any, Union, List, Dict, Optional
-from dataclasses import dataclass
-from .app import Overwrite
+from .app import Overwrite, BaseApplicationCommand
+from .enums import ChannelType
 
 
 __all__ = [
@@ -19,21 +19,6 @@ __all__ = [
     'Choice',
     'ChannelType',
 ]
-
-
-@dataclass(frozen=True)
-class ChannelType:
-    GUILD_TEXT = 0
-    DM = 1
-    GUILD_VOICE = 2
-    GROUP_DM = 3
-    GUILD_CATEGORY = 4
-    GUILD_NEWS = 5
-    GUILD_STORE = 6
-    GUILD_NEWS_THREAD = 10
-    GUILD_PUBLIC_THREAD = 11
-    GUILD_PRIVATE_THREAD = 12
-    GUILD_STAGE_VOICE = 13
 
 
 class _Option:
@@ -130,7 +115,7 @@ class ChannelOption(_Option):
             *,
             required: bool = True,
             choices: list[Choice] = None,
-            channel_types: [int] = None
+            channel_types: [ChannelType] = None
     ):
         self.data = {
             "name": name,
@@ -138,7 +123,7 @@ class ChannelOption(_Option):
             "type": 7,
             "required": required,
             "choices": [choice.data for choice in choices] if choices else [],
-            "channel_types": channel_types if channel_types else []
+            "channel_types": [ct.value for ct in channel_types] if channel_types else []
         }
 
 
@@ -249,7 +234,7 @@ class SubCommandGroup:
         }
 
 
-class SlashCommand:
+class SlashCommand(BaseApplicationCommand):
 
     def __init__(
             self,

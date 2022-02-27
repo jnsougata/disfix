@@ -125,6 +125,12 @@ class Bot(commands.Bot):
         self._walk_app_commands(cog)
 
     async def sync_current_commands(self):
+        """
+        Synchronize the currently implemented application commands for the specified guild or global.
+        This method is called automatically when the bot is ready. however, you can call it manually
+        to ensure that the bot is up-to-date with the latest commands.
+        :return: None
+        """
         for command, guild_id in self.__queue.values():
             if guild_id:
                 route = Route('POST', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
@@ -132,47 +138,56 @@ class Bot(commands.Bot):
                 if command.overwrites:
                     perm_route = Route(
                         'PUT',
-                        f'/applications/{self.application_id}/guilds/{guild_id}/commands/{resp.get("id")}/permissions')
+                        f'/applications/{self.application_id}/guilds/{guild_id}/commands/{resp["id"]}/permissions')
                     perms = await self.http.request(perm_route, json=command.overwrites)
                     resp['permissions'] = perms
             else:
                 route = Route('POST', f'/applications/{self.application_id}/commands')
                 resp = await self.http.request(route, json=command.to_dict())
 
-            apc = ApplicationCommand(resp, self)
+            apc = ApplicationCommand(self, resp)
             self._application_commands[apc.id] = apc
 
     async def sync_global_commands(self):
+        """
+        Syncs the global commands of the application.
+        It does this automatically when the bot is ready.
+        :return: None
+        """
         route = Route('GET', f'/applications/{self.application_id}/commands')
         resp = await self.http.request(route)
         for data in resp:
-            cmd = ApplicationCommand(data, self)
+            cmd = ApplicationCommand(self, data)
             self._application_commands[cmd.id] = cmd
 
     async def sync_guild_commands(self, guild: discord.Guild):
+        """
+        Automatically sync all commands for a specific guild.
+        :param guild: the guild to sync commands for
+        :return: None
+        """
         route = Route('GET', f'/applications/{self.application_id}/guilds/{guild.id}/commands')
         resp = await self.http.request(route)
         for data in resp:
-            cmd = ApplicationCommand(data, self)
+            cmd = ApplicationCommand(self, data)
             self._application_commands[cmd.id] = cmd
 
-    async def fetch_application_command(self, command_id: int, guild_id: int = None):
+    async def fetch_command(self, command_id: int, guild_id: int = None):
+        """
+        Fetch an application command by its ID.
+        :param command_id: the command id to fetch
+        :param guild_id: the guild id where the command is located
+        :return: ApplicationCommand
+        """
         if guild_id:
             route = Route('GET', f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}')
         else:
             route = Route('GET', f'/applications/{self.application_id}/commands/{command_id}')
         resp = await self.http.request(route)
-        return ApplicationCommand(resp, self)
+        return ApplicationCommand(self, resp)
 
     def get_application_command(self, command_id: int):
         return self._application_commands.get(command_id)
-
-    async def delete_slash_command(self, command_id: int, guild_id: int = None):
-        if guild_id:
-            route = Route('DELETE', f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}')
-        else:
-            route = Route('DELETE', f'/applications/{self.application_id}/commands/{command_id}')
-        await self.http.request(route)
 
     async def update_slash_command(self, command_id: int, updated: SlashCommand, guild_id: int = None):
         if guild_id:
@@ -180,15 +195,9 @@ class Bot(commands.Bot):
         else:
             route = Route('PATCH', f'/applications/{self.application_id}/commands/{command_id}')
         resp = await self.http.request(route, json=updated.to_dict())
-        cmd = ApplicationCommand(resp, self)
+        cmd = ApplicationCommand(self, resp)
         self._application_commands[cmd.id] = cmd
         return cmd
-
-    async def update_slash_permission(self, guild_id: int, command_id: int, overwrites: [Overwrite]):
-        payload = [perm.to_dict() for perm in overwrites]
-        route = Route('PATCH',
-                      f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}/permissions')
-        return await self.http.request(route, json=payload)
 
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:

@@ -1,7 +1,7 @@
-from .app import Overwrite
+from .app import Overwrite, BaseApplicationCommand
 
 
-class MessageCommand:
+class MessageCommand(BaseApplicationCommand):
     def __init__(
             self,
             *,

@@ -1,3 +1,7 @@
+class BaseApplicationCommand:
+    pass
+
+
 class Overwrite:
     def __init__(self, payload: dict):
         self._payload = payload

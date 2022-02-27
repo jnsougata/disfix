@@ -4,9 +4,7 @@ import traceback
 from abc import ABC, ABCMeta
 from functools import wraps
 from .errors import NonCoroutine
-from .slash_input import SlashCommand
-from .user_input import UserCommand
-from .msg_input import MessageCommand
+from .app import BaseApplicationCommand
 from .context import Context
 from typing import Optional, ClassVar, Callable, List, Union, Dict, Any
 
@@ -40,7 +38,7 @@ class Cog(metaclass=type):
 
 
     @classmethod
-    def command(cls, command: [SlashCommand, UserCommand, MessageCommand], guild_id: int = None):
+    def command(cls, command: BaseApplicationCommand, guild_id: int = None):
         """
         Decorator for registering a slash command
         """

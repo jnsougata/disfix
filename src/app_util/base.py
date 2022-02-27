@@ -1,4 +1,7 @@
+import sys
+from .app import Overwrite, BaseApplicationCommand
 import discord
+from discord.ext import commands
 from enum import Enum
 from discord.http import Route
 from dataclasses import dataclass
@@ -10,6 +13,13 @@ def try_enum(enum_class, value):
     try:
         return enum_class(value)
     except ValueError:
+        return None
+
+
+def intflake(snowflake: str) -> Union[int, None]:
+    try:
+        return int(snowflake)
+    except TypeError:
         return None
 
 
@@ -197,10 +207,12 @@ class ChatInputOption:
 
 
 class ApplicationCommand:
-    def __init__(self, data: dict, client: discord.Client):
+
+    def __init__(self, client: commands.Bot, data: dict):
         self.__payload = data
         self.__client = client
         self.id = int(data['id'])
+        self.guild_id = intflake(data.get('guild_id'))
         self.name = data['name']
         self.description = data['description']
         self.type = try_enum(ApplicationCommandType, data['type'])
@@ -220,10 +232,15 @@ class ApplicationCommand:
         return f'<ApplicationCommand id = {self.id} name = {self.name}>'
 
     @property
+    def guild_specific(self) -> bool:
+        if self.guild_id:
+            return True
+        return False
+
+    @property
     def guild(self):
-        guild_id = self.__payload.get('guild_id')
-        if guild_id:
-            return self.__client.get_guild(int(guild_id))
+        if self.guild_id:
+            return self.__client.get_guild(self.guild_id)
         return None
 
     async def delete(self):
@@ -237,6 +254,38 @@ class ApplicationCommand:
                 f'/applications/{self.application_id}/commands/{self.id}')
 
         await self.__client.http.request(route)
+        self.__client._application_commands.pop(self.id)
+
+    async def edit_overwrites(self, overwrites: List[Overwrite], guild: discord.Guild = None):
+        """
+        Edits the overwrites for an application command.
+        :param overwrites: the overwrites to add
+        :param guild: the guild for which to edit the overwrites
+        :return: None
+        """
+        ows = {'permissions': [ow.to_dict() for ow in overwrites]}
+        if self.guild_specific:
+            r = Route('PUT',
+                      f'/applications/{self.application_id}/guilds/{self.guild_id}/commands/{self.id}/permissions')
+        elif guild:
+            r = Route('PUT',
+                      f'/applications/{self.application_id}/guilds/{guild.id}/commands/{self.id}/permissions')
+        else:
+            print(f'Warning: [guild] is required when editing global application command Overwrites'
+                  f'\nGuild must be provided to edit global command named `{self.name}`', file=sys.stderr)
+            return
+
+        await self.__client.http.request(r, json=ows)
+
+    async def edit(self, command: BaseApplicationCommand):
+        pass
+
+
+
+
+
+
+
 
 
 
