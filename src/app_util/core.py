@@ -1,6 +1,7 @@
 import sys
 from .app import Overwrite, BaseApplicationCommand
 import discord
+from .errors import NoGuildProvided, TypeMismatch
 from discord.ext import commands
 from enum import Enum
 from discord.http import Route
@@ -270,18 +271,19 @@ class ApplicationCommand:
             r = Route('PUT',
                       f'/applications/{self.application_id}/guilds/{guild.id}/commands/{self.id}/permissions')
         else:
-            print(f'Guild is not given while editing command named `{self.name}`'
-                  f'\nWarning: [guild] is required to edit global application command Overwrites', file=sys.stderr)
-            return
+            raise NoGuildProvided(f'Guild not provided while editing global command ({self.name})')
 
         await self.__client.http.request(r, json=ows)
 
     async def edit(self, command: BaseApplicationCommand):
         if isinstance(command.type, self.type):
-            print('Command type matched')
+            if self.guild_specific:
+                r = Route('PATCH', f'/applications/{self.application_id}/guilds/{self.guild_id}/commands/{self.id}')
+            else:
+                r = Route('PATCH', f'/applications/{self.application_id}/commands/{self.id}')
         else:
-            print(f'Type mismatched while editing command `{self.name}`'
-                  f'\nWarning: Command type mismatched. Expected {self.type} got {command.type}', file=sys.stderr)
+            raise TypeMismatch(f'Type mismatched while editing command `{self.name}` '
+                               f'expected {self.type}, got {command.type})')
 
 
 

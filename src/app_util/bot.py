@@ -5,7 +5,7 @@ import asyncio
 import traceback
 from .errors import *
 from .cog import Cog
-from .parser import _build_prams
+from .parser import _build_prams, _get_qual_name
 from .slash_input import SlashCommand
 from .user_input import UserCommand
 from .msg_input import MessageCommand
@@ -57,14 +57,7 @@ class Bot(commands.Bot):
     async def _invoke_app_command(self, interaction: discord.Interaction):
         if interaction.type == InteractionType.application_command:
             c = Context(interaction, self)
-            if c.type is ApplicationCommandType.CHAT_INPUT:
-                qual = 'SLASH_' + c.name.upper()
-            elif c.type is ApplicationCommandType.MESSAGE:
-                qual = 'MESSAGE_' + c.name.replace(' ', '_').upper()
-            elif c.type is ApplicationCommandType.USER:
-                qual = 'USER_' + c.name.replace(' ', '_').upper()
-            else:
-                raise TypeError(f'Unknown command type: {c.type}')
+            qual = _get_qual_name(c)
             try:
                 try:
                     cog = self.__aux[qual]

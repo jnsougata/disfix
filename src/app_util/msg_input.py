@@ -10,14 +10,14 @@ class MessageCommand(BaseApplicationCommand):
             default_access: bool = True,
             overwrites: [Overwrite] = None,
     ):
+        super().__init__(name=name, type=ApplicationCommandType.MESSAGE)
         self._map = 'MESSAGE_' + name.replace(" ", "_").upper()  # name for mapping
         self._payload = {
             'name': name,
-            'type': ApplicationCommandType.MESSAGE.value,
+            'type': self.type.value,
             'default_permission': default_access,
         }
         self._overwrites = overwrites
-        self.type = ApplicationCommandType.MESSAGE
 
 
     @property

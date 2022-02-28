@@ -1,5 +1,10 @@
+from .enums import ApplicationCommandType
+
+
 class BaseApplicationCommand:
-    ...
+    def __init__(self, name: str, type: ApplicationCommandType):
+        self.name = name
+        self.type = type
 
 
 

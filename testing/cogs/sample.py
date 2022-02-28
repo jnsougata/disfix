@@ -109,6 +109,7 @@ class Sample(app_util.Cog):
         guild_id=877399405056102431
     )
     async def pin_command(self, ctx: app_util.Context):
+        print(ctx.command.type)
         await ctx.clicked_message.pin()
         await ctx.send_response(f'Message pinned by {ctx.author.mention}')
 

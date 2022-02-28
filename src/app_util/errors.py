@@ -21,3 +21,13 @@ class ApplicationCommandError(Exception):
 class CommandNotImplemented(Exception):
     def __init__(self, message: str):
         super().__init__(message)
+
+
+class NoGuildProvided(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class TypeMismatch(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)

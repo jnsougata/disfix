@@ -10,6 +10,7 @@ class UserCommand(BaseApplicationCommand):
             default_access: bool = True,
             overwrites: [Overwrite] = None,
     ):
+        super().__init__(name=name, type=ApplicationCommandType.USER)
         self._map = 'USER_' + name.replace(" ", "_").upper()  # name for mapping
         self._payload = {
             'name': name,
