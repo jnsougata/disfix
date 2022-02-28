@@ -300,8 +300,7 @@ class ApplicationCommand:
             try:
                 resp = await self.__client.http.request(r, json=command.to_dict())
             except discord.errors.HTTPException as e:
-                if e.code == 40041:
-                    raise NameAlreadyExists(f'Command with name `{command.name}` already exists')
+                raise e
             else:
                 updated = self._from_data(self.__client, resp)
                 self.__client._application_commands.pop(self.id)
