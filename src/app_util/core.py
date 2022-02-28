@@ -1,13 +1,13 @@
+from __future__ import annotations
 import sys
-from .app import Overwrite, BaseApplicationCommand
 import discord
-from .errors import NoGuildProvided, TypeMismatch
+from .errors import *
 from discord.ext import commands
-from enum import Enum
 from discord.http import Route
 from dataclasses import dataclass
+from .app import Overwrite, BaseApplicationCommand
 from typing import List, Optional, Union, Any, Dict
-from .enums import OptionType, ApplicationCommandType
+from .enums import OptionType, ApplicationCommandType, PermissionType
 
 
 def try_enum(enum_class, value):
@@ -221,7 +221,7 @@ class ApplicationCommand:
         self.version = int(data['version'])
         self.default_access = data['default_permission']
         self.dm_access = self.default_access or False
-        self.permissions = data.get('permissions')
+        self.permissions = data.get('permissions') or {}
         self.name_locale = data.get('name_localizations')
         self.description_locale = data.get('description_localizations')
 
@@ -230,6 +230,10 @@ class ApplicationCommand:
 
     def __repr__(self):
         return f'<ApplicationCommand id = {self.id} name = {self.name}>'
+
+    @classmethod
+    def _from_data(cls, client: commands.Bot, data: dict):
+        return cls(client, data)
 
     @property
     def guild_specific(self) -> bool:
@@ -242,6 +246,15 @@ class ApplicationCommand:
         if self.guild_id:
             return self.__client.get_guild(self.guild_id)
         return None
+
+    def has_permission(self, guild: discord.Guild, entity: Union[discord.Role, discord.User]):
+        permission = self.permissions.get(guild.id)
+        if permission is None:
+            return self.default_access
+        for_entity = permission.get(str(entity.id))
+        if for_entity is None:
+            return self.default_access
+        return for_entity
 
     async def delete(self):
         if self.guild:
@@ -256,7 +269,7 @@ class ApplicationCommand:
         await self.__client.http.request(route)
         self.__client._application_commands.pop(self.id)
 
-    async def edit_overwrites(self, overwrites: List[Overwrite], guild: discord.Guild = None):
+    async def add_overwrites(self, overwrites: List[Overwrite], guild: discord.Guild = None):
         """
         Edits the overwrites for an application command.
         :param overwrites: the overwrites to add
@@ -273,22 +286,30 @@ class ApplicationCommand:
         else:
             raise NoGuildProvided(f'Guild not provided while editing global command ({self.name})')
 
-        await self.__client.http.request(r, json=ows)
+        data = await self.__client.http.request(r, json=ows)
+        p = {p['id']: p['permission'] for p in data['permissions']}
+        self.permissions[guild.id] = p
 
-    async def edit(self, command: BaseApplicationCommand):
-        if isinstance(command.type, self.type):
+
+    async def update(self, command: BaseApplicationCommand) -> ApplicationCommand:
+        if command.type is self.type:
             if self.guild_specific:
                 r = Route('PATCH', f'/applications/{self.application_id}/guilds/{self.guild_id}/commands/{self.id}')
             else:
                 r = Route('PATCH', f'/applications/{self.application_id}/commands/{self.id}')
+            try:
+                resp = await self.__client.http.request(r, json=command.to_dict())
+            except discord.errors.HTTPException as e:
+                if e.code == 40041:
+                    raise NameAlreadyExists(f'Command with name `{command.name}` already exists')
+            else:
+                updated = self._from_data(self.__client, resp)
+                self.__client._application_commands.pop(self.id)
+                self.__client._application_commands[updated.id] = updated
+                return updated
         else:
             raise TypeMismatch(f'Type mismatched while editing command `{self.name}` '
-                               f'expected {self.type}, got {command.type})')
-
-
-
-
-
+                               f'\nexpected: {self.type} | got: {command.type}')
 
 
 

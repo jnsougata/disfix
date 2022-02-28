@@ -39,12 +39,16 @@ def _build_prams(options: Dict[str, Any], callable: Callable):
     return args, kwargs
 
 
-def _get_qual_name(c: Context):
-    if c.type is ApplicationCommandType.CHAT_INPUT:
-        return 'SLASH_' + c.name.upper()
-    elif c.type is ApplicationCommandType.MESSAGE:
-        return 'MESSAGE_' + c.name.replace(' ', '_').upper()
-    elif c.type is ApplicationCommandType.USER:
-        return 'USER_' + c.name.replace(' ', '_').upper()
+def _build_qual(c: Context) -> str:
+    if c.command.guild_id:
+        qual_name = f'{c.name}_{c.command.guild_id}'
     else:
-        return 'UNKNOWN_' + c.name.replace(' ', '_').upper()
+        qual_name = c.name
+    if c.type is ApplicationCommandType.CHAT_INPUT:
+        return '__CHAT__' + qual_name
+    elif c.type is ApplicationCommandType.MESSAGE:
+        return '__MESSAGE__' + qual_name
+    elif c.type is ApplicationCommandType.USER:
+        return '__USER__' + qual_name
+    else:
+        return '__UWU__' + qual_name

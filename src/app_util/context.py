@@ -5,7 +5,7 @@ import discord
 from discord.http import Route
 from discord.utils import MISSING
 from discord.ext.commands import Bot
-from .core import InteractionData, ChatInputOption, Resolved
+from .core import InteractionData, ChatInputOption, Resolved, ApplicationCommand
 from .enums import ApplicationCommandType, OptionType
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict
 
@@ -208,7 +208,7 @@ class Context:
         return int(self._ia.data['id'])
 
     @property
-    def command(self):
+    def command(self) -> ApplicationCommand:
         return self._client.get_application_command(self.id)
 
     @property

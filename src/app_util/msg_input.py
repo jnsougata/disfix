@@ -10,8 +10,8 @@ class MessageCommand(BaseApplicationCommand):
             default_access: bool = True,
             overwrites: [Overwrite] = None,
     ):
-        super().__init__(name=name, type=ApplicationCommandType.MESSAGE)
-        self._map = 'MESSAGE_' + name.replace(" ", "_").upper()  # name for mapping
+        super().__init__(name, ApplicationCommandType.MESSAGE)
+        self._qual = '__MESSAGE__' + name  # name for mapping
         self._payload = {
             'name': name,
             'type': self.type.value,

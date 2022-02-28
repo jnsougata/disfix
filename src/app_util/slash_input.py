@@ -245,11 +245,11 @@ class SlashCommand(BaseApplicationCommand):
             default_access: bool = True,
             overwrites: list[Overwrite] = None,
     ) -> None:
-        super().__init__(name=name, type=ApplicationCommandType.CHAT_INPUT)
-        self._map = 'SLASH_' + name.upper()
+        super().__init__(name, ApplicationCommandType.CHAT_INPUT)
+        self._qual = '__CHAT__' + name
         self._overwrites = overwrites
         self._payload = {
-            "name": name,
+            "name": name.lower().replace(' ', '_'),
             "description": description,
             "type": self.type.value,
             "options": [option.data for option in options] if options else [],

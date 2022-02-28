@@ -5,7 +5,6 @@ import asyncio
 import traceback
 from .errors import *
 from .cog import Cog
-from .parser import _build_prams, _get_qual_name
 from .slash_input import SlashCommand
 from .user_input import UserCommand
 from .msg_input import MessageCommand
@@ -15,6 +14,7 @@ from functools import wraps
 from .context import Context
 from .enums import ApplicationCommandType
 from .core import ApplicationCommand, BaseOverwrite
+from .parser import _build_prams, _build_qual
 from typing import Callable, Optional, Any, Union, List, Dict, Tuple
 from discord.ext import commands
 from discord.http import Route
@@ -32,7 +32,7 @@ class Bot(commands.Bot):
             self,
             command_prefix: Union[Callable, str],
             intents: discord.Intents = discord.Intents.default(),
-            help_command: Optional[discord.ext.commands.HelpCommand] = discord.ext.commands.DefaultHelpCommand(),
+            help_command: Optional[commands.HelpCommand] = commands.DefaultHelpCommand(),
             description: Optional[str] = None,
             **options
     ):
@@ -57,7 +57,7 @@ class Bot(commands.Bot):
     async def _invoke_app_command(self, interaction: discord.Interaction):
         if interaction.type == InteractionType.application_command:
             c = Context(interaction, self)
-            qual = _get_qual_name(c)
+            qual = _build_qual(c)
             try:
                 try:
                     cog = self.__aux[qual]
@@ -70,29 +70,23 @@ class Bot(commands.Bot):
                     try:
                         is_done = await job(c)
                     except Exception as e:
-                        raise JobFailure(f'Before invoke job named `{job.__name__}` raised an exception: ({e})')
+                        raise JobFailure(f'Job named `{job.__name__}` raised an exception: ({e})')
                     if is_done:
-                        try:
-                            await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
-                        except Exception as e:
-                            raise ApplicationCommandError(f'Application Command `{c!r}` raised an exception: ({e})')
-                else:
-                    try:
                         await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
-                    except Exception as e:
-                        raise ApplicationCommandError(f'Application Command `{c!r}` raised an exception: ({e})')
+                else:
+                    await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
             except Exception as e:
                 handler = self._connection.hooks.get('on_command_error')
                 if handler:
                     await handler(self.__aux['handler'], c, e)
                     return
-                print(f'Ignoring exception while invoking command `{c!r}`\n', file=sys.stderr)
+                print(f'Ignoring exception while invoking application command `{c!r}`\n', file=sys.stderr)
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
 
 
     def _walk_app_commands(self, cog: Cog):
 
-        for name, job in cog.__mapped_checks__.items():
+        for name, job in cog.__mapped_jobs__.items():
             if asyncio.iscoroutinefunction(job):
                 self.__jobs[name] = job
             else:
@@ -129,11 +123,11 @@ class Bot(commands.Bot):
                 route = Route('POST', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
                 resp = await self.http.request(route, json=command.to_dict())
                 if command.overwrites:
-                    perm_route = Route(
+                    r = Route(
                         'PUT',
                         f'/applications/{self.application_id}/guilds/{guild_id}/commands/{resp["id"]}/permissions')
-                    perms = await self.http.request(perm_route, json=command.overwrites)
-                    resp['permissions'] = perms
+                    perms = await self.http.request(r, json=command.overwrites)
+                    resp['permissions'] = {guild_id: {p['id']: p['permission'] for p in perms['permissions']}}
             else:
                 route = Route('POST', f'/applications/{self.application_id}/commands')
                 resp = await self.http.request(route, json=command.to_dict())
@@ -147,23 +141,23 @@ class Bot(commands.Bot):
         It does this automatically when the bot is ready.
         :return: None
         """
-        route = Route('GET', f'/applications/{self.application_id}/commands')
-        resp = await self.http.request(route)
+        r = Route('GET', f'/applications/{self.application_id}/commands')
+        resp = await self.http.request(r)
         for data in resp:
-            cmd = ApplicationCommand(self, data)
-            self._application_commands[cmd.id] = cmd
+            apc = ApplicationCommand(self, data)
+            self._application_commands[apc.id] = apc
 
-    async def sync_guild_commands(self, guild: discord.Guild):
+    async def sync_for(self, guild: discord.Guild):
         """
         Automatically sync all commands for a specific guild.
         :param guild: the guild to sync commands for
         :return: None
         """
-        route = Route('GET', f'/applications/{self.application_id}/guilds/{guild.id}/commands')
-        resp = await self.http.request(route)
+        r = Route('GET', f'/applications/{self.application_id}/guilds/{guild.id}/commands')
+        resp = await self.http.request(r)
         for data in resp:
-            cmd = ApplicationCommand(self, data)
-            self._application_commands[cmd.id] = cmd
+            apc = ApplicationCommand(self, data)
+            self._application_commands[apc.id] = apc
 
     async def fetch_command(self, command_id: int, guild_id: int = None):
         """
@@ -181,16 +175,6 @@ class Bot(commands.Bot):
 
     def get_application_command(self, command_id: int):
         return self._application_commands.get(command_id)
-
-    async def update_slash_command(self, command_id: int, updated: SlashCommand, guild_id: int = None):
-        if guild_id:
-            route = Route('PATCH', f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}')
-        else:
-            route = Route('PATCH', f'/applications/{self.application_id}/commands/{command_id}')
-        resp = await self.http.request(route, json=updated.to_dict())
-        cmd = ApplicationCommand(self, resp)
-        self._application_commands[cmd.id] = cmd
-        return cmd
 
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:

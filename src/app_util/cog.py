@@ -16,7 +16,7 @@ class Cog(metaclass=type):
     __method_container__: dict = {}
     __object_container__: dict = {}
     __mapped_container__: dict = {}
-    __mapped_checks__: dict = {}
+    __mapped_jobs__: dict = {}
 
     def __new__(cls, *args, **kwargs):
         cls.__error_listener__['parent'] = cls
@@ -42,13 +42,18 @@ class Cog(metaclass=type):
         """
         Decorator for registering a slash command
         """
-        cls.__object_container__[command._map] = (command, guild_id)
+        if guild_id:
+            qualified_name = f"{command._qual}_{guild_id}"
+        else:
+            qualified_name = command._qual
+
+        cls.__object_container__[qualified_name] = (command, guild_id)
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            cls.__method_container__[command._map] = wrapper()
+            cls.__method_container__[qualified_name] = wrapper()
         return decorator
 
     @classmethod
@@ -61,7 +66,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__mapped_checks__[func.__name__] = job
+                cls.__mapped_jobs__[func.__name__] = job
                 return func
 
             return wrapper()

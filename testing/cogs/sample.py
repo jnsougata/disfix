@@ -21,9 +21,11 @@ class Sample(app_util.Cog):
 
     @app_util.Cog.listener
     async def on_command_error(self, ctx: app_util.Context, error: Exception):
+        print(error.__class__.__name__, file=sys.stderr)
         stack = traceback.format_exception(type(error), error, error.__traceback__)
         tb = ''.join(stack)
-        await ctx.send_followup(f'```py\n{tb}\n```')
+        print(tb, file=sys.stderr)
+        await ctx.send_followup(f'Traceback printed in terminal!')
 
 
     @app_util.Cog.command(
@@ -52,6 +54,7 @@ class Sample(app_util.Cog):
                 app_util.StrOption('footer_text', 'footer text of the embed', required=False),
                 app_util.AttachmentOption('footer_icon', 'file for embed', required=False),
             ],
+            overwrites=[app_util.Overwrite.for_role(920176634890428436, allow=False)],
         ),
         guild_id=877399405056102431
     )
@@ -64,7 +67,6 @@ class Sample(app_util.Cog):
             thumbnail: discord.Attachment, image: discord.Attachment,
             footer_icon: discord.Attachment, footer_text: str
     ):
-
         await ctx.defer(ephemeral=True)
         slots = {}
         if title:
@@ -126,13 +128,28 @@ class Sample(app_util.Cog):
     @app_util.Cog.before_invoke(job=job)
     async def delete_command(self, ctx: app_util.Context, name: str):
         await ctx.defer()
-        await self.bot.sync_guild_commands(ctx.guild)
+        await self.bot.sync_for(ctx.guild)
         for command in self.bot.application_commands:
             if command.name == name:
                 await command.delete()
                 await ctx.send_followup(f'Application Command **`{name}`** has been deleted | (ID: {command.id})')
+                break
         else:
             await ctx.send_followup(f'Application Command **`{name}`** does not exist')
+
+    @app_util.Cog.command(
+        command=app_util.SlashCommand(
+            name='perm',
+            description='edits command perms',
+        ),
+        guild_id=877399405056102431
+    )
+    async def edit_command(self, ctx: app_util.Context):
+        await ctx.defer()
+        ows = [app_util.Overwrite.for_user(ctx.author.id)]
+        await ctx.command.add_overwrites(ows, ctx.guild)
+        await ctx.send_followup(
+            f'Edited Application Command perms for {ctx.name}')
 
 
 def setup(bot: app_util.Bot):

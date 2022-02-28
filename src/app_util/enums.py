@@ -33,3 +33,8 @@ class ApplicationCommandType(Enum):
     USER = 2
     MESSAGE = 3
     CHAT_INPUT = 1
+
+
+class PermissionType(Enum):
+    USER = 2
+    ROLE = 1
