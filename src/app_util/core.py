@@ -251,7 +251,7 @@ class ApplicationCommand:
         permission = self.permissions.get(guild.id)
         if permission is None:
             return self.default_access
-        for_entity = permission.get(str(entity.id))
+        for_entity = permission.get(entity.id)
         if for_entity is None:
             return self.default_access
         return for_entity
@@ -270,12 +270,6 @@ class ApplicationCommand:
         self.__client._application_commands.pop(self.id)
 
     async def add_overwrites(self, overwrites: List[Overwrite], guild: discord.Guild = None):
-        """
-        Edits the overwrites for an application command.
-        :param overwrites: the overwrites to add
-        :param guild: the guild for which to edit the overwrites
-        :return: None
-        """
         ows = {'permissions': [ow.to_dict() for ow in overwrites]}
         if self.guild_specific:
             r = Route('PUT',
@@ -287,7 +281,7 @@ class ApplicationCommand:
             raise NoGuildProvided(f'Guild not provided while editing global command ({self.name})')
 
         data = await self.__client.http.request(r, json=ows)
-        p = {p['id']: p['permission'] for p in data['permissions']}
+        p = {int(p['id']): p['permission'] for p in data['permissions']}
         self.permissions[guild.id] = p
 
 

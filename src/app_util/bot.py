@@ -119,18 +119,30 @@ class Bot(commands.Bot):
             if guild_id:
                 route = Route('POST', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
                 resp = await self.http.request(route, json=command.to_dict())
+                command_id = int(resp['id'])
                 if command.overwrites:
                     r = Route(
                         'PUT',
                         f'/applications/{self.application_id}/guilds/{guild_id}/commands/{resp["id"]}/permissions')
                     perms = await self.http.request(r, json=command.overwrites)
-                    resp['permissions'] = {guild_id: {p['id']: p['permission'] for p in perms['permissions']}}
+                    resp['permissions'] = {guild_id: {int(p['id']): p['permission'] for p in perms['permissions']}}
+                else:
+                    try:
+                        x = await self.__sync_permissions(command_id, guild_id)
+                    except discord.errors.NotFound:
+                        pass
+                    else:
+                        resp['permissions'] = {
+                            guild_id: {int(p['id']): p['permission'] for p in x['permissions']}
+                        }
             else:
                 route = Route('POST', f'/applications/{self.application_id}/commands')
                 resp = await self.http.request(route, json=command.to_dict())
+            self._application_commands[int(resp['id'])] = ApplicationCommand(self, resp)
 
-            apc = ApplicationCommand(self, resp)
-            self._application_commands[apc.id] = apc
+    async def __sync_permissions(self, command_id: int, guild_id: int):
+        r = Route('GET', f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}/permissions')
+        return await self.http.request(r)
 
     async def sync_global_commands(self):
         """

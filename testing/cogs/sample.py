@@ -146,7 +146,7 @@ class Sample(app_util.Cog):
     )
     async def edit_command(self, ctx: app_util.Context):
         await ctx.defer()
-        ows = [app_util.Overwrite.for_user(ctx.author.id)]
+        ows = [app_util.Overwrite.for_user(ctx.author.id, allow=False)]
         await ctx.command.add_overwrites(ows, ctx.guild)
         await ctx.send_followup(
             f'Edited Application Command perms for {ctx.name}')
