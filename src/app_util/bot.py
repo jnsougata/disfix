@@ -5,7 +5,7 @@ import asyncio
 import traceback
 from .errors import *
 from .cog import Cog
-from .slash_input import SlashCommand
+from .chat_input import SlashCommand
 from .user_input import UserCommand
 from .msg_input import MessageCommand
 from .app import Overwrite

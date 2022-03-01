@@ -1,6 +1,6 @@
 from typing import Any, Union, List, Dict, Optional
 from .app import Overwrite, BaseApplicationCommand
-from .enums import ChannelType, ApplicationCommandType
+from .enums import ChannelType, ApplicationCommandType, OptionType
 
 
 __all__ = [
@@ -21,8 +21,10 @@ __all__ = [
 ]
 
 
-class _Option:
-    data: Any
+class BaseOption:
+    def __init__(self, name: str, type: OptionType):
+        self.name = name.lower().replace(' ', '_')
+        self.type = type
 
 
 class Choice:
@@ -33,7 +35,7 @@ class Choice:
         }
 
 
-class StrOption(_Option):
+class StrOption(BaseOption):
     def __init__(
             self, name: str,
             description: str,
@@ -41,16 +43,18 @@ class StrOption(_Option):
             required: bool = True,
             choices: list[Choice] = None
     ):
+        super().__init__(name, OptionType.STRING)
         self.data = {
-            "name": name,
+            "name": self.name,
             "description": description,
-            "type": 3,
+            "type": self.type.value,
             "required": required,
-            "choices": [choice.data for choice in choices] if choices else []
         }
+        if choices:
+            self.data["choices"] = [c.data for c in choices]
 
 
-class IntOption(_Option):
+class IntOption(BaseOption):
     def __init__(
             self, name: str,
             description: str,
@@ -60,20 +64,22 @@ class IntOption(_Option):
             required: bool = True,
             choices: list[Choice] = None
     ):
+        super().__init__(name, OptionType.INTEGER)
         self.data = {
-            "name": name,
+            "name": self.name,
             "description": description,
-            "type": 4,
+            "type": self.type.value,
             "required": required,
-            "choices": [choice.data for choice in choices] if choices else []
         }
+        if choices:
+            self.data["choices"] = [c.data for c in choices]
         if min_value:
             self.data["min_value"] = min_value
         if max_value:
             self.data["max_value"] = max_value
 
 
-class BoolOption(_Option):
+class BoolOption(BaseOption):
     def __init__(
             self, name: str,
             description: str,
@@ -81,16 +87,18 @@ class BoolOption(_Option):
             required: bool = True,
             choices: list[Choice] = None
     ):
+        super().__init__(name, OptionType.BOOLEAN)
         self.data = {
-            "name": name,
+            "name": self.name,
             "description": description,
-            "type": 5,
+            "type": self.type.value,
             "required": required,
-            "choices": [choice.data for choice in choices] if choices else []
         }
+        if choices:
+            self.data["choices"] = [c.data for c in choices]
 
 
-class UserOption(_Option):
+class UserOption(BaseOption):
     def __init__(
             self, name: str,
             description: str,
@@ -98,16 +106,18 @@ class UserOption(_Option):
             required: bool = True,
             choices: list[Choice] = None
     ):
+        super().__init__(name, OptionType.USER)
         self.data = {
-            "name": name,
+            "name": self.name,
             "description": description,
-            "type": 6,
+            "type": self.type.value,
             "required": required,
-            "choices": [choice.data for choice in choices] if choices else []
         }
+        if choices:
+            self.data["choices"] = [c.data for c in choices]
 
 
-class ChannelOption(_Option):
+class ChannelOption(BaseOption):
     def __init__(
             self,
             name: str,
@@ -117,17 +127,20 @@ class ChannelOption(_Option):
             choices: list[Choice] = None,
             channel_types: [ChannelType] = None
     ):
+        super().__init__(name, OptionType.CHANNEL)
         self.data = {
-            "name": name,
+            "name": self.name,
             "description": description,
-            "type": 7,
+            "type": self.type.value,
             "required": required,
-            "choices": [choice.data for choice in choices] if choices else [],
-            "channel_types": [ct.value for ct in channel_types] if channel_types else []
         }
+        if choices:
+            self.data["choices"] = [c.data for c in choices]
+        if channel_types:
+            self.data["channel_types"] = [t.value for t in channel_types]
 
 
-class RoleOption(_Option):
+class RoleOption(BaseOption):
     def __init__(
             self, name: str,
             description: str,
@@ -135,16 +148,18 @@ class RoleOption(_Option):
             required: bool = True,
             choices: list[Choice] = None
     ):
+        super().__init__(name, OptionType.ROLE)
         self.data = {
-            "name": name,
+            "name": self.name,
             "description": description,
-            "type": 8,
+            "type": self.type.value,
             "required": required,
-            "choices": [choice.data for choice in choices] if choices else []
         }
+        if choices:
+            self.data["choices"] = [c.data for c in choices]
 
 
-class MentionableOption(_Option):
+class MentionableOption(BaseOption):
     def __init__(
             self, name: str,
             description: str,
@@ -152,16 +167,18 @@ class MentionableOption(_Option):
             required: bool = True,
             choices: list[Choice] = None
     ):
+        super().__init__(name, OptionType.MENTIONABLE)
         self.data = {
-            "name": name,
+            "name": self.name,
             "description": description,
-            "type": 9,
+            "type": self.type.value,
             "required": required,
-            "choices": [choice.data for choice in choices] if choices else []
         }
+        if choices:
+            self.data["choices"] = [c.data for c in choices]
 
 
-class NumberOption(_Option):
+class NumberOption(BaseOption):
     def __init__(
             self,
             name: str,
@@ -172,53 +189,57 @@ class NumberOption(_Option):
             required: bool = True,
             choices: list[Choice] = None
     ):
+        super().__init__(name, OptionType.NUMBER)
         self.data = {
-            "name": name,
+            "name": self.name,
             "description": description,
-            "type": 10,
+            "type": self.type.value,
             "required": required,
-            "choices": [choice.data for choice in choices] if choices else []
         }
+        if choices:
+            self.data["choices"] = [c.data for c in choices]
         if min_value:
             self.data["min_value"] = min_value
         if max_value:
             self.data["max_value"] = max_value
 
 
-class AttachmentOption(_Option):
+class AttachmentOption(BaseOption):
     def __init__(
             self,
             name: str,
             description: str,
             *,
             required: bool = True,
-            choices: list[Choice] = None
     ):
+        super().__init__(name, OptionType.ATTACHMENT)
         self.data = {
-            "name": name,
-            "type": 11,
+            "name": self.name,
+            "type": self.type.value,
             "required": required,
             "description": description,
         }
 
 
-class SubCommand:
+class SubCommand(BaseOption):
     def __init__(
             self,
             name: str,
             *,
             description: str,
-            options: [_Option] = None
+            options: [BaseOption] = None
     ):
+        super().__init__(name, OptionType.SUBCOMMAND)
         self.data = {
-            "name": name,
+            "name": self.name,
             "description": description,
-            "type": 1,
-            "options": [option.data for option in options] if options else []
+            "type": self.type.value,
         }
+        if options:
+            self.data["options"] = [op.data for op in options]
 
 
-class SubCommandGroup:
+class SubCommandGroup(BaseOption):
     def __init__(
             self,
             name: str,
@@ -226,12 +247,14 @@ class SubCommandGroup:
             *,
             options: [SubCommand] = None
     ):
+        super().__init__(name, OptionType.SUBCOMMAND_GROUP)
         self.data = {
-            "name": name,
+            "name": self.name,
             "description": description,
-            "type": 2,
-            "options": [sc.data for sc in options] if options else []
+            "type": self.type.value,
         }
+        if options:
+            self.data["options"] = [sc.data for sc in options]
 
 
 class SlashCommand(BaseApplicationCommand):
@@ -241,15 +264,16 @@ class SlashCommand(BaseApplicationCommand):
             *,
             name: str,
             description: str,
-            options: List[Union[_Option, SubCommand, SubCommandGroup]] = None,
+            options: List[Union[BaseOption, SubCommand, SubCommandGroup]] = None,
             default_access: bool = True,
             overwrites: list[Overwrite] = None,
     ) -> None:
-        super().__init__(name, ApplicationCommandType.CHAT_INPUT)
+        fmt_name = name.lower().replace(' ', '_')
+        super().__init__(fmt_name, ApplicationCommandType.CHAT_INPUT)
         self._qual = '__CHAT__' + name
         self._overwrites = overwrites
         self._payload = {
-            "name": name.lower().replace(' ', '_'),
+            "name": fmt_name,
             "description": description,
             "type": self.type.value,
             "options": [option.data for option in options] if options else [],

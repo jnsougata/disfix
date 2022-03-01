@@ -20,6 +20,6 @@ from .cog import Cog
 from .errors import *
 from .app import Overwrite
 from .context import Context
-from .slash_input import *
+from .chat_input import *
 from .user_input import UserCommand
 from .msg_input import MessageCommand
