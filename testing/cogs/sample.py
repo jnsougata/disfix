@@ -54,7 +54,6 @@ class Sample(app_util.Cog):
                 app_util.StrOption('footer_text', 'footer text of the embed', required=False),
                 app_util.AttachmentOption('footer_icon', 'file for embed', required=False),
             ],
-            overwrites=[app_util.Overwrite.for_role(920176634890428436, allow=False)],
         ),
         guild_id=877399405056102431
     )
@@ -67,6 +66,7 @@ class Sample(app_util.Cog):
             thumbnail: discord.Attachment, image: discord.Attachment,
             footer_icon: discord.Attachment, footer_text: str
     ):
+        print(ctx.command.overwrites)
         await ctx.defer(ephemeral=True)
         slots = {}
         if title:

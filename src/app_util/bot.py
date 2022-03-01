@@ -132,9 +132,7 @@ class Bot(commands.Bot):
                     except discord.errors.NotFound:
                         pass
                     else:
-                        resp['permissions'] = {
-                            guild_id: {int(p['id']): p['permission'] for p in x['permissions']}
-                        }
+                        resp['permissions'] = {guild_id: x['permissions']}
             else:
                 route = Route('POST', f'/applications/{self.application_id}/commands')
                 resp = await self.http.request(route, json=command.to_dict())
@@ -195,7 +193,7 @@ class Bot(commands.Bot):
                     except discord.errors.NotFound:
                         pass
                     else:
-                        command._cache_overwrite(ows, guild_id)
+                        command._cache_permissions(ows, guild_id)
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
         self.add_listener(self._invoke_app_command, 'on_interaction')

@@ -221,7 +221,9 @@ class ApplicationCommand:
         self.version = int(data['version'])
         self.default_access = data['default_permission']
         self.dm_access = self.default_access or False
-        self.permissions = data.get('permissions') or {}
+        self._permissions = data.get('permissions')
+        self.overwrites = {}
+        self.__parse_permissions()
         self.name_locale = data.get('name_localizations')
         self.description_locale = data.get('description_localizations')
 
@@ -247,14 +249,14 @@ class ApplicationCommand:
             return self.__client.get_guild(self.guild_id)
         return None
 
-    def has_permission(self, guild: discord.Guild, entity: Union[discord.Role, discord.User]):
-        permission = self.permissions.get(guild.id)
+    def overwrite_for(self, guild: discord.Guild, entity: Union[discord.Role, discord.User]) -> bool:
+        permission = self.overwrites.get(guild.id)
         if permission is None:
             return self.default_access
         for_entity = permission.get(entity.id)
         if for_entity is None:
             return self.default_access
-        return for_entity
+        return for_entity['allowed']
 
     async def delete(self):
         if self.guild:
@@ -269,8 +271,13 @@ class ApplicationCommand:
         await self.__client.http.request(route)
         self.__client._application_commands.pop(self.id)
 
-    def _cache_overwrite(self, ows: dict, guild_id: int):
-        self.permissions[guild_id] = {int(p['id']): p['permission'] for p in ows['permissions']}
+    def __parse_permissions(self):
+        for guild_id, p in self._permissions.items():
+            self.overwrites[int(guild_id)] = {int(p['id']): {'allowed': p['permission'], 'type': p['type']}}
+
+    def _cache_permissions(self, ows: dict, guild_id: int):
+        self._permissions[guild_id] = ows['permissions']
+        self.__parse_permissions()
 
     async def add_overwrites(self, overwrites: List[Overwrite], guild: discord.Guild = None):
         ows = {'permissions': [ow.to_dict() for ow in overwrites]}
@@ -285,7 +292,7 @@ class ApplicationCommand:
 
         data = await self.__client.http.request(r, json=ows)
         p = {int(p['id']): p['permission'] for p in data['permissions']}
-        self.permissions[guild.id] = p
+        self.overwrites[guild.id] = p
 
 
     async def update(self, command: BaseApplicationCommand) -> ApplicationCommand:
