@@ -128,7 +128,7 @@ class Bot(commands.Bot):
                     resp['permissions'] = {guild_id: {int(p['id']): p['permission'] for p in perms['permissions']}}
                 else:
                     try:
-                        x = await self.__sync_permissions(command_id, guild_id)
+                        x = await self.__fetch_permissions(command_id, guild_id)
                     except discord.errors.NotFound:
                         pass
                     else:
@@ -140,7 +140,7 @@ class Bot(commands.Bot):
                 resp = await self.http.request(route, json=command.to_dict())
             self._application_commands[int(resp['id'])] = ApplicationCommand(self, resp)
 
-    async def __sync_permissions(self, command_id: int, guild_id: int):
+    async def __fetch_permissions(self, command_id: int, guild_id: int):
         r = Route('GET', f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}/permissions')
         return await self.http.request(r)
 
@@ -185,9 +185,21 @@ class Bot(commands.Bot):
     def get_application_command(self, command_id: int):
         return self._application_commands.get(command_id)
 
+    async def _sync_overwrites(self):
+        guild_ids = [g.id for g in self.guilds]
+        for command_id, command in self._application_commands.items():
+            if not command.guild_id:
+                for guild_id in guild_ids:
+                    try:
+                        ows = await self.__fetch_permissions(command_id, guild_id)
+                    except discord.errors.NotFound:
+                        pass
+                    else:
+                        command._cache_overwrite(ows, guild_id)
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
         self.add_listener(self._invoke_app_command, 'on_interaction')
+        self.add_listener(self._sync_overwrites, 'on_ready')
         await self.login(token)
         app_info = await self.application_info()
         self._connection.application_id = app_info.id

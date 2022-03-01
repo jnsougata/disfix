@@ -269,6 +269,9 @@ class ApplicationCommand:
         await self.__client.http.request(route)
         self.__client._application_commands.pop(self.id)
 
+    def _cache_overwrite(self, ows: dict, guild_id: int):
+        self.permissions[guild_id] = {int(p['id']): p['permission'] for p in ows['permissions']}
+
     async def add_overwrites(self, overwrites: List[Overwrite], guild: discord.Guild = None):
         ows = {'permissions': [ow.to_dict() for ow in overwrites]}
         if self.guild_specific:
