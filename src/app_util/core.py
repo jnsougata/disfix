@@ -221,7 +221,7 @@ class ApplicationCommand:
         self.version = int(data['version'])
         self.default_access = data['default_permission']
         self.dm_access = self.default_access or False
-        self._permissions = data.get('permissions')
+        self._permissions = data.get('permissions') or {}
         self.overwrites = {}
         self.__parse_permissions()
         self.name_locale = data.get('name_localizations')
@@ -272,8 +272,9 @@ class ApplicationCommand:
         self.__client._application_commands.pop(self.id)
 
     def __parse_permissions(self):
-        for guild_id, p in self._permissions.items():
-            self.overwrites[int(guild_id)] = {int(p['id']): {'allowed': p['permission'], 'type': p['type']}}
+        for guild_id, perms in self._permissions.items():
+            for p in perms:
+                self.overwrites[int(guild_id)] = {int(p['id']): {'allowed': p['permission'], 'type': p['type']}}
 
     def _cache_permissions(self, ows: dict, guild_id: int):
         self._permissions[guild_id] = ows['permissions']
@@ -292,7 +293,11 @@ class ApplicationCommand:
             ]
 
     async def edit_overwrites(self, guild: discord.Guild, overwrites: List[Overwrite]):
-        pass
+        payload = {'permissions': [o.to_dict() for o in overwrites]}
+        r = Route('PUT',
+                  f'/applications/{self.application_id}/guilds/{guild.id}/commands/{self.id}/permissions')
+        data = await self.__client.http.request(r, json=payload)
+        self._cache_permissions(data, guild.id)
 
     async def edit_overwrite_for(self, guild: discord.Guild, overwrite: Overwrite):
         curr = self.__build_overwrites(guild.id)
