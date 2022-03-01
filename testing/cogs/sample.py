@@ -53,6 +53,7 @@ class Sample(app_util.Cog):
                 app_util.AttachmentOption('image', 'image file to add to embed', required=False),
                 app_util.StrOption('footer_text', 'footer text of the embed', required=False),
                 app_util.AttachmentOption('footer_icon', 'file for embed', required=False),
+                app_util.StrOption('link_button', 'sends a link in button form with embed', required=False),
             ],
         ),
         guild_id=877399405056102431
@@ -64,9 +65,8 @@ class Sample(app_util.Cog):
             title: str, description: str, url: str,
             color: str, author: discord.User, author_url: str,
             thumbnail: discord.Attachment, image: discord.Attachment,
-            footer_icon: discord.Attachment, footer_text: str
+            footer_icon: discord.Attachment, footer_text: str, link_button: str,
     ):
-        print(ctx.command.overwrites)
         await ctx.defer(ephemeral=True)
         slots = {}
         if title:
@@ -93,8 +93,14 @@ class Sample(app_util.Cog):
         if image:
             slots['image'] = {'url': image.url}
 
+        view = discord.ui.View()
+
+        if link_button:
+            button = discord.ui.Button(style=discord.ButtonStyle.link, label='link', url=link_button)
+            view.add_item(button)
+
         embed = discord.Embed.from_dict(slots)
-        await ctx.channel.send(embed=embed)
+        await ctx.channel.send(embed=embed, view=view)
         await ctx.send_followup(f'Embed sent successfully')
 
 
