@@ -10,7 +10,6 @@ from .user_input import UserCommand
 from .msg_input import MessageCommand
 from .app import Overwrite
 from discord.http import Route
-from functools import wraps
 from .context import Context
 from .enums import ApplicationCommandType
 from .core import ApplicationCommand, BaseOverwrite
@@ -22,8 +21,6 @@ from discord.enums import InteractionType
 
 
 __all__ = ['Bot']
-
-#  # override the default route
 
 
 class Bot(commands.Bot):
