@@ -1,6 +1,6 @@
+from __future__ import annotations
 import sys
 import discord
-import json
 import asyncio
 import traceback
 from .errors import *
@@ -14,7 +14,7 @@ from .context import Context
 from .enums import ApplicationCommandType
 from .core import ApplicationCommand, BaseOverwrite
 from .parser import _build_prams, _build_qual
-from typing import Callable, Optional, Any, Union, List, Dict, Tuple
+from typing import Callable, Optional, Any, Union, List, Dict, Tuple, TypeVar
 from discord.ext import commands
 from discord.http import Route
 from discord.enums import InteractionType
@@ -40,9 +40,9 @@ class Bot(commands.Bot):
             description=description,
             **options
         )
-        self.__aux = {}
+        self._aux = {}
         self.__jobs = {}
-        self.__queue = {}
+        self._queue = {}
         self._application_commands: Dict[int, ApplicationCommand] = {}
         self.__route = Route.BASE = f'https://discord.com/api/v10'
 
@@ -57,7 +57,7 @@ class Bot(commands.Bot):
             qual = _build_qual(c)
             try:
                 try:
-                    cog = self.__aux[qual]
+                    cog = self._aux[qual]
                     func = self._connection.hooks[qual]
                 except KeyError:
                     raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
@@ -75,7 +75,7 @@ class Bot(commands.Bot):
             except Exception as e:
                 handler = self._connection.hooks.get('on_command_error')
                 if handler:
-                    await handler(self.__aux['exec'], c, e)
+                    await handler(self._aux['exec'], c, e)
                     return
                 print(f'Ignoring exception while invoking application command `{c!r}`\n', file=sys.stderr)
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
@@ -91,16 +91,16 @@ class Bot(commands.Bot):
 
         for qual, data in cog.__commands__.items():
             apc, guild_id = data
-            self.__aux[qual] = cog.__this__
+            self._aux[qual] = cog.__this__
             hook = cog.__methods__[qual]
             if asyncio.iscoroutinefunction(hook):
-                self.__queue[qual] = apc, guild_id
+                self._queue[qual] = apc, guild_id
                 self._connection.hooks[qual] = hook
                 eh = cog.__listener__
                 if eh:
                     if asyncio.iscoroutinefunction(eh):
                         self._connection.hooks[eh.__name__] = eh
-                        self.__aux['exec'] = cog.__this__
+                        self._aux['exec'] = cog.__this__
                     else:
                         raise NonCoroutine(f'listener `{eh.__name__}` must be a coroutine function')
             else:
@@ -116,7 +116,7 @@ class Bot(commands.Bot):
         to ensure that the bot is up-to-date with the latest commands.
         :return: None
         """
-        for command, guild_id in self.__queue.values():
+        for command, guild_id in self._queue.values():
             if guild_id:
                 route = Route('POST', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
                 resp = await self.http.request(route, json=command.to_dict())
@@ -205,3 +205,7 @@ class Bot(commands.Bot):
         await self.sync_global_commands()
         await self.sync_current_commands()
         await self.connect(reconnect=reconnect)
+
+
+class TypeBot(Bot):
+    ...

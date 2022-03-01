@@ -1,10 +1,11 @@
+from __future__ import annotations
 import sys
 import asyncio
 import json
 import discord
 from discord.http import Route
 from discord.utils import MISSING
-from discord.ext.commands import Bot
+from discord.ext import commands
 from .core import InteractionData, ChatInputOption, Resolved, ApplicationCommand
 from .enums import ApplicationCommandType, OptionType
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict
@@ -171,7 +172,7 @@ def _handle_send_prams(
 
 
 class Context:
-    def __init__(self, action: discord.Interaction, client: Bot):
+    def __init__(self, action: discord.Interaction, client: commands.Bot):
         self._ia = action
         self.bot = client
         self._client = client
