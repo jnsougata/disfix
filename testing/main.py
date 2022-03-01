@@ -18,4 +18,5 @@ class MyBot(app.Bot):
 
 bot = MyBot()
 bot.load_extension('cogs.sample')
+bot.load_extension('cogs.extras')
 bot.run(os.getenv('DISCORD_TOKEN'))

@@ -12,29 +12,28 @@ from typing import Optional, ClassVar, Callable, List, Union, Dict, Any
 
 class Cog(metaclass=type):
 
-    __error_listener__: dict = {}
+    __error_listener__: Any = None
     __method_container__: dict = {}
     __object_container__: dict = {}
     __mapped_container__: dict = {}
     __mapped_jobs__: dict = {}
 
     def __new__(cls, *args, **kwargs):
-        cls.__error_listener__['parent'] = cls
-        elems = inspect.getfullargspec(cls).args
-        elems.pop(0)
-        arg_names = elems
-        arg_list = list(args)
-        for arg, value in zip(arg_names, arg_list):
-            setattr(cls, arg, value)
-        copied = cls.__object_container__.copy()
-        for name, data in copied.items():
-            cls.__mapped_container__[name] = {
-                "parent": cls,
-                "object": data[0],
-                "guild_id": data[1]
-            }
-            cls.__object_container__.pop(name)
-        return cls
+        self = super().__new__(cls)
+        commands = cls.__object_container__.copy()
+        setattr(cls, '__commands__', commands)
+        cls.__object_container__.clear()
+        methods = cls.__method_container__.copy()
+        setattr(cls, '__methods__', methods)
+        cls.__method_container__.clear()
+        jobs = cls.__mapped_jobs__.copy()
+        setattr(cls, '__jobs__', jobs)
+        cls.__mapped_jobs__.clear()
+        listener = cls.__error_listener__
+        setattr(cls, '__listener__', listener)
+        setattr(cls, '__this__', self)
+        return self
+
 
 
     @classmethod
@@ -79,5 +78,5 @@ class Cog(metaclass=type):
         """
         Decorator for registering an error listener
         """
-        cls.__error_listener__ = {'callable': func, 'parent': None}
+        cls.__error_listener__ = func
         return func

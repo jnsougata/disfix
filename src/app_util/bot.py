@@ -75,7 +75,7 @@ class Bot(commands.Bot):
             except Exception as e:
                 handler = self._connection.hooks.get('on_command_error')
                 if handler:
-                    await handler(self.__aux['handler'], c, e)
+                    await handler(self.__aux['exec'], c, e)
                     return
                 print(f'Ignoring exception while invoking application command `{c!r}`\n', file=sys.stderr)
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
@@ -83,23 +83,24 @@ class Bot(commands.Bot):
 
     def _walk_app_commands(self, cog: Cog):
 
-        for name, job in cog.__mapped_jobs__.items():
+        for name, job in cog.__jobs__.items():
             if asyncio.iscoroutinefunction(job):
                 self.__jobs[name] = job
             else:
                 raise NonCoroutine(f'Job function `{name}` must be a coroutine.')
 
-        for qual, data in cog.__mapped_container__.items():
-            self.__aux[qual] = data['parent']
-            m = cog.__method_container__[qual]
-            if asyncio.iscoroutinefunction(m):
-                self.__queue[qual] = (data['object'], data['guild_id'])
-                self._connection.hooks[qual] = m
-                eh = cog.__error_listener__.get('callable')
+        for qual, data in cog.__commands__.items():
+            apc, guild_id = data
+            self.__aux[qual] = cog.__this__
+            hook = cog.__methods__[qual]
+            if asyncio.iscoroutinefunction(hook):
+                self.__queue[qual] = apc, guild_id
+                self._connection.hooks[qual] = hook
+                eh = cog.__listener__
                 if eh:
                     if asyncio.iscoroutinefunction(eh):
                         self._connection.hooks[eh.__name__] = eh
-                        self.__aux['handler'] = cog.__error_listener__.get('parent')
+                        self.__aux['exec'] = cog.__this__
                     else:
                         raise NonCoroutine(f'listener `{eh.__name__}` must be a coroutine function')
             else:
