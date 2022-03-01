@@ -90,17 +90,15 @@ class Sample(app_util.Cog):
         command=app_util.UserCommand(name='Bonk'),
         guild_id=877399405056102431
     )
-    async def promote_command(self, ctx: app_util.Context):
-        await ctx.send_response(f'LOL! {ctx.clicked_user.mention} '
-                                f'you have been bonked by {ctx.author.mention}')
+    async def promote_command(self, ctx: app_util.Context, user: discord.User):
+        await ctx.send_response(f'LOL! {ctx.user.mention} you have been bonked by {ctx.author.mention}')
 
     @app_util.Cog.command(
         command=app_util.MessageCommand(name='Pin'),
         guild_id=877399405056102431
     )
-    async def pin_command(self, ctx: app_util.Context):
-        print(ctx.command.type)
-        await ctx.clicked_message.pin()
+    async def pin_command(self, ctx: app_util.Context, message: discord.Message):
+        await message.pin()
         await ctx.send_response(f'Message pinned by {ctx.author.mention}')
 
     @app_util.Cog.command(

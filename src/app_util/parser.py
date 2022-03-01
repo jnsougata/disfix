@@ -52,3 +52,10 @@ def _build_qual(c: Context) -> str:
         return '__USER__' + qual_name
     else:
         return '__UWU__' + qual_name
+
+
+def _build_ctx_menu_arg(c: Context):
+    if c.type is ApplicationCommandType.USER:
+        return c.clicked_user
+    elif c.type is ApplicationCommandType.MESSAGE:
+        return c.clicked_message

@@ -13,11 +13,11 @@ from discord.http import Route
 from .context import Context
 from .enums import ApplicationCommandType
 from .core import ApplicationCommand, BaseOverwrite
-from .parser import _build_prams, _build_qual
-from typing import Callable, Optional, Any, Union, List, Dict, Tuple, TypeVar
+from .parser import _build_prams, _build_qual, _build_ctx_menu_arg
 from discord.ext import commands
 from discord.http import Route
 from discord.enums import InteractionType
+from typing import Callable, Optional, Any, Union, List, Dict, Tuple
 
 
 __all__ = ['Bot']
@@ -61,7 +61,6 @@ class Bot(commands.Bot):
                     func = self._connection.hooks[qual]
                 except KeyError:
                     raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
-                args, kwargs = _build_prams(c.options, func)
                 job = self.__jobs.get(func.__name__)
                 if job:
                     try:
@@ -69,9 +68,19 @@ class Bot(commands.Bot):
                     except Exception as e:
                         raise JobFailure(f'Job named `{job.__name__}` raised an exception: ({e})')
                     if is_done:
-                        await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
+                        if c.type is ApplicationCommandType.CHAT_INPUT:
+                            args, kwargs = _build_prams(c.options, func)
+                            await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
+                        else:
+                            arg = _build_ctx_menu_arg(c)
+                            await self._connection.call_hooks(qual, cog, c, arg)
                 else:
-                    await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
+                    if c.type is ApplicationCommandType.CHAT_INPUT:
+                        args, kwargs = _build_prams(c.options, func)
+                        await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
+                    else:
+                        arg = _build_ctx_menu_arg(c)
+                        await self._connection.call_hooks(qual, cog, c, arg)
             except Exception as e:
                 handler = self._connection.hooks.get('on_command_error')
                 if handler:

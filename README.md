@@ -80,14 +80,12 @@ class Sample(app_util.Cog):
                 )
             ]
         ),
-        guild_id=877399405056102431
+        guild_id=1234567890
         # if guild_id is not provided
         # it will be available globally
     )
-    async def book(self, ctx: app_util.Context):
-        page_number = ctx.options['page'].value
-        book_name = ctx.options['book_name'].value
-        page_content = await imaginary_api.fetch(book_name, page_number)
+    async def book(self, ctx: app_util.Context, book_name: str, page: int):
+        page_content = await imaginary_api.fetch(book_name, page)
         embed = discord.Embed(
             title=f'{book_name}', 
             description=page_content, 
@@ -104,9 +102,8 @@ class Sample(app_util.Cog):
         # if guild_id is not provided
         # the command will be available globally
     )
-    async def bonk(self, ctx: app_util.Context):
-        target = ctx.clicked_user
-        await ctx.send_response(f'{ctx.author.mention} just bonked {target.mention}!')
+    async def bonk(self, ctx: app_util.Context, user: discord.User):
+        await ctx.send_response(f'{ctx.author.mention} just bonked {user.mention}!')
 
     # example application message command named `Pin`
     # this command will pin the message to the channel
@@ -114,9 +111,8 @@ class Sample(app_util.Cog):
         command=app_util.MessageCommand(name='Pin'),
         guild_id=877399405056102431
     )
-    async def pin(self, ctx: app_util.Context):
-        target = ctx.clicked_message
-        await target.pin()
+    async def pin(self, ctx: app_util.Context, message: discord.Message):
+        await message.pin()
         await ctx.send_response(f'Message pinned by {ctx.author}')
 
 
