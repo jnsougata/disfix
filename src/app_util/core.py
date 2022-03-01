@@ -279,20 +279,34 @@ class ApplicationCommand:
         self._permissions[guild_id] = ows['permissions']
         self.__parse_permissions()
 
-    async def add_overwrites(self, overwrites: List[Overwrite], guild: discord.Guild = None):
-        ows = {'permissions': [ow.to_dict() for ow in overwrites]}
-        if self.guild_specific:
-            r = Route('PUT',
-                      f'/applications/{self.application_id}/guilds/{self.guild_id}/commands/{self.id}/permissions')
-        elif guild:
-            r = Route('PUT',
-                      f'/applications/{self.application_id}/guilds/{guild.id}/commands/{self.id}/permissions')
-        else:
-            raise NoGuildProvided(f'Guild not provided while editing global command ({self.name})')
+    def __build_overwrites(self, guild_id: int):
+        ows = self.overwrites.get(guild_id)
+        if ows:
+            return [
+                {
+                    'id': str(en_id),
+                    'type': ow['type'],
+                    'permission': ow['allowed']
+                }
+                for en_id, ow in ows.items()
+            ]
 
-        data = await self.__client.http.request(r, json=ows)
-        p = {int(p['id']): p['permission'] for p in data['permissions']}
-        self.overwrites[guild.id] = p
+    async def edit_overwrites(self, guild: discord.Guild, overwrites: List[Overwrite]):
+        pass
+
+    async def edit_overwrite_for(self, guild: discord.Guild, overwrite: Overwrite):
+        curr = self.__build_overwrites(guild.id)
+        new = overwrite.to_dict()
+        for ow in curr:
+            if ow['id'] == new['id']:
+                curr.remove(ow)
+        curr.append(new)
+        payload = {'permissions': curr}
+        r = Route('PUT',
+                  f'/applications/{self.application_id}/guilds/{guild.id}/commands/{self.id}/permissions')
+
+        data = await self.__client.http.request(r, json=payload)
+        self._cache_permissions(data, guild.id)
 
 
     async def update(self, command: BaseApplicationCommand) -> ApplicationCommand:
