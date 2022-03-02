@@ -26,7 +26,7 @@ def _handle_edit_params(
 
     if content is not MISSING:
         if content is not None:
-            payload['content'] = str(content)  # type: ignore
+            payload['content'] = content  # type: ignore
         else:
             payload['content'] = None
 
@@ -369,7 +369,7 @@ class Context:
             raise TypeError('Can not mix view and views')
 
         return await self._ia.channel.send(
-            content=str(content),
+            content=content,
             tts=tts,
             file=file,
             files=files,
@@ -398,7 +398,7 @@ class Context:
             views: Optional[List[discord.ui.View]] = None,
     ):
         payload, form = _handle_send_prams(
-            content=str(content),
+            content=content,
             tts=tts,
             file=file,
             files=files,
@@ -446,7 +446,7 @@ class Context:
             views: Optional[List[discord.ui.View]] = None
     ):
         payload, form = _handle_send_prams(
-            content=str(content),
+            content=content,
             tts=tts,
             file=file,
             files=files,
@@ -495,7 +495,7 @@ class Context:
             views: Optional[List[discord.ui.View]] = MISSING
     ):
         payload, form = _handle_edit_params(
-            content=str(content),
+            content=content,
             file=file,
             files=files,
             embed=embed,
@@ -551,7 +551,7 @@ class Followup:
             views: Optional[List[discord.ui.View]] = MISSING,
     ):
         payload, form = _handle_edit_params(
-            content=str(content),
+            content=content,
             file=file,
             files=files,
             embed=embed,
