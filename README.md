@@ -32,8 +32,6 @@ class SampleBot(app_util.Bot):
         
 bot = SampleBot()
 
-# here you can pass in 
-# both dpy cog[path/extension] and app_util cog[path]
 bot.load_extension('extension_name')
 bot.run('YOUR_TOKEN')
 ```
@@ -53,14 +51,14 @@ class Sample(app_util.Cog):
     def __init__(self, bot: app_util.Bot):
         self.bot = bot
 
-    # this is default the application command error handler
+    # error handler
     @app_util.Cog.listener
     async def on_command_error(self, ctx: app_util.Context, error: Exception):
         stack = traceback.format_exception(type(error), error, error.__traceback__)
         tb = ''.join(stack)
         await ctx.send_followup(f'```py\n{tb}\n```')
 
-    # example slash command named `book`
+    # slash command named `book`
     @app_util.Cog.command(
         command=app_util.SlashCommand(
             name='book',
@@ -81,8 +79,7 @@ class Sample(app_util.Cog):
             ]
         ),
         guild_id=1234567890
-        # if guild_id is not provided
-        # it will be available globally
+        # if None, available for all guilds
     )
     async def book(self, ctx: app_util.Context, book_name: str, page: int):
         page_content = await imaginary_api.fetch(book_name, page)
@@ -94,26 +91,22 @@ class Sample(app_util.Cog):
         embed.set_footer(text=f'Page {page_number}')
         await ctx.send_followup(embed=embed)
 
-    # example application user command named `Bonk`
-    # this command will dm the target user with the phrase if possible
+    # user command named `Bonk`
     @app_util.Cog.command(
         command=app_util.UserCommand(name='Bonk'),
-        guild_id=None
-        # if guild_id is not provided
-        # the command will be available globally
+        # guild_id not given, available for all guilds
     )
     async def bonk(self, ctx: app_util.Context, user: discord.User):
         await ctx.send_response(f'{ctx.author.mention} just bonked {user.mention}!')
 
-    # example application message command named `Pin`
-    # this command will pin the message to the channel
+    # message command named `Pin`
     @app_util.Cog.command(
         command=app_util.MessageCommand(name='Pin'),
         guild_id=877399405056102431
     )
     async def pin(self, ctx: app_util.Context, message: discord.Message):
         await message.pin()
-        await ctx.send_response(f'Message pinned by {ctx.author}')
+        await ctx.send_response(f'Message pinned by {ctx.author}', ephemeral=True)
 
 
 def setup(bot: app_util.Bot):

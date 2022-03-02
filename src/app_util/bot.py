@@ -82,9 +82,9 @@ class Bot(commands.Bot):
                         arg = _build_ctx_menu_arg(c)
                         await self._connection.call_hooks(qual, cog, c, arg)
             except Exception as e:
-                handler = self._connection.hooks.get('on_command_error')
-                if handler:
-                    await handler(self._aux['exec'], c, e)
+                eh = self._connection.hooks.get('on_command_error')
+                if eh:
+                    await eh(c, e)
                     return
                 print(f'Ignoring exception while invoking application command `{c!r}`\n', file=sys.stderr)
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
