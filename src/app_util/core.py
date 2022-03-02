@@ -334,9 +334,6 @@ class ApplicationCommand:
                                f'\nexpected: {self.type} | got: {command.type}')
 
 
-
-
-
 @dataclass(frozen=True)
 class BasePermission:
     id: Union[int, str]

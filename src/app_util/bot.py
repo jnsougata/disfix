@@ -69,14 +69,14 @@ class Bot(commands.Bot):
                         raise JobFailure(f'Job named `{job.__name__}` raised an exception: ({e})')
                     if is_done:
                         if c.type is ApplicationCommandType.CHAT_INPUT:
-                            args, kwargs = _build_prams(c.options, func)
+                            args, kwargs = _build_prams(c._options, func)
                             await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
                         else:
                             arg = _build_ctx_menu_arg(c)
                             await self._connection.call_hooks(qual, cog, c, arg)
                 else:
                     if c.type is ApplicationCommandType.CHAT_INPUT:
-                        args, kwargs = _build_prams(c.options, func)
+                        args, kwargs = _build_prams(c._options, func)
                         await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
                     else:
                         arg = _build_ctx_menu_arg(c)

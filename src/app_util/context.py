@@ -229,7 +229,7 @@ class Context:
         return InteractionData(**self._ia.data)
 
     @property
-    def resolved(self):
+    def _resolved(self):
         """
         returns the resolved data of the interaction
         :return:
@@ -238,28 +238,28 @@ class Context:
         return Resolved(r_data, self) if r_data else None
 
     @property
-    def clicked_message(self):
+    def _target_message(self):
         """
         returns the resolved message of the MESSAGE COMMAND
         :return:
         """
         if self.type is ApplicationCommandType.MESSAGE:
             message_id = int(self.data.target_id)
-            return self.resolved.messages[message_id]
+            return self._resolved.messages[message_id]
 
     @property
-    def clicked_user(self):
+    def _target_user(self):
         """
         returns the resolved user of the USER COMMAND
         :return:
         """
         if self.type is ApplicationCommandType.USER:
             user_id = int(self.data.target_id)
-            return self.resolved.users[user_id]
+            return self._resolved.users[user_id]
 
 
     @property
-    def options(self) -> Dict[str, ChatInputOption]:
+    def _options(self) -> Dict[str, ChatInputOption]:
         """
         returns the options of the interaction
         :return: InteractionDataOption
@@ -275,7 +275,7 @@ class Context:
                     data=option,
                     guild=self.guild,
                     client=self._client,
-                    resolved=self.resolved
+                    resolved=self._resolved
                 ) for option in options
             }
         else:

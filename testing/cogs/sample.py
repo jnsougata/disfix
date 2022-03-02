@@ -91,7 +91,7 @@ class Sample(app_util.Cog):
         guild_id=877399405056102431
     )
     async def promote_command(self, ctx: app_util.Context, user: discord.User):
-        await ctx.send_response(f'LOL! {ctx.user.mention} you have been bonked by {ctx.author.mention}')
+        await ctx.send_response(f'LOL! {user.mention} you have been bonked by {ctx.author.mention}')
 
     @app_util.Cog.command(
         command=app_util.MessageCommand(name='Pin'),
