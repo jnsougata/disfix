@@ -270,16 +270,20 @@ class Context:
             return {}  # type: ignore
         options = self.data.options
         if options:
-            return {
-                option['name']: ChatInputOption(
-                    data=option,
-                    guild=self.guild,
-                    client=self._client,
-                    resolved=self._resolved
-                ) for option in options
-            }
-        else:
-            return {}
+            container = {}
+            for option in options:
+                type = option['type']
+                name = option['name']
+                if type > 2:
+                    container[name] = ChatInputOption(option, self.guild, self._client, self._resolved)
+                if type < 3:
+                    family = option['name']
+                    new_options = option['options']
+                    parsed = ChatInputOption._hybrid(family, new_options)
+                    for new in parsed:
+                        container[new['name']] = ChatInputOption(new, self.guild, self._client, self._resolved)
+            return container
+        return {}
 
     @property
     def application_id(self):

@@ -53,6 +53,7 @@ class Bot(commands.Bot):
 
     async def _invoke_app_command(self, interaction: discord.Interaction):
         if interaction.type == InteractionType.application_command:
+            #print(interaction.data)
             c = Context(interaction, self)
             qual = _build_qual(c)
             try:

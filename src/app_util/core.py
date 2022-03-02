@@ -132,25 +132,38 @@ class ChatInputOption:
 
     @property
     def name(self) -> str:
-        return self._data.get('name')
+        return self._data['name']
 
     @property
     def type(self):
-        value = self._data.get('type')
+        value = self._data['type']
         return try_enum(OptionType, value)
+
+    @staticmethod
+    def _hybrid(family: str, options: List[Dict[str, Any]]):
+        return [
+            {
+                'type': generic['type'],
+                'value': generic['value'],
+                'name': f'{family}_{generic["name"]}'
+            } for generic in options
+        ]
 
     @property
     def value(self) -> Any:
 
-        if self.type is OptionType.SUBCOMMAND:
-            # TODO: parse subcommand
-            return self._data.get('value')
+        """if self.type is OptionType.SUBCOMMAND:
+            data = self._data
+            family = data['name']
+            options = data.get('options')
+            print(family)
+            return self._data.get('options')
 
         elif self.type is OptionType.SUBCOMMAND_GROUP:
             # TODO: parse subcommand group
-            return self._data.get('value')
+            return self._data.get('value')"""
 
-        elif self.type is OptionType.STRING:
+        if self.type is OptionType.STRING:
             return self._data.get('value')
 
         elif self.type is OptionType.INTEGER:
@@ -196,10 +209,6 @@ class ChatInputOption:
             return self._resolved.attachments[attachment_id]
         else:
             return self._data.get('value')
-
-    @property
-    def sub_options(self) -> list:
-        return self._data.get('options')
 
     @property
     def focused(self) -> bool:
