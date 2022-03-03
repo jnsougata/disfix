@@ -8,7 +8,7 @@ long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 setup(
     name='app_util',
-    version='0.1.9',
+    version='0.2.0',
     description='Integrates application commands with discord.py 2.0',
     long_description=long_description,
     long_description_content_type='text/markdown',

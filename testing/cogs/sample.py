@@ -123,20 +123,6 @@ class Sample(app_util.Cog):
         else:
             await ctx.send_followup(f'Application Command **`{name}`** does not exist')
 
-    @app_util.Cog.command(
-        command=app_util.SlashCommand(
-            name='perm',
-            description='edits command perms',
-        ),
-        guild_id=877399405056102431
-    )
-    async def edit_command(self, ctx: app_util.Context):
-        await ctx.defer()
-        ows = [app_util.Overwrite.for_user(ctx.author.id, allow=False)]
-        await ctx.command.add_overwrites(ows, ctx.guild)
-        await ctx.send_followup(
-            f'Edited Application Command perms for {ctx.name}')
-
 
 def setup(bot: app_util.Bot):
     bot.add_application_cog(Sample(bot))
