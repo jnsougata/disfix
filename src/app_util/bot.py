@@ -53,8 +53,7 @@ class Bot(commands.Bot):
 
     async def _invoke_app_command(self, interaction: discord.Interaction):
         if interaction.type == InteractionType.application_command:
-            #print(interaction.data)
-            c = Context(interaction, self)
+            c = Context(self, interaction)
             qual = _build_qual(c)
             try:
                 try:
@@ -70,14 +69,14 @@ class Bot(commands.Bot):
                         raise JobFailure(f'Job named `{job.__name__}` raised an exception: ({e})')
                     if is_done:
                         if c.type is ApplicationCommandType.CHAT_INPUT:
-                            args, kwargs = _build_prams(c._options, func)
+                            args, kwargs = _build_prams(c._parsed_options, func)
                             await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
                         else:
                             arg = _build_ctx_menu_arg(c)
                             await self._connection.call_hooks(qual, cog, c, arg)
                 else:
                     if c.type is ApplicationCommandType.CHAT_INPUT:
-                        args, kwargs = _build_prams(c._options, func)
+                        args, kwargs = _build_prams(c._parsed_options, func)
                         await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
                     else:
                         arg = _build_ctx_menu_arg(c)
@@ -215,7 +214,3 @@ class Bot(commands.Bot):
         await self.sync_global_commands()
         await self.sync_current_commands()
         await self.connect(reconnect=reconnect)
-
-
-class TypeBot(Bot):
-    ...

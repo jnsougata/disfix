@@ -39,6 +39,10 @@ class InteractionData:
     target_id: Optional[str] = None
 
 
+class DummyOption:
+    value = True
+
+
 class Resolved:
     def __init__(self, payload: dict, ctx):
         self._ctx = ctx
@@ -151,17 +155,6 @@ class ChatInputOption:
 
     @property
     def value(self) -> Any:
-
-        """if self.type is OptionType.SUBCOMMAND:
-            data = self._data
-            family = data['name']
-            options = data.get('options')
-            print(family)
-            return self._data.get('options')
-
-        elif self.type is OptionType.SUBCOMMAND_GROUP:
-            # TODO: parse subcommand group
-            return self._data.get('value')"""
 
         if self.type is OptionType.STRING:
             return self._data.get('value')

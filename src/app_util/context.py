@@ -6,7 +6,7 @@ import discord
 from discord.http import Route
 from discord.utils import MISSING
 from discord.ext import commands
-from .core import InteractionData, ChatInputOption, Resolved, ApplicationCommand
+from .core import InteractionData, ChatInputOption, Resolved, ApplicationCommand, DummyOption
 from .enums import ApplicationCommandType, OptionType
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict
 
@@ -172,8 +172,8 @@ def _handle_send_prams(
 
 
 class Context:
-    def __init__(self, action: discord.Interaction, client: commands.Bot):
-        self._ia = action
+    def __init__(self, client: commands.Bot, interaction: discord.Interaction):
+        self._ia = interaction
         self.bot = client
         self._client = client
         self._deferred = False
@@ -259,7 +259,7 @@ class Context:
 
 
     @property
-    def _options(self) -> Dict[str, ChatInputOption]:
+    def _parsed_options(self) -> Dict[str, ChatInputOption]:
         """
         returns the options of the interaction
         :return: InteractionDataOption
@@ -268,20 +268,29 @@ class Context:
             return {}  # type: ignore
         if self.type is ApplicationCommandType.MESSAGE:
             return {}  # type: ignore
+        container = {}
         options = self.data.options
         if options:
-            container = {}
             for option in options:
                 type = option['type']
                 name = option['name']
-                if type > 2:
+                if type > OptionType.SUBCOMMAND_GROUP.value:
                     container[name] = ChatInputOption(option, self.guild, self._client, self._resolved)
-                if type < 3:
+                if type == OptionType.SUBCOMMAND.value:
                     family = option['name']
+                    container[family] = DummyOption
                     new_options = option['options']
                     parsed = ChatInputOption._hybrid(family, new_options)
                     for new in parsed:
                         container[new['name']] = ChatInputOption(new, self.guild, self._client, self._resolved)
+                if type == OptionType.SUBCOMMAND_GROUP.value:
+                    origin = option['name']
+                    container[origin] = DummyOption
+                    for new_option in option['options']:
+                        family = f"{origin}_{new_option['name']}"
+                        parsed = ChatInputOption._hybrid(family, new_option['options'])
+                        for new in parsed:
+                            container[new['name']] = ChatInputOption(new, self.guild, self._client, self._resolved)
             return container
         return {}
 
