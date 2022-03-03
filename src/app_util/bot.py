@@ -58,10 +58,10 @@ class Bot(commands.Bot):
             try:
                 try:
                     cog = self._aux[qual]
-                    func = self._connection.hooks[qual]
                 except KeyError:
                     raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
-                job = self.__jobs.get(func.__name__)
+                job = self.__jobs.get(qual)
+                func = self._connection.hooks[qual]
                 if job:
                     try:
                         is_done = await job(c)

@@ -14,10 +14,9 @@ class Cog(metaclass=type):
 
     __qual__ = None
     __mapped_jobs__: dict = {}
-    __subcommand_container__: dict = {}
+    __mapped_container__: dict = {}
     __method_container__: dict = {}
     __command_container__: dict = {}
-    __mapped_container__: dict = {}
     __error_listener__: Any = None
 
 
@@ -26,9 +25,6 @@ class Cog(metaclass=type):
         commands = cls.__command_container__.copy()
         setattr(cls, '__commands__', commands)
         cls.__command_container__.clear()
-        sub_commands = cls.__subcommand_container__.copy()
-        setattr(cls, '__subcommands__', sub_commands)
-        cls.__subcommand_container__.clear()
         methods = cls.__method_container__.copy()
         setattr(cls, '__methods__', methods)
         cls.__method_container__.clear()
@@ -58,12 +54,7 @@ class Cog(metaclass=type):
             def wrapper(*args, **kwargs):
                 return func
             cls.__method_container__[qualified_name] = wrapper()
-        return cls
-
-    @classmethod
-    def subcommand(cls, func: Callable):
-        child = f'{cls.__qual__}__child__'
-        cls.__subcommand_container__[child] = func
+        return decorator
 
     @classmethod
     def before_invoke(cls, job: Callable):

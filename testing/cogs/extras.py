@@ -49,10 +49,6 @@ class Extras(app_util.Cog):
     async def perms(self, ctx: app_util.Context, get_user: discord.User, get_role: discord.Role):
         await ctx.send_response(f'Selected user `{get_user}` and role `@{get_role}`')
 
-    @perms.subcommand
-    async def perms_subcommand(self, ctx: app_util.Context):
-        pass
-
 
 def setup(bot: app_util.Bot):
     bot.add_application_cog(Extras(bot))
