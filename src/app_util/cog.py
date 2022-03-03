@@ -12,17 +12,23 @@ from typing import Optional, ClassVar, Callable, List, Union, Dict, Any
 
 class Cog(metaclass=type):
 
-    __error_listener__: Any = None
-    __method_container__: dict = {}
-    __object_container__: dict = {}
-    __mapped_container__: dict = {}
+    __qual__ = None
     __mapped_jobs__: dict = {}
+    __subcommand_container__: dict = {}
+    __method_container__: dict = {}
+    __command_container__: dict = {}
+    __mapped_container__: dict = {}
+    __error_listener__: Any = None
+
 
     def __new__(cls, *args, **kwargs):
         self = super().__new__(cls)
-        commands = cls.__object_container__.copy()
+        commands = cls.__command_container__.copy()
         setattr(cls, '__commands__', commands)
-        cls.__object_container__.clear()
+        cls.__command_container__.clear()
+        sub_commands = cls.__subcommand_container__.copy()
+        setattr(cls, '__subcommands__', sub_commands)
+        cls.__subcommand_container__.clear()
         methods = cls.__method_container__.copy()
         setattr(cls, '__methods__', methods)
         cls.__method_container__.clear()
@@ -35,25 +41,29 @@ class Cog(metaclass=type):
         return self
 
 
-
     @classmethod
     def command(cls, command: BaseApplicationCommand, guild_id: int = None):
         """
-        Decorator for registering a slash command
+        Decorator for registering an application command
         """
         if guild_id:
             qualified_name = f"{command._qual}_{guild_id}"
         else:
             qualified_name = command._qual
-
-        cls.__object_container__[qualified_name] = (command, guild_id)
+        cls.__qual__ = qualified_name
+        cls.__command_container__[qualified_name] = (command, guild_id)
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
             cls.__method_container__[qualified_name] = wrapper()
-        return decorator
+        return cls
+
+    @classmethod
+    def subcommand(cls, func: Callable):
+        child = f'{cls.__qual__}__child__'
+        cls.__subcommand_container__[child] = func
 
     @classmethod
     def before_invoke(cls, job: Callable):
@@ -65,9 +75,8 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__mapped_jobs__[func.__name__] = job
+                cls.__mapped_jobs__[cls.__qual__] = job
                 return func
-
             return wrapper()
 
         return decorator

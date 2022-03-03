@@ -19,5 +19,40 @@ class Extras(app_util.Cog):
         await ctx.send_followup(f'Traceback printed in Console')
 
 
+    @app_util.Cog.command(
+        command=app_util.SlashCommand(
+            name='perms',
+            description='gives permission for role or user',
+            options=[
+                app_util.SubCommand(
+                    name='get',
+                    description='the role or user  to get the perms for',
+                    options=[
+                        app_util.UserOption(name='user', description='user to get the perms for', required=False),
+                        app_util.RoleOption(name='role', description='role to get the perms for', required=False)
+                    ]
+
+                ),
+                app_util.SubCommand(
+                    name='edit',
+                    description='the role or user  to edit the perms for',
+                    options=[
+                        app_util.UserOption(name='user', description='user to edit the perms for', required=False),
+                        app_util.RoleOption(name='role', description='role to edit the perms for', required=False)
+                    ]
+
+                )
+            ]
+        ),
+        guild_id=877399405056102431
+    )
+    async def perms(self, ctx: app_util.Context, get_user: discord.User, get_role: discord.Role):
+        await ctx.send_response(f'Selected user `{get_user}` and role `@{get_role}`')
+
+    @perms.subcommand
+    async def perms_subcommand(self, ctx: app_util.Context):
+        pass
+
+
 def setup(bot: app_util.Bot):
     bot.add_application_cog(Extras(bot))
