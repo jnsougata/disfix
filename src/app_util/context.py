@@ -177,6 +177,7 @@ class Context:
         self.bot = client
         self._client = client
         self._deferred = False
+        self._invisible = False
         self.original_message: Optional[discord.Message] = None
 
     def __repr__(self):
