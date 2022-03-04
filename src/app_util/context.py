@@ -485,13 +485,13 @@ class Context:
             raise discord.ClientException('Cannot send followup to a non (deferred / responded) interaction')
 
         data = await self._client.http.request(r, form=form, files=files)
-        message_id = data['id']
+        followup = Followup(self, data)
         if view:
-            self._client._connection.store_view(view, message_id)
+            self._client._connection.store_view(view, followup.message.id)
         if views:
             for view in views:
-                self._client._connection.store_view(view, message_id)
-        return Followup(self, data)
+                self._client._connection.store_view(view, followup.message.id)
+        return followup
 
 
     async def edit_response(
