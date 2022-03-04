@@ -10,6 +10,8 @@ async def job(ctx: app_util.Context):
         await ctx.send_response(f'{ctx.author.mention} please use command `{ctx.name}` inside a guild')
     elif not ctx.author.guild_permissions.administrator:
         await ctx.send_response(f'{ctx.author.mention} you are not an administrator')
+    elif not ctx.options:
+        await ctx.send_response(f'{ctx.author.mention} please select any valid option')
     else:
         return True
 
@@ -40,6 +42,7 @@ class Sample(app_util.Cog):
         ),
         guild_id=877399405056102431
     )
+    @app_util.Cog.before_invoke(job)
     async def embed(
             self,
             ctx: app_util.Context,
