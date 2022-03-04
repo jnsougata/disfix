@@ -193,14 +193,22 @@ class Bot(commands.Bot):
     def get_application_command(self, command_id: int):
         return self._application_commands.get(command_id)
 
-    async def _sync_overwrites(self):
+    async def _sync_non_implemented(self):
         for guild in self.guilds:
-            r = Route('GET', f'/applications/{self.application_id}/guilds/{guild.id}/commands')
+            guild_id = guild.id
+            r = Route('GET', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
             resp = await self.http.request(r)
             for data in resp:
                 if int(data['id']) not in self._application_commands:
                     apc = ApplicationCommand(self, data)
                     self._application_commands[apc.id] = apc
+                    try:
+                        ows = await self.__fetch_permissions(apc.id, guild_id)
+                    except discord.errors.NotFound:
+                        pass
+                    else:
+                        apc._cache_permissions(ows, guild_id)
+                    print(apc.overwrites)
 
         guild_ids = [g.id for g in self.guilds]
         for command_id, command in self._application_commands.items():
@@ -215,7 +223,7 @@ class Bot(commands.Bot):
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
         self.add_listener(self._invoke_app_command, 'on_interaction')
-        self.add_listener(self._sync_overwrites, 'on_ready')
+        self.add_listener(self._sync_non_implemented, 'on_ready')
         await self.login(token)
         app_info = await self.application_info()
         self._connection.application_id = app_info.id
