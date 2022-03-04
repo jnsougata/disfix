@@ -482,7 +482,7 @@ class Context:
         r = Route('POST', f'/webhooks/{self.application_id}/{self.token}')
 
         if not self._deferred:
-            raise discord.ClientException('Cannot send followup to a non-deferred or non-responded interaction')
+            raise discord.ClientException('Cannot send followup to a non (deferred / responded) interaction')
 
         data = await self._client.http.request(r, form=form, files=files)
         message_id = data['id']
