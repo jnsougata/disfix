@@ -197,17 +197,21 @@ class Bot(commands.Bot):
         for guild in self.guilds:
             guild_id = guild.id
             r = Route('GET', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
-            resp = await self.http.request(r)
-            for data in resp:
-                if int(data['id']) not in self._application_commands:
-                    apc = ApplicationCommand(self, data)
-                    self._application_commands[apc.id] = apc
-                    try:
-                        ows = await self.__fetch_permissions(apc.id, guild_id)
-                    except discord.errors.NotFound:
-                        pass
-                    else:
-                        apc._cache_permissions(ows, guild_id)
+            try:
+                resp = await self.http.request(r)
+            except discord.errors.Forbidden:
+                pass
+            else:
+                for data in resp:
+                    if int(data['id']) not in self._application_commands:
+                        apc = ApplicationCommand(self, data)
+                        self._application_commands[apc.id] = apc
+                        try:
+                            ows = await self.__fetch_permissions(apc.id, guild_id)
+                        except discord.errors.NotFound:
+                            pass
+                        else:
+                            apc._cache_permissions(ows, guild_id)
 
         guild_ids = [g.id for g in self.guilds]
         for command_id, command in self._application_commands.items():
