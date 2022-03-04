@@ -5,9 +5,9 @@ import asyncio
 import traceback
 from .errors import *
 from .cog import Cog
-from .chat_input import SlashCommand
-from .user_input import UserCommand
-from .msg_input import MessageCommand
+from .input_chat import SlashCommand
+from .input_user import UserCommand
+from .input_msg import MessageCommand
 from .app import Overwrite
 from discord.http import Route
 from .context import Context

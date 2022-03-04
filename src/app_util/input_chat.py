@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-class BaseOption:
+class Option:
     def __init__(self, name: str, type: OptionType):
         self.name = name.lower().replace(' ', '_')
         self.type = type
@@ -35,7 +35,7 @@ class Choice:
         }
 
 
-class StrOption(BaseOption):
+class StrOption(Option):
     def __init__(
             self, name: str,
             description: str,
@@ -54,7 +54,7 @@ class StrOption(BaseOption):
             self.data["choices"] = [c.data for c in choices]
 
 
-class IntOption(BaseOption):
+class IntOption(Option):
     def __init__(
             self, name: str,
             description: str,
@@ -79,7 +79,7 @@ class IntOption(BaseOption):
             self.data["max_value"] = max_value
 
 
-class BoolOption(BaseOption):
+class BoolOption(Option):
     def __init__(
             self, name: str,
             description: str,
@@ -98,7 +98,7 @@ class BoolOption(BaseOption):
             self.data["choices"] = [c.data for c in choices]
 
 
-class UserOption(BaseOption):
+class UserOption(Option):
     def __init__(
             self, name: str,
             description: str,
@@ -117,7 +117,7 @@ class UserOption(BaseOption):
             self.data["choices"] = [c.data for c in choices]
 
 
-class ChannelOption(BaseOption):
+class ChannelOption(Option):
     def __init__(
             self,
             name: str,
@@ -140,7 +140,7 @@ class ChannelOption(BaseOption):
             self.data["channel_types"] = [t.value for t in channel_types]
 
 
-class RoleOption(BaseOption):
+class RoleOption(Option):
     def __init__(
             self, name: str,
             description: str,
@@ -159,7 +159,7 @@ class RoleOption(BaseOption):
             self.data["choices"] = [c.data for c in choices]
 
 
-class MentionableOption(BaseOption):
+class MentionableOption(Option):
     def __init__(
             self, name: str,
             description: str,
@@ -178,7 +178,7 @@ class MentionableOption(BaseOption):
             self.data["choices"] = [c.data for c in choices]
 
 
-class NumberOption(BaseOption):
+class NumberOption(Option):
     def __init__(
             self,
             name: str,
@@ -204,7 +204,7 @@ class NumberOption(BaseOption):
             self.data["max_value"] = max_value
 
 
-class AttachmentOption(BaseOption):
+class AttachmentOption(Option):
     def __init__(
             self,
             name: str,
@@ -221,13 +221,13 @@ class AttachmentOption(BaseOption):
         }
 
 
-class SubCommand(BaseOption):
+class SubCommand(Option):
     def __init__(
             self,
             name: str,
             *,
             description: str,
-            options: [BaseOption] = None
+            options: [Option] = None
     ):
         super().__init__(name, OptionType.SUBCOMMAND)
         self.data = {
@@ -239,7 +239,7 @@ class SubCommand(BaseOption):
             self.data["options"] = [op.data for op in options]
 
 
-class SubCommandGroup(BaseOption):
+class SubCommandGroup(Option):
     def __init__(
             self,
             name: str,
@@ -264,7 +264,7 @@ class SlashCommand(BaseApplicationCommand):
             *,
             name: str,
             description: str,
-            options: List[Union[BaseOption, SubCommand, SubCommandGroup]] = None,
+            options: List[Union[Option, SubCommand, SubCommandGroup]] = None,
             default_access: bool = True,
             overwrites: list[Overwrite] = None,
     ) -> None:

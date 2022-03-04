@@ -257,9 +257,8 @@ class Context:
             user_id = int(self.data.target_id)
             return self._resolved.users[user_id]
 
-
     @property
-    def _parsed_options(self) -> Dict[str, ChatInputOption]:
+    def options(self) -> Dict[str, ChatInputOption]:
         """
         returns the options of the interaction
         :return: InteractionDataOption
@@ -268,6 +267,10 @@ class Context:
             return {}  # type: ignore
         if self.type is ApplicationCommandType.MESSAGE:
             return {}  # type: ignore
+        return self._parsed_options
+
+    @property
+    def _parsed_options(self) -> Dict[str, ChatInputOption]:
         container = {}
         options = self.data.options
         if options:
