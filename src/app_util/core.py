@@ -10,7 +10,7 @@ from typing import List, Optional, Union, Any, Dict
 from .enums import OptionType, ApplicationCommandType, PermissionType, try_enum
 
 
-def intflake(snowflake: str) -> Union[int, None]:
+def flake(snowflake: str) -> Union[int, None]:
     try:
         return int(snowflake)
     except TypeError:
@@ -193,7 +193,7 @@ class ApplicationCommand:
         self.__payload = data
         self.__client = client
         self.id = int(data['id'])
-        self.guild_id = intflake(data.get('guild_id'))
+        self.guild_id = flake(data.get('guild_id'))
         self.name = data['name']
         self.description = data['description']
         self.type = try_enum(ApplicationCommandType, data['type'])
