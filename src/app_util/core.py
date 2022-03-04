@@ -7,14 +7,7 @@ from discord.http import Route
 from dataclasses import dataclass
 from .app import Overwrite, BaseApplicationCommand
 from typing import List, Optional, Union, Any, Dict
-from .enums import OptionType, ApplicationCommandType, PermissionType
-
-
-def try_enum(enum_class, value):
-    try:
-        return enum_class(value)
-    except ValueError:
-        return None
+from .enums import OptionType, ApplicationCommandType, PermissionType, try_enum
 
 
 def intflake(snowflake: str) -> Union[int, None]:
@@ -37,10 +30,6 @@ class InteractionData:
     values: Optional[list] = None
     # only used for User Command & Message Command
     target_id: Optional[str] = None
-
-
-class DummyOption:
-    value = True
 
 
 class Resolved:
@@ -103,18 +92,8 @@ class Resolved:
                 for key, payload in self._payload['attachments'].items()}
 
 
-@dataclass(frozen=True)
-class ResolvedAttachment:
-    id: str = None
-    filename: str = None
-    description: str = None
-    content_type: str = None
-    size: int = None
-    url: str = None
-    proxy_url: str = None
-    height: int = None
-    width: int = None
-    ephemeral: bool = None
+class DummyOption:
+    value = True
 
 
 class ChatInputOption:
@@ -334,39 +313,3 @@ class ApplicationCommand:
         else:
             raise TypeMismatch(f'Type mismatched while editing command `{self.name}` '
                                f'\nexpected: {self.type} | got: {command.type}')
-
-
-@dataclass(frozen=True)
-class BasePermission:
-    id: Union[int, str]
-    application_id: Union[int, str]
-    guild_id: [Union[int, str]]
-    permissions: list[dict]
-
-
-@dataclass(frozen=True)
-class PermissionData:
-    id: Union[int, str]
-    type: int
-    permission: bool
-
-
-class BaseOverwrite:
-    def __init__(self, data: dict):
-        self._perms = BasePermission(**data)
-
-    @property
-    def command_id(self):
-        return int(self._perms.id)
-
-    @property
-    def application_id(self):
-        return int(self._perms.application_id)
-
-    @property
-    def guild_id(self):
-        return int(self._perms.guild_id)
-
-    @property
-    def permissions(self):
-        return [PermissionData(**perm) for perm in self._perms.permissions]

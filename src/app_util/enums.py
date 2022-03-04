@@ -1,18 +1,22 @@
 from enum import Enum
 
 
-class ChannelType(Enum):
-    GUILD_TEXT = 0
-    DM = 1
-    GUILD_VOICE = 2
-    GROUP_DM = 3
-    GUILD_CATEGORY = 4
-    GUILD_NEWS = 5
-    GUILD_STORE = 6
-    GUILD_NEWS_THREAD = 10
-    GUILD_PUBLIC_THREAD = 11
-    GUILD_PRIVATE_THREAD = 12
-    GUILD_STAGE_VOICE = 13
+def try_enum(enum_class, value):
+    try:
+        return enum_class(value)
+    except ValueError:
+        return None
+
+
+class ApplicationCommandType(Enum):
+    USER = 2
+    MESSAGE = 3
+    CHAT_INPUT = 1
+
+
+class PermissionType(Enum):
+    USER = 2
+    ROLE = 1
 
 
 class OptionType(Enum):
@@ -29,12 +33,15 @@ class OptionType(Enum):
     ATTACHMENT = 11
 
 
-class ApplicationCommandType(Enum):
-    USER = 2
-    MESSAGE = 3
-    CHAT_INPUT = 1
-
-
-class PermissionType(Enum):
-    USER = 2
-    ROLE = 1
+class ChannelType(Enum):
+    GUILD_TEXT = 0
+    DM = 1
+    GUILD_VOICE = 2
+    GROUP_DM = 3
+    GUILD_CATEGORY = 4
+    GUILD_NEWS = 5
+    GUILD_STORE = 6
+    GUILD_NEWS_THREAD = 10
+    GUILD_PUBLIC_THREAD = 11
+    GUILD_PRIVATE_THREAD = 12
+    GUILD_STAGE_VOICE = 13

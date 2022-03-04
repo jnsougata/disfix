@@ -17,7 +17,6 @@ __all__ = [
     'NumberOption',
     'AttachmentOption',
     'Choice',
-    'ChannelType',
 ]
 
 
@@ -225,8 +224,8 @@ class SubCommand(Option):
     def __init__(
             self,
             name: str,
-            *,
             description: str,
+            *,
             options: [Option] = None
     ):
         super().__init__(name, OptionType.SUBCOMMAND)

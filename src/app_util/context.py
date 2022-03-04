@@ -7,7 +7,7 @@ from discord.http import Route
 from discord.utils import MISSING
 from discord.ext import commands
 from .core import InteractionData, ChatInputOption, Resolved, ApplicationCommand, DummyOption
-from .enums import ApplicationCommandType, OptionType
+from .enums import ApplicationCommandType, OptionType, try_enum
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict
 
 
@@ -177,6 +177,7 @@ class Context:
         self.bot = client
         self._client = client
         self._deferred = False
+        self.original_message: Optional[discord.Message] = None
 
     def __repr__(self):
         return self.name
@@ -184,13 +185,8 @@ class Context:
 
     @property
     def type(self):
-        raw_type = self._ia.data.get('type')
-        if raw_type == ApplicationCommandType.CHAT_INPUT.value:
-            return ApplicationCommandType.CHAT_INPUT
-        elif raw_type == ApplicationCommandType.USER.value:
-            return ApplicationCommandType.USER
-        elif raw_type == ApplicationCommandType.MESSAGE.value:
-            return ApplicationCommandType.MESSAGE
+        t = self._ia.data['type']
+        return try_enum(ApplicationCommandType, t)
 
     @property
     def name(self) -> str:
@@ -306,7 +302,7 @@ class Context:
         return self._ia.application_id
 
     @property
-    def responded(self):
+    def responded(self) -> bool:
         """
         returns whether the interaction is deferred
         :return: bool
@@ -323,7 +319,7 @@ class Context:
 
     async def think_for(self, time: float, ephemeral: bool = False):
         if not self._deferred:
-            await self.defer(ephemeral=ephemeral)
+            await self.defer(ephemeral)
             await asyncio.sleep(time)
 
     @property
@@ -391,13 +387,13 @@ class Context:
             files=files,
             embed=embed,
             embeds=embeds,
-            allowed_mentions=allowed_mentions,
             view=view,
             stickers=stickers,
             reference=reference,
             nonce=nonce,
             delete_after=delete_after,
-            mention_author=mention_author)
+            mention_author=mention_author,
+            allowed_mentions=allowed_mentions)
 
     async def send_response(
             self,
@@ -420,10 +416,11 @@ class Context:
             files=files,
             embed=embed,
             embeds=embeds,
-            allowed_mentions=allowed_mentions,
             view=view,
             views=views,
-            ephemeral=ephemeral)
+            ephemeral=ephemeral,
+            allowed_mentions=allowed_mentions)
+
         data = {
                 'name': 'payload_json',
                 'value': json.dumps({
@@ -436,16 +433,14 @@ class Context:
         route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
         await self._client.http.request(route, form=form, files=files)
         self._deferred = True
-        # getting message for storing view
-        # getting this message is a bit of a hack, but it works if you want to refresh the view
-        re_route = Route('GET', f'/webhooks/{self.application_id}/{self.token}/messages/@original')
-        original = await self._client.http.request(re_route)
-        message_id = int(original.get('id'))
+        self.original_message = await self._ia.original_message()
+        message_id = self.original_message.id
         if view:
             self._client._connection.store_view(view, message_id)
         if views:
             for view in views:
                 self._client._connection.store_view(view, message_id)
+        return self.original_message
 
     async def send_followup(
             self,
@@ -468,10 +463,10 @@ class Context:
             files=files,
             embed=embed,
             embeds=embeds,
-            allowed_mentions=allowed_mentions,
             view=view,
             views=views,
-            ephemeral=ephemeral)
+            ephemeral=ephemeral,
+            allowed_mentions=allowed_mentions)
 
         payload['wait'] = True
 
@@ -482,13 +477,11 @@ class Context:
         form.insert(0, data)  # type: ignore
 
         r = Route('POST', f'/webhooks/{self.application_id}/{self.token}')
-        if self._deferred:
-            resp = await self._client.http.request(r, form=form, files=files)
-        else:
-            await self.defer()
-            resp = await self._client.http.request(r, form=form, files=files)
 
-        message_id = int(resp.get('id'))
+        if not self._deferred:
+            await self.defer()
+
+        data = await self._client.http.request(r, form=form, files=files)
 
         if view:
             self._client._connection.store_view(view, message_id)
@@ -496,7 +489,7 @@ class Context:
             for view in views:
                 self._client._connection.store_view(view, message_id)
 
-        return Followup(self, resp, ephemeral)
+        return Followup(parent=self, payload=data, ephemeral=ephemeral)
 
     async def edit_response(
             self,
@@ -541,16 +534,22 @@ class Context:
 
 
 class Followup:
-    def __init__(self, parent: Context, payload: dict, ephemeral: bool = False):
+    def __init__(self, *, parent: Context, payload: dict, ephemeral: bool = False):
         self._data = payload
         self._parent = parent
         self._eph = ephemeral
-        self.message_id = int(payload.get('id'))
-        self.application_id = parent.application_id
         self.token = parent.token
+        self.channel = parent.channel
+        self._client = parent._client
+        self.application_id = parent.application_id
+
+    @property
+    def message(self):
+        return discord.Message(
+            state=self._client._connection, data=resp, channel=self.channel)  # type: ignore
 
     async def delete(self):
-        route = Route('DELETE', f'/webhooks/{self.application_id}/{self.token}/messages/{self.message_id}')
+        route = Route('DELETE', f'/webhooks/{self.application_id}/{self.token}/messages/{self.message.id}')
         if not self._eph:
             await self._parent._client.http.request(route)
 
@@ -583,10 +582,10 @@ class Followup:
                 'value': json.dumps(payload)
         }
         form.insert(0, data)  # type: ignore
-        route = Route('PATCH', f'/webhooks/{self.application_id}/{self.token}/messages/{self.message_id}')
+        route = Route('PATCH', f'/webhooks/{self.application_id}/{self.token}/messages/{self.message.id}')
         resp = await self._parent._client.http.request(route, form=form, files=files)
         if view is not MISSING and view is not None:
-            self._parent._client._connection.store_view(view, self.message_id)
+            self._parent._client._connection.store_view(view, self.message.id)
         elif views is not MISSING and views is not None:
             for view in views:
-                self._parent._client._connection.store_view(view, self.message_id)
+                self._parent._client._connection.store_view(view, self.message.id)

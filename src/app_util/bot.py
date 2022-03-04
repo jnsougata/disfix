@@ -12,7 +12,7 @@ from .app import Overwrite
 from discord.http import Route
 from .context import Context
 from .enums import ApplicationCommandType
-from .core import ApplicationCommand, BaseOverwrite
+from .core import ApplicationCommand
 from .parser import _build_prams, _build_qual, _build_ctx_menu_arg
 from discord.ext import commands
 from discord.http import Route
