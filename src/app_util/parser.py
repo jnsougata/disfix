@@ -42,8 +42,9 @@ def _build_prams(options: Dict[str, Any], callable: Callable):
 
 
 def _build_qual(c: Context) -> str:
-    if c.command:
-        qual_name = f'{c.name}_{c.command.guild_id}'
+    command = c.command
+    if command and command.guild_id:
+        qual_name = f'{c.name}_{command.guild_id}'
     else:
         qual_name = c.name
     if c.type is ApplicationCommandType.CHAT_INPUT:
