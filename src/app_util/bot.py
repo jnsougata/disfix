@@ -194,6 +194,14 @@ class Bot(commands.Bot):
         return self._application_commands.get(command_id)
 
     async def _sync_overwrites(self):
+        for guild in self.guilds:
+            r = Route('GET', f'/applications/{self.application_id}/guilds/{guild.id}/commands')
+            resp = await self.http.request(r)
+            for data in resp:
+                if int(data['id']) not in self._application_commands:
+                    apc = ApplicationCommand(self, data)
+                    self._application_commands[apc.id] = apc
+
         guild_ids = [g.id for g in self.guilds]
         for command_id, command in self._application_commands.items():
             if not command.guild_id:
