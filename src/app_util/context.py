@@ -91,7 +91,7 @@ def _handle_edit_params(
 
 def _handle_send_prams(
         *,
-        content: Optional[Union[str, Any]] = None,
+        content: Optional[Union[str, Any]] = MISSING,
         tts: bool = False,
         ephemeral: bool = False,
         file: Optional[discord.File] = None,
@@ -114,8 +114,8 @@ def _handle_send_prams(
     if tts:
         payload['tts'] = tts
 
-    if content:
-        payload['content'] = content
+    if content is not MISSING:
+        payload['content'] = str(content)
 
     if embed:
         payload['embeds'] = [embed.to_dict()]
@@ -316,6 +316,7 @@ class Context:
             payload['data'] = {'flags': 64}
         await self._client.http.request(route, json=payload)
         self._deferred = True
+        self._invisible = ephemeral
 
     async def think_for(self, time: float, ephemeral: bool = False):
         if not self._deferred:
@@ -357,7 +358,7 @@ class Context:
 
     async def send_message(
             self,
-            content: Optional[Union[str, Any]] = None,
+            content: Optional[Union[str, Any]] = MISSING,
             *,
             tts: bool = False,
             file: Optional[discord.File] = None,
@@ -381,7 +382,7 @@ class Context:
             raise TypeError('Can not mix view and views')
 
         return await self._ia.channel.send(
-            content=content,
+            content=str(content),
             tts=tts,
             file=file,
             files=files,
@@ -397,7 +398,7 @@ class Context:
 
     async def send_response(
             self,
-            content: Optional[Union[str, Any]] = None,
+            content: Optional[Union[str, Any]] = MISSING,
             *,
             tts: bool = False,
             ephemeral: bool = False,
@@ -433,6 +434,7 @@ class Context:
         route = Route('POST', f'/interactions/{self._ia.id}/{self._ia.token}/callback')
         await self._client.http.request(route, form=form, files=files)
         self._deferred = True
+        self._invisible = ephemeral
         self.original_message = await self._ia.original_message()
         message_id = self.original_message.id
         if view:
@@ -444,7 +446,7 @@ class Context:
 
     async def send_followup(
             self,
-            content: Optional[Union[str, Any]] = None,
+            content: Optional[Union[str, Any]] = MISSING,
             *,
             tts: bool = False,
             ephemeral: bool = False,
@@ -479,21 +481,16 @@ class Context:
         r = Route('POST', f'/webhooks/{self.application_id}/{self.token}')
 
         if not self._deferred:
-            await self.defer()
+            raise discord.ClientException('Cannot send followup to a non-deferred or non-responded interaction')
 
         data = await self._client.http.request(r, form=form, files=files)
-
+        message_id = data['id']
         if view:
             self._client._connection.store_view(view, message_id)
         if views:
             for view in views:
                 self._client._connection.store_view(view, message_id)
-
-        follow_up = Followup(parent=self, payload=data, ephemeral=ephemeral)
-
-        if self.original_message is None:
-            self.original_message = follow_up.message
-        return follow_up
+        return Followup(self, data)
 
 
     async def edit_response(
@@ -514,9 +511,9 @@ class Context:
             files=files,
             embed=embed,
             embeds=embeds,
-            allowed_mentions=allowed_mentions,
             view=view,
-            views=views)
+            views=views,
+            allowed_mentions=allowed_mentions,)
         data = {
             'name': 'payload_json',
             'value': json.dumps(payload)
@@ -534,18 +531,19 @@ class Context:
             state=self._client._connection, data=payload, channel=self.channel)  # type: ignore
 
     async def delete_response(self):
-        route = Route('DELETE', f'/webhooks/{self.application_id}/{self.token}/messages/@original')
-        await self._client.http.request(route)
+        if not self._invisible:
+            r = Route('DELETE', f'/webhooks/{self.application_id}/{self.token}/messages/@original')
+            await self._client.http.request(r)
 
 
 class Followup:
-    def __init__(self, *, parent: Context, payload: dict, ephemeral: bool = False):
+    def __init__(self, parent: Context, payload: dict):
         self._data = payload
         self._parent = parent
-        self._eph = ephemeral
         self.token = parent.token
         self.channel = parent.channel
         self._client = parent._client
+        self._invisible = parent._invisible
         self.application_id = parent.application_id
 
     @property
@@ -554,9 +552,9 @@ class Followup:
             state=self._client._connection, data=self._data, channel=self.channel)
 
     async def delete(self):
-        route = Route('DELETE', f'/webhooks/{self.application_id}/{self.token}/messages/{self.message.id}')
-        if not self._eph:
-            await self._parent._client.http.request(route)
+        r = Route('DELETE', f'/webhooks/{self.application_id}/{self.token}/messages/{self.message.id}')
+        if not self._invisible:
+            await self._parent._client.http.request(r)
 
     async def edit(
             self,
