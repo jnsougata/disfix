@@ -489,7 +489,12 @@ class Context:
             for view in views:
                 self._client._connection.store_view(view, message_id)
 
-        return Followup(parent=self, payload=data, ephemeral=ephemeral)
+        follow_up = Followup(parent=self, payload=data, ephemeral=ephemeral)
+
+        if self.original_message is None:
+            self.original_message = follow_up.message
+        return follow_up
+
 
     async def edit_response(
             self,
@@ -546,7 +551,7 @@ class Followup:
     @property
     def message(self):
         return discord.Message(
-            state=self._client._connection, data=resp, channel=self.channel)  # type: ignore
+            state=self._client._connection, data=self._data, channel=self.channel)
 
     async def delete(self):
         route = Route('DELETE', f'/webhooks/{self.application_id}/{self.token}/messages/{self.message.id}')
