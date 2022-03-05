@@ -219,7 +219,7 @@ class Bot(commands.Bot):
                 for guild_id in guild_ids:
                     try:
                         ows = await self.__fetch_permissions(command_id, guild_id)
-                    except discord.errors.NotFound:
+                    except (discord.errors.NotFound, discord.errors.Forbidden):
                         pass
                     else:
                         command._cache_permissions(ows, guild_id)
