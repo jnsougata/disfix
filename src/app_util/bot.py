@@ -208,7 +208,7 @@ class Bot(commands.Bot):
                         self._application_commands[apc.id] = apc
                         try:
                             ows = await self.__fetch_permissions(apc.id, guild_id)
-                        except discord.errors.NotFound:
+                        except (discord.errors.NotFound, discord.errors.Forbidden):
                             pass
                         else:
                             apc._cache_permissions(ows, guild_id)
