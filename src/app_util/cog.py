@@ -57,7 +57,7 @@ class Cog(metaclass=type):
         return decorator
 
     @classmethod
-    def before_invoke(cls, job: Callable):
+    def before_invoke(cls, coroutine_job: Callable):
         """
         Decorator for adding a pre-command job w.r.t checks
         :job: The function containing the job to be executed
@@ -66,7 +66,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__mapped_jobs__[cls.__qual__] = job
+                cls.__mapped_jobs__[cls.__qual__] = coroutine_job
                 return func
             return wrapper()
 
@@ -74,9 +74,9 @@ class Cog(metaclass=type):
 
 
     @classmethod
-    def listener(cls, func: Callable):
+    def listener(cls, coro: Callable):
         """
         Decorator for registering an error listener
         """
-        cls.__error_listener__ = func
-        return func
+        cls.__error_listener__ = coro
+        return coro

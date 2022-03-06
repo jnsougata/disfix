@@ -215,9 +215,7 @@ class Context:
         return self._ia.user
 
     async def send_modal(self, modal: Modal):
-        r = Route('POST', f'/interactions/{self._ia.id}/{self.token}/callback')
-        await self.client.http.request(r, json=modal.to_payload())
-
+        await self._adapter.post_modal(modal=modal)
 
 
     async def send_message(
@@ -239,11 +237,11 @@ class Context:
             reference: Optional[Union[Message, PartialMessage, MessageReference]] = None,
     ):
         if embed and embeds:
-            raise TypeError('Can not mix embed and embeds')
+            raise ValueError('Can not mix embed and embeds')
         if file and files:
-            raise TypeError('Can not mix file and files')
+            raise ValueError('Can not mix file and files')
         if view and views:
-            raise TypeError('Can not mix view and views')
+            raise ValueError('Can not mix view and views')
 
         return await self._ia.channel.send(
             content=str(content), mention_author=mention_author, tts=tts,

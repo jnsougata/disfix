@@ -3,18 +3,16 @@ import asyncio
 import discord
 from discord.utils import MISSING
 from typing import Callable
-from .app import Adapter
-from discord import Message, PartialMessage, MessageReference
 from typing import Optional, Union, Any, Sequence, List, Dict
 from .enums import TextInputStyle, ModalFieldStyle
 
 
 class Modal:
 
-    def __init__(self, client: discord.Client, title: str):
+    def __init__(self, client: discord.Client, title: str, *, custom_id: str = None):
         self.title = title
         self.client = client
-        self.custom_id = os.urandom(16).hex()
+        self.custom_id = custom_id or os.urandom(16).hex()
         self.data = {"title": title, "custom_id": self.custom_id, "components": []}
 
     def add_field(
@@ -57,7 +55,7 @@ class Modal:
 
         return {'type': 9, 'data': self.data}
 
-    def callback(self, func: Callable):
+    def callback(self, coro: Callable):
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("callback method must be a coroutine")
-        self.client._modals[self.custom_id] = func
+        self.client._modals[self.custom_id] = coro

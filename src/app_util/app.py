@@ -5,6 +5,7 @@ from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, D
 from .enums import ApplicationCommandType, PermissionType
 from typing import List, Optional, Union, Dict
 import discord
+from .modal import Modal
 
 
 class BaseApplicationCommand:
@@ -204,6 +205,11 @@ class Adapter:
 
     async def original_message(self):
         return await self.ia.original_message()
+
+    async def post_modal(self, *, modal: Modal):
+        r = Route('POST', f'/interactions/{self.id}/{self.token}/callback')
+        await self.client.http.request(r, json=modal.to_payload())
+
 
     async def post_to_delay(self, ephemeral: bool = False):
         route = Route('POST', f'/interactions/{self.id}/{self.token}/callback')
