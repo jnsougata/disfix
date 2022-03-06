@@ -102,6 +102,40 @@ class Sample(app_util.Cog):
         await message.pin()
         await ctx.send_response(f'Message pinned by {ctx.author}', ephemeral=True)
         
+    @app_util.Cog.command(
+        command=app_util.SlashCommand(
+            name='modal',
+            description='sends a placeholder modal',
+        ),
+        guild_id=1234567890
+    )
+    async def modal_command(self, ctx: app_util.Context, name: str):
+        # creating a modal with author's name
+        modal = app_util.Modal(client=self.bot, title=f'A Super Modal for {ctx.author.name}')
+        modal.add_field(
+            label='About',
+            custom_id='about',
+            style=app_util.TextInputStyle.PARAGRAPH,
+            required=False,
+            hint='Write something about yourself...',
+        )
+        modal.add_field(
+            label='Tip',
+            custom_id='tip',
+            style=app_util.TextInputStyle.SHORT,
+            required=True,
+            hint='Give me some tips to improve...',
+            max_length=100,
+        )
+        await ctx.send_modal(modal)  # sending the modal
+
+        @modal.callback  # in-place callback for the modal
+        async def on_submit(mcx: app_util.Context, about: str, tip: str):
+            embed = discord.Embed(
+                description=f'**About:** {about}\n**Tip:** {tip}')
+            embed.set_author(name=f'{mcx.author.name}', icon_url=mcx.author.avatar.url)
+            await mcx.send_response(embed=embed)
+        
     # error handler
     @app_util.Cog.listener
     async def on_command_error(self, ctx: app_util.Context, error: Exception):
