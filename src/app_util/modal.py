@@ -56,6 +56,6 @@ class Modal:
         return {'type': 9, 'data': self.data}
 
     def callback(self, coro: Callable):
-        if not asyncio.iscoroutinefunction(func):
+        if not asyncio.iscoroutinefunction(coro):
             raise TypeError("callback method must be a coroutine")
         self.client._modals[self.custom_id] = coro
