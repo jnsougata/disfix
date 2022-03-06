@@ -195,12 +195,12 @@ def _handle_send_prams(
 
 
 class Adapter:
-    def __init__(self, ia: discord.Interaction, client: discord.Client):
-        self.ia = ia
-        self.id = ia.id
-        self.token = ia.token
-        self.client = client
-        self.application_id = ia.application_id
+    def __init__(self, interaction: discord.Interaction):
+        self.ia = interaction
+        self.id = interaction.id
+        self.token = interaction.token
+        self.client = interaction.client
+        self.application_id = interaction.application_id
 
     async def original_message(self):
         return await self.ia.original_message()

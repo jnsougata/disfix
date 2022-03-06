@@ -1,19 +1,21 @@
+import os
 import asyncio
+import discord
+from discord.utils import MISSING
 from typing import Callable
+from .app import Adapter
+from discord import Message, PartialMessage, MessageReference
+from typing import Optional, Union, Any, Sequence, List, Dict
 from .enums import TextInputStyle, ModalFieldStyle
 
 
 class Modal:
 
-    def __init__(self, contex, title: str):
+    def __init__(self, client: discord.Client, title: str):
         self.title = title
-        self.ctx = contex
-        self.custom_id = f'{contex.author.id}'
-        self.data = {
-            "title": title,
-            "custom_id": self.custom_id,
-            "components": []
-        }
+        self.client = client
+        self.custom_id = os.urandom(16).hex()
+        self.data = {"title": title, "custom_id": self.custom_id, "components": []}
 
     def add_field(
             self,
@@ -47,9 +49,15 @@ class Modal:
         )
 
     def to_payload(self):
+        if not len(self.data['components']) > 0:
+            raise ValueError("You must add at least one field to the modal")
+
+        if len(self.data['components']) > 5:
+            raise ValueError("You can only have a maximum of 5 fields in a modal")
+
         return {'type': 9, 'data': self.data}
 
     def callback(self, func: Callable):
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("callback method must be a coroutine")
-        self.ctx.client._modals[self.ctx.author.id] = func
+        self.client._modals[self.custom_id] = func

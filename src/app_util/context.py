@@ -14,9 +14,8 @@ from .modal import Modal
 
 
 class Context:
-    def __init__(self, client: commands.Bot, ia: discord.Interaction):
-        self._ia = ia
-        self.client = client
+    def __init__(self, interaction: discord.Interaction):
+        self._ia = interaction
         self._deferred = False
         self._invisible = False
         self.original_message: Optional[discord.Message] = None
@@ -25,8 +24,12 @@ class Context:
         return self.name
 
     @property
+    def client(self):
+        return self._ia.client
+
+    @property
     def _adapter(self):
-        return Adapter(self._ia, self.client)
+        return Adapter(self._ia)
 
 
     @property
@@ -68,6 +71,19 @@ class Context:
         :return: InteractionData
         """
         return InteractionData(**self._ia.data)
+
+    @property
+    def _modal_values(self):
+        """
+        returns the mapping modal values
+        :return:
+        """
+        options = {}
+        for comp in self.data.components:
+            for sub_comp in comp['components']:
+                options[sub_comp['custom_id']] = sub_comp['value']
+        return options
+
 
     @property
     def _resolved(self):

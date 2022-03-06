@@ -14,11 +14,11 @@ from discord.http import Route
 from .context import Context
 from .enums import ApplicationCommandType
 from .core import ApplicationCommand
-from .parser import _build_prams, _build_qual, _build_ctx_menu_arg
 from discord.ext import commands
 from discord.http import Route
 from discord.enums import InteractionType
 from typing import Callable, Optional, Any, Union, List, Dict, Tuple
+from .parser import _build_prams, _build_qual, _build_ctx_menu_arg, _build_modal_prams
 
 
 __all__ = ['Bot']
@@ -55,12 +55,14 @@ class Bot(commands.Bot):
 
     async def _handle_interaction(self, interaction: discord.Interaction):
         if interaction.type is InteractionType.modal_submit:
-            callback_id = interaction.user.id
+            mc = Context(interaction)
+            callback_id = interaction.data['custom_id']
             if callback_id in self._modals:
-                callback = self._modals.pop(callback_id)
-                await callback(interaction)
+                func = self._modals.pop(callback_id)
+                args, kwargs = _build_modal_prams(mc._modal_values, func)
+                await func(mc, *args, **kwargs)
         if interaction.type == InteractionType.application_command:
-            c = Context(self, interaction)
+            c = Context(interaction)
             qual = _build_qual(c)
             try:
                 try:

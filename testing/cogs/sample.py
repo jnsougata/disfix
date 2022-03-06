@@ -52,7 +52,7 @@ class Sample(app_util.Cog):
             thumbnail: discord.Attachment, image: discord.Attachment,
             footer_icon: discord.Attachment, footer_text: str, link_button: str,
     ):
-        async with ctx.thinking(5, author_only=True):
+        async with ctx.thinking(1, author_only=True):
             slots = {}
             if title:
                 slots['title'] = title
@@ -112,24 +112,31 @@ class Sample(app_util.Cog):
         guild_id=877399405056102431
     )
     async def modal_command(self, ctx: app_util.Context, name: str):
-        modal = app_util.Modal(
-            contex=ctx,
-            title=f'A Super Modal for {ctx.author.name}',
-        )
+
+        modal = app_util.Modal(client=self.bot, title=f'A Super Modal for {ctx.author.name}')
         modal.add_field(
             label='About',
-            custom_id=str(ctx.author.id),
+            custom_id='about',
             style=app_util.TextInputStyle.PARAGRAPH,
+            required=False,
+            hint='Write something about yourself...',
+        )
+        modal.add_field(
+            label='Tip',
+            custom_id='tip',
+            style=app_util.TextInputStyle.SHORT,
             required=True,
-            hint='Write something about yourself...'
+            hint='Give me some tips to improve...',
+            max_length=100,
         )
         await ctx.send_modal(modal)
 
         @modal.callback
-        async def on_submit(interaction: discord.Interaction):
+        async def on_submit(mcx: app_util.Context, about: str, tip: str):
             embed = discord.Embed(
-                description=f'**{ctx.author}** just used a modal\n\n**Modal Data:**\n```{interaction.data}```')
-            await interaction.response.send_message(embed=embed)
+                description=f'**About:** {about}\n**Tip:** {tip}')
+            embed.set_author(name=f'{mcx.author.name}', icon_url=mcx.author.avatar.url)
+            await mcx.send_response(embed=embed)
 
 
 def setup(bot: app_util.Bot):

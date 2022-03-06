@@ -20,9 +20,9 @@ def flake(snowflake: str) -> Union[int, None]:
 
 @dataclass(frozen=True)
 class InteractionData:
-    id: Union[int, str]
-    name: str
-    type: int
+    name: str = None
+    type: int = None
+    id: Union[int, str] = None
     resolved: Optional[dict] = None
     options: Optional[List[dict]] = None
     # below are only used for type != 2
@@ -31,6 +31,8 @@ class InteractionData:
     values: Optional[list] = None
     # only used for User Command & Message Command
     target_id: Optional[str] = None
+    # only used for modals
+    components: Optional[List[dict]] = None
 
 
 class Resolved:
