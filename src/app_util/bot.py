@@ -127,7 +127,25 @@ class Bot(commands.Bot):
         :return: None
         """
         for command, guild_id in self._queue.values():
-            await sync_local(self, command, guild_id)
+            if guild_id:
+                data = await post_command(self, command, guild_id)
+                if command.overwrites:
+                    perms = await put_overwrites(self, data['id'], guild_id, command.overwrites)
+                    data['permissions'] = {guild_id: {int(p['id']): p['permission'] for p in perms['permissions']}}
+                else:
+                    try:
+                        perms = await fetch_overwrites(self, data['id'], guild_id)
+                    except discord.errors.NotFound:
+                        pass
+                    else:
+                        data['permissions'] = {guild_id: perms['permissions']}
+            else:
+                data = await post_command(self, command)
+
+            command_id = int(data['id'])
+
+            self._application_commands[command_id] = ApplicationCommand(self, data)
+
 
     async def sync_global_commands(self):
         """
@@ -135,7 +153,10 @@ class Bot(commands.Bot):
         It does this automatically when the bot is ready.
         :return: None
         """
-        await sync_global(self)
+        data_arr = await fetch_global_commands(self)
+        for data in data_arr:
+            command = ApplicationCommand(self, data)
+            self._application_commands[command.id] = command
 
     async def sync_for(self, guild: discord.Guild):
         """
@@ -143,7 +164,10 @@ class Bot(commands.Bot):
         :param guild: the guild to sync commands for
         :return: None
         """
-        await guild_specific_sync(self, guild)
+        data_arr = await fetch_guild_commands(self, guild.id)
+        for data in data_arr:
+            command = ApplicationCommand(self, data)
+            client._application_commands[command.id] = command
 
     async def fetch_command(self, command_id: int, guild_id: int = None):
         """
@@ -152,7 +176,7 @@ class Bot(commands.Bot):
         :param guild_id: the guild id where the command is located
         :return: ApplicationCommand
         """
-        return await fetch_any(self, command_id, guild_id)
+        return await fetch_any_command(self, command_id, guild_id)
 
     def get_application_command(self, command_id: int):
         return self._application_commands.get(command_id)
@@ -161,7 +185,7 @@ class Bot(commands.Bot):
         for guild in self.guilds:
             guild_id = guild.id
             try:
-                resp = await fetch_by_guild(self, guild_id)
+                resp = await fetch_guild_commands(self, guild_id)
             except (discord.errors.Forbidden, discord.errors.NotFound):
                 pass
             else:
@@ -170,7 +194,7 @@ class Bot(commands.Bot):
                         apc = ApplicationCommand(self, data)
                         self._application_commands[apc.id] = apc
                         try:
-                            ows = await fetch_permissions(self, apc.id, guild_id)
+                            ows = await fetch_overwrites(self, apc.id, guild_id)
                         except (discord.errors.NotFound, discord.errors.Forbidden):
                             pass
                         else:
@@ -181,7 +205,7 @@ class Bot(commands.Bot):
             if not command.guild_id:
                 for guild_id in guild_ids:
                     try:
-                        ows = await fetch_permissions(self, command_id, guild_id)
+                        ows = await fetch_overwrites(self, command_id, guild_id)
                     except (discord.errors.NotFound, discord.errors.Forbidden):
                         pass
                     else:

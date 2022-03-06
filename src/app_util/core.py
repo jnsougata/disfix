@@ -4,6 +4,7 @@ import discord
 from .errors import *
 from discord.ext import commands
 from discord.http import Route
+from .http_s import *
 from dataclasses import dataclass
 from .app import Overwrite, BaseApplicationCommand
 from typing import List, Optional, Union, Any, Dict
@@ -191,7 +192,7 @@ class ApplicationCommand:
 
     def __init__(self, client: commands.Bot, data: dict):
         self.__payload = data
-        self.__client = client
+        self._client = client
         self.id = int(data['id'])
         self.guild_id = flake(data.get('guild_id'))
         self.name = data['name']
@@ -227,7 +228,7 @@ class ApplicationCommand:
     @property
     def guild(self):
         if self.guild_id:
-            return self.__client.get_guild(self.guild_id)
+            return self._client.get_guild(self.guild_id)
         return None
 
     def overwrite_for(self, guild: discord.Guild, entity: Union[discord.Role, discord.User]) -> bool:
@@ -240,17 +241,10 @@ class ApplicationCommand:
         return for_entity['allowed']
 
     async def delete(self):
-        if self.guild:
-            route = Route(
-                'DELETE',
-                f'/applications/{self.application_id}/guilds/{self.guild.id}/commands/{self.id}')
-        else:
-            route = Route(
-                'DELETE',
-                f'/applications/{self.application_id}/commands/{self.id}')
+        await delete_command(self._client, self.id, self.guild_id)
 
-        await self.__client.http.request(route)
-        self.__client._application_commands.pop(self.id)
+        await self._client.http.request(route)
+        self._client._application_commands.pop(self.id)
 
     def __parse_permissions(self):
         for guild_id, perms in self._permissions.items():
@@ -261,49 +255,40 @@ class ApplicationCommand:
         self._permissions[guild_id] = ows['permissions']
         self.__parse_permissions()
 
-    def __build_overwrites(self, guild_id: int):
-        ows = self.overwrites.get(guild_id)
+    def _build_overwrites(self, guild_id: int):
+        overwrites = self.overwrites.get(guild_id)
         if ows:
-            return [{'id': str(entity_id), 'type': ow['type'], 'permission': ow['allowed']}
-                    for entity_id, ow in ows.items()]
+            return [{'id': str(entity_id), 'type': ovrt['type'], 'permission': ovrt['allowed']}
+                    for entity_id, ovrt in ows.items()]
 
     async def edit_overwrites(self, guild: discord.Guild, overwrites: List[Overwrite]):
         payload = {'permissions': [o.to_dict() for o in overwrites]}
-        r = Route('PUT',
-                  f'/applications/{self.application_id}/guilds/{guild.id}/commands/{self.id}/permissions')
-        data = await self.__client.http.request(r, json=payload)
+        data = await put_overwrites(self._client, self.id, guild.id, payload)
         self._cache_permissions(data, guild.id)
 
     async def edit_overwrite_for(self, guild: discord.Guild, overwrite: Overwrite):
-        curr = self.__build_overwrites(guild.id)
+        container = self._build_overwrites(guild.id)
         new = overwrite.to_dict()
-        for ow in curr:
-            if ow['id'] == new['id']:
-                curr.remove(ow)
-        curr.append(new)
-        payload = {'permissions': curr}
-        r = Route('PUT',
-                  f'/applications/{self.application_id}/guilds/{guild.id}/commands/{self.id}/permissions')
-
-        data = await self.__client.http.request(r, json=payload)
+        for ovrt in container:
+            if ovrt['id'] == new['id']:
+                container.remove(ovrt)
+        container.append(new)
+        payload = {'permissions': container}
+        data = await put_overwrites(self._client, self.id, guild.id, payload)
         self._cache_permissions(data, guild.id)
 
 
-    async def update(self, command: BaseApplicationCommand) -> ApplicationCommand:
-        if command.type is self.type:
-            if self.guild_specific:
-                r = Route('PATCH', f'/applications/{self.application_id}/guilds/{self.guild_id}/commands/{self.id}')
-            else:
-                r = Route('PATCH', f'/applications/{self.application_id}/commands/{self.id}')
+    async def update(self, new_command: BaseApplicationCommand) -> ApplicationCommand:
+        if new_command.type is self.type:
             try:
-                resp = await self.__client.http.request(r, json=command.to_dict())
+                data = await patch_existing_command(self._client, self, new_command)
             except discord.errors.HTTPException as e:
                 raise e
             else:
-                updated = self._from_data(self.__client, resp)
-                self.__client._application_commands.pop(self.id)
-                self.__client._application_commands[updated.id] = updated
+                updated = self._from_data(self._client, data)
+                self._client._application_commands.pop(updated.id)
+                self._client._application_commands[updated.id] = updated
                 return updated
         else:
             raise TypeMismatch(f'Type mismatched while editing command `{self.name}`'
-                               f'\nexpected: {self.type} | got: {command.type}')
+                               f'\nexpected: {self.type} | got: {new_command.type}')
