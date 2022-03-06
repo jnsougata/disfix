@@ -1,7 +1,5 @@
 import discord
 from discord.http import Route
-from .core import ApplicationCommand
-from .app import BaseApplicationCommand
 
 
 
@@ -13,7 +11,7 @@ async def post_command(client, command, guild_id: int = None):
     return await client.http.request(r, json=command.to_dict())
 
 
-async def patch_existing_command(client, old: ApplicationCommand, new: BaseApplicationCommand):
+async def patch_existing_command(client, old, new):
     if old.guild_specific:
         r = Route('PATCH', f'/applications/{old.application_id}/guilds/{old.guild_id}/commands/{old.id}')
     else:
@@ -26,8 +24,7 @@ async def fetch_any_command(client, command_id: int, guild_id: int = None):
         r = Route('GET', f'/applications/{client.application_id}/guilds/{guild_id}/commands/{command_id}')
     else:
         r = Route('GET', f'/applications/{client.application_id}/commands/{command_id}')
-    resp = await client.http.request(r)
-    return ApplicationCommand(client, resp)
+    return await client.http.request(r)
 
 
 async def fetch_global_commands(client):

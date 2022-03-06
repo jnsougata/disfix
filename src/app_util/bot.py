@@ -176,7 +176,8 @@ class Bot(commands.Bot):
         :param guild_id: the guild id where the command is located
         :return: ApplicationCommand
         """
-        return await fetch_any_command(self, command_id, guild_id)
+        data = await fetch_any_command(self, command_id, guild_id)
+        return ApplicationCommand(self, data)
 
     def get_application_command(self, command_id: int):
         return self._application_commands.get(command_id)
