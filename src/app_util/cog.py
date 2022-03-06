@@ -1,11 +1,7 @@
-import inspect
 import asyncio
-import traceback
-from abc import ABC, ABCMeta
 from functools import wraps
 from .errors import NonCoroutine
 from .app import BaseApplicationCommand
-from .context import Context
 from typing import Optional, ClassVar, Callable, List, Union, Dict, Any
 
 
