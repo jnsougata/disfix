@@ -35,6 +35,7 @@ class Modal:
                     {
                         "label": label,
                         "style": style.value,
+                        "value": value,
                         "custom_id": custom_id,
                         "min_length": min_length,
                         "max_length": max_length,
