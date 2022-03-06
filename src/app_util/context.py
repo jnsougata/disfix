@@ -155,16 +155,14 @@ class Context:
 
     async def defer(self, ephemeral: bool = False):
         if self._deferred:
-            raise discord.ClientException('Cannot think for already (deferred / responded) interaction')
+            raise discord.ClientException('Cannot defer already (deferred / responded) interaction')
         await self._adapter.post_to_delay(ephemeral)
         self._deferred = True
         self._invisible = ephemeral
 
-    async def think_for(self, time: float, ephemeral: bool = False):
-        if self._deferred:
-            raise discord.ClientException('Cannot think for already (deferred / responded) interaction')
-        await self.defer(ephemeral)
-        await asyncio.sleep(time)
+    def thinking(self, time: float, author_only: bool = False):
+        return Thinking(self, time, author_only)
+
 
     @property
     def permissions(self):
@@ -242,6 +240,7 @@ class Context:
             allowed_mentions: Optional[discord.AllowedMentions] = None,
             view: Optional[discord.ui.View] = None,
             views: Optional[List[discord.ui.View]] = None,
+            delete_after: Optional[float] = None,
     ):
         if self._deferred:
             raise discord.ClientException('Cannot send response for already (deferred / responded) interaction')
@@ -252,6 +251,8 @@ class Context:
         self._deferred = True
         self._invisible = ephemeral
         self.original_message = await self._adapter.original_message()
+        if delete_after:
+            await self.original_message.delete(delay=delete_after)
         return self.original_message
 
     async def send_followup(
@@ -266,7 +267,8 @@ class Context:
             file: Optional[discord.File] = None,
             files: Optional[List[discord.File]] = None,
             view: Optional[discord.ui.View] = None,
-            views: Optional[List[discord.ui.View]] = None
+            views: Optional[List[discord.ui.View]] = None,
+            delete_after: Optional[float] = None,
     ):
         if not self._deferred:
             raise discord.ClientException('Cannot send followup to a non (deferred / responded) interaction')
@@ -274,7 +276,19 @@ class Context:
         data = await self._adapter.post_followup(
             tts=tts, file=file, view=view, files=files, embed=embed, views=views,
             embeds=embeds, content=content, ephemeral=ephemeral, allowed_mentions=allowed_mentions)
-        return Followup(self, data)
+
+        followup_message = Followup(self, data)
+
+        async def delay_delete(time: float):
+            await asyncio.sleep(time)
+            try:
+                await followup_message.delete()
+            except discord.HTTPException:
+                pass
+        if delete_after:
+            asyncio.create_task(delay_delete(delete_after))
+
+        return followup_message
 
 
     async def edit_response(
@@ -287,11 +301,14 @@ class Context:
             file: Optional[discord.File] = MISSING,
             files: Optional[List[discord.File]] = MISSING,
             view: Optional[discord.ui.View] = MISSING,
-            views: Optional[List[discord.ui.View]] = MISSING
+            views: Optional[List[discord.ui.View]] = MISSING,
+            delete_after: Optional[float] = None,
     ):
         data = await self._adapter.patch_response(
             content=content, file=file, files=files, embed=embed,
             embeds=embeds, view=view, views=views, allowed_mentions=allowed_mentions)
+        if delete_after:
+            await self.original_message.delete(delay=delete_after)
         return discord.Message(
             state=self.client._connection, data=data, channel=self.channel)  # type: ignore
 
@@ -328,10 +345,36 @@ class Followup:
             files: Optional[List[discord.File]] = MISSING,
             view: Optional[discord.ui.View] = MISSING,
             views: Optional[List[discord.ui.View]] = MISSING,
+            delete_after: Optional[float] = None,
     ):
         data = await self._parent._adapter.patch_followup(
             message_id=self.message_id, content=content, file=file, files=files,
             embed=embed, embeds=embeds, view=view, views=views, allowed_mentions=allowed_mentions)
 
+        async def delay_delete(time: float):
+            await asyncio.sleep(time)
+            try:
+                await self.message.delete()
+            except discord.HTTPException:
+                pass
+        if delete_after:
+            asyncio.create_task(delay_delete(delete_after))
+
         return discord.Message(
             state=self._parent.client._connection, data=data, channel=self._parent.channel)
+
+
+class Thinking:
+    def __init__(self, ctx, time, ep):
+        self.ep = ep
+        self.ctx = ctx
+        self.time = time
+
+    async def __aenter__(self):
+        try:
+            await self.ctx.defer(self.ep)
+        finally:
+            await asyncio.sleep(self.time)
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        pass
