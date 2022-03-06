@@ -269,7 +269,7 @@ class Adapter:
         form.insert(0, data)  # type: ignore
         r = Route('POST', f'/webhooks/{self.application_id}/{self.token}')
         message_data = await self.client.http.request(r, form=form, files=files)
-        message_id = int(message_data['message_id'])
+        message_id = int(message_data['id'])
         if view:
             self.client._connection.store_view(view, message_id)
         if views:
