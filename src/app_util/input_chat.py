@@ -235,7 +235,7 @@ class SubCommand(Option):
             "type": self.type.value,
         }
         if options:
-            self.data["options"] = [op.data for op in options]
+            self.data["options"] = [op._data for op in options]
 
 
 class SubCommandGroup(Option):
@@ -253,7 +253,7 @@ class SubCommandGroup(Option):
             "type": self.type.value,
         }
         if options:
-            self.data["options"] = [sc.data for sc in options]
+            self.data["options"] = [sc._data for sc in options]
 
 
 class SlashCommand(BaseApplicationCommand):

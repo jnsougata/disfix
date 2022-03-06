@@ -37,7 +37,7 @@ class Resolved:
     def __init__(self, payload: dict, ctx):
         self._ctx = ctx
         self._payload = payload
-        self._client = ctx._client
+        self._client = ctx.client
 
     @property
     def users(self) -> Dict[int, discord.User]:
