@@ -5,13 +5,12 @@ from .enums import ApplicationCommandType
 class MessageCommand(BaseApplicationCommand):
     def __init__(
             self,
-            *,
             name: str,
+            *,
             default_access: bool = True,
             overwrites: [Overwrite] = None,
     ):
         super().__init__(name, ApplicationCommandType.MESSAGE)
-        self._qual = '__MESSAGE__' + name  # name for mapping
         self._payload = {
             'name': name,
             'type': self.type.value,

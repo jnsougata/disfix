@@ -264,14 +264,8 @@ class ApplicationCommand:
     def __build_overwrites(self, guild_id: int):
         ows = self.overwrites.get(guild_id)
         if ows:
-            return [
-                {
-                    'id': str(en_id),
-                    'type': ow['type'],
-                    'permission': ow['allowed']
-                }
-                for en_id, ow in ows.items()
-            ]
+            return [{'id': str(entity_id), 'type': ow['type'], 'permission': ow['allowed']}
+                    for entity_id, ow in ows.items()]
 
     async def edit_overwrites(self, guild: discord.Guild, overwrites: List[Overwrite]):
         payload = {'permissions': [o.to_dict() for o in overwrites]}
@@ -311,5 +305,5 @@ class ApplicationCommand:
                 self.__client._application_commands[updated.id] = updated
                 return updated
         else:
-            raise TypeMismatch(f'Type mismatched while editing command `{self.name}` '
+            raise TypeMismatch(f'Type mismatched while editing command `{self.name}`'
                                f'\nexpected: {self.type} | got: {command.type}')

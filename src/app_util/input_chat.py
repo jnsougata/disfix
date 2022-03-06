@@ -145,7 +145,7 @@ class RoleOption(Option):
             description: str,
             *,
             required: bool = True,
-            choices: list[Choice] = None
+            choices: List[Choice] = None
     ):
         super().__init__(name, OptionType.ROLE)
         self.data = {
@@ -260,17 +260,15 @@ class SlashCommand(BaseApplicationCommand):
 
     def __init__(
             self,
-            *,
             name: str,
             description: str,
+            *,
             options: List[Union[Option, SubCommand, SubCommandGroup]] = None,
             default_access: bool = True,
             overwrites: list[Overwrite] = None,
     ) -> None:
         fmt_name = name.lower().replace(' ', '_')
         super().__init__(fmt_name, ApplicationCommandType.CHAT_INPUT)
-        self._qual = '__CHAT__' + name
-        self._overwrites = overwrites
         self._payload = {
             "name": fmt_name,
             "description": description,
@@ -278,6 +276,7 @@ class SlashCommand(BaseApplicationCommand):
             "options": [option.data for option in options] if options else [],
             "default_permission": default_access,
         }
+        self._overwrites = overwrites
 
     @property
     def overwrites(self):

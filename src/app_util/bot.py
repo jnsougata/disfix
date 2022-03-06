@@ -5,6 +5,7 @@ import asyncio
 import traceback
 from .errors import *
 from .cog import Cog
+from .http_s import *
 from .input_chat import SlashCommand
 from .input_user import UserCommand
 from .input_msg import MessageCommand
@@ -126,31 +127,7 @@ class Bot(commands.Bot):
         :return: None
         """
         for command, guild_id in self._queue.values():
-            if guild_id:
-                route = Route('POST', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
-                resp = await self.http.request(route, json=command.to_dict())
-                command_id = int(resp['id'])
-                if command.overwrites:
-                    r = Route(
-                        'PUT',
-                        f'/applications/{self.application_id}/guilds/{guild_id}/commands/{resp["id"]}/permissions')
-                    perms = await self.http.request(r, json=command.overwrites)
-                    resp['permissions'] = {guild_id: {int(p['id']): p['permission'] for p in perms['permissions']}}
-                else:
-                    try:
-                        x = await self.__fetch_permissions(command_id, guild_id)
-                    except discord.errors.NotFound:
-                        pass
-                    else:
-                        resp['permissions'] = {guild_id: x['permissions']}
-            else:
-                route = Route('POST', f'/applications/{self.application_id}/commands')
-                resp = await self.http.request(route, json=command.to_dict())
-            self._application_commands[int(resp['id'])] = ApplicationCommand(self, resp)
-
-    async def __fetch_permissions(self, command_id: int, guild_id: int):
-        r = Route('GET', f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}/permissions')
-        return await self.http.request(r)
+            await sync_local(self, command, guild_id)
 
     async def sync_global_commands(self):
         """
@@ -158,11 +135,7 @@ class Bot(commands.Bot):
         It does this automatically when the bot is ready.
         :return: None
         """
-        r = Route('GET', f'/applications/{self.application_id}/commands')
-        resp = await self.http.request(r)
-        for data in resp:
-            apc = ApplicationCommand(self, data)
-            self._application_commands[apc.id] = apc
+        await sync_global(self)
 
     async def sync_for(self, guild: discord.Guild):
         """
@@ -170,11 +143,7 @@ class Bot(commands.Bot):
         :param guild: the guild to sync commands for
         :return: None
         """
-        r = Route('GET', f'/applications/{self.application_id}/guilds/{guild.id}/commands')
-        resp = await self.http.request(r)
-        for data in resp:
-            apc = ApplicationCommand(self, data)
-            self._application_commands[apc.id] = apc
+        await guild_specific_sync(self, guild)
 
     async def fetch_command(self, command_id: int, guild_id: int = None):
         """
@@ -183,12 +152,7 @@ class Bot(commands.Bot):
         :param guild_id: the guild id where the command is located
         :return: ApplicationCommand
         """
-        if guild_id:
-            route = Route('GET', f'/applications/{self.application_id}/guilds/{guild_id}/commands/{command_id}')
-        else:
-            route = Route('GET', f'/applications/{self.application_id}/commands/{command_id}')
-        resp = await self.http.request(route)
-        return ApplicationCommand(self, resp)
+        return await fetch_any(self, command_id, guild_id)
 
     def get_application_command(self, command_id: int):
         return self._application_commands.get(command_id)
@@ -196,10 +160,9 @@ class Bot(commands.Bot):
     async def _sync_overwrites(self):
         for guild in self.guilds:
             guild_id = guild.id
-            r = Route('GET', f'/applications/{self.application_id}/guilds/{guild_id}/commands')
             try:
-                resp = await self.http.request(r)
-            except discord.errors.Forbidden:
+                resp = await fetch_by_guild(self, guild_id)
+            except (discord.errors.Forbidden, discord.errors.NotFound):
                 pass
             else:
                 for data in resp:
@@ -207,7 +170,7 @@ class Bot(commands.Bot):
                         apc = ApplicationCommand(self, data)
                         self._application_commands[apc.id] = apc
                         try:
-                            ows = await self.__fetch_permissions(apc.id, guild_id)
+                            ows = await fetch_permissions(self, apc.id, guild_id)
                         except (discord.errors.NotFound, discord.errors.Forbidden):
                             pass
                         else:
@@ -218,7 +181,7 @@ class Bot(commands.Bot):
             if not command.guild_id:
                 for guild_id in guild_ids:
                     try:
-                        ows = await self.__fetch_permissions(command_id, guild_id)
+                        ows = await fetch_permissions(self, command_id, guild_id)
                     except (discord.errors.NotFound, discord.errors.Forbidden):
                         pass
                     else:

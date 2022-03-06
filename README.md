@@ -51,13 +51,6 @@ class Sample(app_util.Cog):
     def __init__(self, bot: app_util.Bot):
         self.bot = bot
 
-    # error handler
-    @app_util.Cog.listener
-    async def on_command_error(self, ctx: app_util.Context, error: Exception):
-        stack = traceback.format_exception(type(error), error, error.__traceback__)
-        tb = ''.join(stack)
-        await ctx.send_followup(f'```py\n{tb}\n```')
-
     # slash command named `book`
     @app_util.Cog.command(
         command=app_util.SlashCommand(
@@ -82,6 +75,7 @@ class Sample(app_util.Cog):
         # if None, available for all guilds
     )
     async def book(self, ctx: app_util.Context, book_name: str, page: int):
+        await ctx.defer(ephemeral=True)
         page_content = await imaginary_api.fetch(book_name, page)
         embed = discord.Embed(
             title=f'{book_name}', 
@@ -107,6 +101,12 @@ class Sample(app_util.Cog):
     async def pin(self, ctx: app_util.Context, message: discord.Message):
         await message.pin()
         await ctx.send_response(f'Message pinned by {ctx.author}', ephemeral=True)
+        
+    # error handler
+    @app_util.Cog.listener
+    async def on_command_error(self, ctx: app_util.Context, error: Exception):
+        stack = traceback.format_exception(type(error), error, error.__traceback__)
+        await ctx.send_followup(f'```py\n{"".join(stack)}\n```')
 
 
 def setup(bot: app_util.Bot):

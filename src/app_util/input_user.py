@@ -5,13 +5,12 @@ from .enums import ApplicationCommandType
 class UserCommand(BaseApplicationCommand):
     def __init__(
             self,
-            *,
             name: str,
+            *,
             default_access: bool = True,
             overwrites: [Overwrite] = None,
     ):
         super().__init__(name, ApplicationCommandType.USER)
-        self._qual = '__USER__' + name  # name for mapping
         self._payload = {
             'name': name,
             'type': ApplicationCommandType.USER.value,
