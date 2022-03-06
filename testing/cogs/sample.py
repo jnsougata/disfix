@@ -106,25 +106,30 @@ class Sample(app_util.Cog):
 
     @app_util.Cog.command(
         command=app_util.SlashCommand(
-            name='delete',
-            description='deletes an existing application command',
-            options=[
-                app_util.StrOption('name', 'name of command to delete', required=True),
-            ],
+            name='modal',
+            description='sends a placeholder modal',
         ),
         guild_id=877399405056102431
     )
-    @app_util.Cog.before_invoke(job=job)
-    async def delete_command(self, ctx: app_util.Context, name: str):
-        await ctx.defer()
-        await self.bot.sync_for(ctx.guild)
-        for command in self.bot.application_commands:
-            if command.name == name:
-                await command.delete()
-                await ctx.send_followup(f'Application Command **`{name}`** has been deleted | (ID: {command.id})')
-                break
-        else:
-            await ctx.send_followup(f'Application Command **`{name}`** does not exist')
+    async def modal_command(self, ctx: app_util.Context, name: str):
+        modal = app_util.Modal(
+            contex=ctx,
+            title=f'A Super Modal for {ctx.author.name}',
+        )
+        modal.add_field(
+            label='About',
+            custom_id=str(ctx.author.id),
+            style=app_util.TextInputStyle.PARAGRAPH,
+            required=True,
+            hint='Write something about yourself...'
+        )
+        await ctx.send_modal(modal)
+
+        @modal.callback
+        async def on_submit(interaction: discord.Interaction):
+            embed = discord.Embed(
+                description=f'**{ctx.author}** just used a modal\n\n**Modal Data:**\n```{interaction.data}```')
+            await interaction.response.send_message(embed=embed)
 
 
 def setup(bot: app_util.Bot):

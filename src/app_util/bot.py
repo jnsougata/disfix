@@ -44,6 +44,7 @@ class Bot(commands.Bot):
         self._aux = {}
         self.__jobs = {}
         self._queue = {}
+        self._modals = {}
         self._application_commands: Dict[int, ApplicationCommand] = {}
         self.__route = Route.BASE = f'https://discord.com/api/v10'
 
@@ -52,7 +53,12 @@ class Bot(commands.Bot):
         return list(self._application_commands.values())
 
 
-    async def _invoke_app_command(self, interaction: discord.Interaction):
+    async def _handle_interaction(self, interaction: discord.Interaction):
+        if interaction.type is InteractionType.modal_submit:
+            callback_id = interaction.user.id
+            if callback_id in self._modals:
+                callback = self._modals.pop(callback_id)
+                await callback(interaction)
         if interaction.type == InteractionType.application_command:
             c = Context(self, interaction)
             qual = _build_qual(c)
@@ -213,7 +219,7 @@ class Bot(commands.Bot):
                         command._cache_permissions(ows, guild_id)
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
-        self.add_listener(self._invoke_app_command, 'on_interaction')
+        self.add_listener(self._handle_interaction, 'on_interaction')
         self.add_listener(self._sync_overwrites, 'on_ready')
         await self.login(token)
         app_info = await self.application_info()

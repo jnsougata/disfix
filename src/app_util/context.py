@@ -10,6 +10,7 @@ from .app import _handle_edit_params, _handle_send_prams, Adapter
 from .core import InteractionData, ChatInputOption, Resolved, ApplicationCommand, DummyOption
 from .enums import ApplicationCommandType, OptionType, try_enum
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict
+from .modal import Modal
 
 
 class Context:
@@ -197,6 +198,12 @@ class Context:
         """
         return self._ia.user
 
+    async def send_modal(self, modal: Modal):
+        r = Route('POST', f'/interactions/{self._ia.id}/{self.token}/callback')
+        await self.client.http.request(r, json=modal.to_payload())
+
+
+
     async def send_message(
             self,
             content: Optional[Union[str, Any]] = MISSING,
@@ -322,7 +329,6 @@ class Followup:
         self._data = data
         self._parent = parent
         self.message_id = int(data['id'])
-
 
 
     @property
