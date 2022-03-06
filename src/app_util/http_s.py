@@ -13,6 +13,14 @@ async def post_command(client, command, guild_id: int = None):
     return await client.http.request(r, json=command.to_dict())
 
 
+async def patch_existing_command(client, old: ApplicationCommand, new: BaseApplicationCommand):
+    if old.guild_specific:
+        r = Route('PATCH', f'/applications/{old.application_id}/guilds/{old.guild_id}/commands/{old.id}')
+    else:
+        r = Route('PATCH', f'/applications/{old.application_id}/commands/{old.id}')
+    return await client.http.request(r, json=new.to_dict())
+
+
 async def fetch_any_command(client, command_id: int, guild_id: int = None):
     if guild_id:
         r = Route('GET', f'/applications/{client.application_id}/guilds/{guild_id}/commands/{command_id}')
@@ -49,11 +57,3 @@ async def delete_command(client, command_id: int, guild_id: int = None):
     else:
         r = Route('DELETE', f'/applications/{client.application_id}/commands/{command_id}')
     return await client.http.request(r)
-
-
-async def patch_existing_command(client, old: ApplicationCommand, new: BaseApplicationCommand):
-    if old.guild_specific:
-        r = Route('PATCH', f'/applications/{old.application_id}/guilds/{old.guild_id}/commands/{old.id}')
-    else:
-        r = Route('PATCH', f'/applications/{old.application_id}/commands/{old.id}')
-    return await client.http.request(r, json=new.to_dict())
