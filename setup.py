@@ -13,7 +13,10 @@ setup(
     description='Asynchronous Application Command wrapper for discord.py 2.0',
     long_description=readme,
     long_description_content_type="text/x-rst",
-    url='https://github.com/jnsougata/app_util',
+    project_urls={
+        'Documentation': 'https://app-util.readthedocs.io/en/latest/',
+        'Source': 'https://github.com/jnsougata/app_util'
+    },
     author='jnsougata',
     author_email='jnsougata@gmail.com',
     classifiers=[
@@ -29,13 +32,8 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Utilities',
     ],
-    keywords='discord.py, slash-commands, application-commands, discord-bot',
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
-    python_requires='>=3.8, <4',
+    python_requires='>=3.8.0',
     install_requires=[],
-    project_urls={
-        'Bug Reports': 'https://github.com/jnsougata/app_util/issues',
-        'Source': 'https://github.com/jnsougata/app_util',
-    },
 )
