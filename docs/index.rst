@@ -1,0 +1,7 @@
+Contents
+--------
+
+.. toctree::
+
+   usage
+   api
