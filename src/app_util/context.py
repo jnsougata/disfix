@@ -26,7 +26,7 @@ class Context:
     @property
     def client(self) -> discord.Client:
         """
-        returns the client of the interaction
+        Returns the client of the interaction
         """
         return self._ia.client
 
@@ -38,64 +38,61 @@ class Context:
     @property
     def type(self) -> ApplicationCommandType:
         """
-        returns the type of the invoked application command
+        Returns the type of the invoked application command
         """
         return try_enum(ApplicationCommandType, self._ia.data['type'])
 
     @property
     def name(self) -> str:
         """
-        returns the name of the invoked application command
+        Returns the name of the invoked application command
         """
         return self._ia.data['name']
 
     @property
     def description(self) -> str:
         """
-        returns the description of the invoked application command
+        Returns the description of the invoked application command
         """
         return self._ia.data.get('description')
 
     @property
     def token(self) -> str:
         """
-        returns the token of the application command interaction
+        Returns the token of the application command interaction
         """
         return self._ia.token
 
     @property
     def id(self) -> int:
         """
-        returns the id of the interaction
+        Returns the id of the interaction
         """
         return int(self._ia.data['id'])
 
     @property
     def command(self) -> ApplicationCommand:
         """
-        returns the invoked application command object
+        Returns the invoked application command object
         """
         return self.client.get_application_command(self.id)
 
     @property
     def version(self) -> int:
         """
-        returns the version of the interaction
+        Returns the version of the interaction
         """
         return self._ia.version
 
     @property
     def data(self) -> InteractionData:
         """
-        returns the application command data
+        Returns the application command data
         """
         return InteractionData(**self._ia.data)
 
     @property
     def _modal_values(self):
-        """
-        returns the mapping modal values
-        """
         options = {}
         for comp in self.data.components:
             for sub_comp in comp['components']:
@@ -105,29 +102,17 @@ class Context:
 
     @property
     def _resolved(self):
-        """
-        returns the resolved data of the interaction
-        :return:
-        """
         r_data = self.data.resolved
         return Resolved(r_data, self) if r_data else None
 
     @property
     def _target_message(self):
-        """
-        returns the resolved message of the MESSAGE COMMAND
-        :return:
-        """
         if self.type is ApplicationCommandType.MESSAGE:
             message_id = int(self.data.target_id)
             return self._resolved.messages[message_id]
 
     @property
     def _target_user(self):
-        """
-        returns the resolved user of the USER COMMAND
-        :return:
-        """
         if self.type is ApplicationCommandType.USER:
             user_id = int(self.data.target_id)
             return self._resolved.users[user_id]
@@ -135,7 +120,7 @@ class Context:
     @property
     def options(self) -> Dict[str, ChatInputOption]:
         """
-        returns the dictionary of the options of the invoked application command
+        Returns the dictionary of the options of the invoked application command
         if the command is a message/user command, this will return an empty dictionary
         """
         if self.type is ApplicationCommandType.USER:
@@ -175,20 +160,20 @@ class Context:
     @property
     def application_id(self) -> int:
         """
-        returns the application id or client id of the application command
+        Returns the application id or client id of the application command
         """
         return self._ia.application_id
 
     @property
     def responded(self) -> bool:
         """
-        returns whether the application command interaction is deferred
+        Returns whether the application command interaction is deferred
         """
         return self._deferred
 
     async def defer(self, ephemeral: bool = False):
         """
-        defers the application command interaction for responding later
+        Defers the application command interaction for responding later
         """
         if self._deferred:
             raise discord.ClientException('Cannot defer already (deferred / responded) interaction')
@@ -198,7 +183,7 @@ class Context:
 
     def thinking(self, time: float, author_only: bool = False):
         """
-        returns async context manager for controlling the thinking state
+        Returns async context manager for controlling the thinking state
         during the application command and the visibility of the response
         """
         return _Thinking(self, time, author_only)
@@ -207,7 +192,7 @@ class Context:
     @property
     def permissions(self) -> discord.Permissions:
         """
-        returns the permissions of the user who used the command
+        Returns the permissions of the user who used the command
         for the channel on which the command was used
         """
         return self._ia.permissions
@@ -215,7 +200,7 @@ class Context:
     @property
     def me(self) -> discord.Member:
         """
-        returns the client user in member form if guild is available
+        Returns the client user in member form if guild is available
         """
         if self.guild:
             return self.guild.me
@@ -223,7 +208,7 @@ class Context:
     @property
     def channel(self) -> discord.abc.GuildChannel:
         """
-        returns the channel on which the command was used
+        Returns the channel on which the command was used
         """
         channel = self._ia.channel
         # since the channel is partial messageable
@@ -234,20 +219,20 @@ class Context:
     @property
     def guild(self) -> discord.Guild:
         """
-        returns the guild where the command was used
+        Returns the guild where the command was used
         """
         return self._ia.guild
 
     @property
     def author(self) -> discord.Member:
         """
-        returns the author (User/Member) of the application command
+        Returns the author (User/Member) of the application command
         """
         return self._ia.user
 
     async def send_modal(self, modal: Modal):
         """
-        sends a modal as a response to the application command
+        Sends a modal as a response to the application command
         """
         await self._adapter.post_modal(modal=modal)
 
@@ -271,7 +256,7 @@ class Context:
             reference: Optional[Union[Message, PartialMessage, MessageReference]] = None,
     ):
         """
-        sends a message to the channel on which the application command was used
+        Sends a message to the channel on which the application command was used
         """
         if embed and embeds:
             raise ValueError('Can not mix embed and embeds')
@@ -301,7 +286,7 @@ class Context:
             delete_after: Optional[float] = None,
     ) -> discord.Message:
         """
-        sends a response to the application command
+        Sends a response to the application command
         """
         if self._deferred:
             raise discord.ClientException('Cannot send response for already (deferred / responded) interaction')
@@ -332,7 +317,7 @@ class Context:
             delete_after: Optional[float] = None,
     ) -> Followup:
         """
-        sends a followup to the responded or deferred application command
+        Sends a followup to the responded or deferred application command
         """
         if not self._deferred:
             raise discord.ClientException('Cannot send followup to a non (deferred / responded) interaction')
@@ -369,7 +354,7 @@ class Context:
             delete_after: Optional[float] = None,
     ):
         """
-        edits the original response to the application command
+        Edits the original response to the application command
         """
         data = await self._adapter.patch_response(
             content=content, file=file, files=files, embed=embed,
@@ -381,7 +366,7 @@ class Context:
 
     async def delete_response(self):
         """
-        deletes the original response to the application command
+        Deletes the original response to the application command
         if the original message is ephemeral, it can't be deleted
         """
         if not self._invisible:
@@ -401,14 +386,14 @@ class Followup:
     @property
     def message(self):
         """
-        returns the message object for this followup
+        Returns the message object for this followup
         """
         return discord.Message(
             state=self._parent.client._connection, data=self._data, channel=self._parent.channel)  # type: ignore
 
     async def delete(self):
         """
-        deletes this followup if it is not ephemeral
+        Deletes this followup if it is not ephemeral
         """
         if not self._parent._invisible:
             await self._parent._adapter.delete_followup_message(self.message_id)
@@ -427,7 +412,7 @@ class Followup:
             delete_after: Optional[float] = None,
     ):
         """
-        edits this followup, does not care if it is ephemeral or not
+        Edits this followup, does not care if it is ephemeral or not
         """
         data = await self._parent._adapter.patch_followup(
             message_id=self.message_id, content=content, file=file, files=files,

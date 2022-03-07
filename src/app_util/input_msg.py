@@ -3,6 +3,9 @@ from .enums import ApplicationCommandType
 
 
 class MessageCommand(BaseApplicationCommand):
+    """
+    Represents a message command. Pops up in the message context menu.
+    """
     def __init__(
             self,
             name: str,

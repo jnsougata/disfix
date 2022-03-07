@@ -8,6 +8,9 @@ from .enums import TextInputStyle, ModalFieldStyle
 
 
 class Modal:
+    """
+    Represents a modal. This is a class that can be used to create a modal.
+    """
 
     def __init__(self, client: discord.Client, title: str, *, custom_id: str = None):
         self.title = title
@@ -28,6 +31,9 @@ class Modal:
             required: bool = True,
 
     ):
+        """
+        Adds a field to the modal. Max allowed fields is 5.
+        """
         self.data["components"].append(
             {
                 "type": 1,
@@ -48,6 +54,9 @@ class Modal:
         )
 
     def to_payload(self):
+        """
+        Returns the modal in json format. Internal use only.
+        """
         if not len(self.data['components']) > 0:
             raise ValueError("You must add at least one field to the modal")
 
@@ -57,6 +66,10 @@ class Modal:
         return {'type': 9, 'data': self.data}
 
     def callback(self, coro: Callable):
+        """
+        A decorator that adds a callback function to the modal.
+        That coroutine callback function will be called when the modal is submitted.
+        """
         if not asyncio.iscoroutinefunction(coro):
             raise TypeError("callback method must be a coroutine")
         self.client._modals[self.custom_id] = coro

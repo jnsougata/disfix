@@ -3,6 +3,9 @@ from .enums import ApplicationCommandType
 
 
 class UserCommand(BaseApplicationCommand):
+    """
+    Represents a user command. Pops up in the user context menu.
+    """
     def __init__(
             self,
             name: str,

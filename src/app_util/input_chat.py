@@ -21,12 +21,18 @@ __all__ = [
 
 
 class Option:
+    """
+    Represents an option for an application command
+    """
     def __init__(self, name: str, type: OptionType):
         self.name = name.lower().replace(' ', '_')
         self.type = type
 
 
 class Choice:
+    """
+    Represents a choice for an application command
+    """
     def __init__(self, name: str, value: Any):
         self.data = {
             "name": name,
@@ -35,6 +41,9 @@ class Choice:
 
 
 class StrOption(Option):
+    """
+    Represents a string option for an application command
+    """
     def __init__(
             self, name: str,
             description: str,
@@ -54,6 +63,9 @@ class StrOption(Option):
 
 
 class IntOption(Option):
+    """
+    Represents an integer option for an application command
+    """
     def __init__(
             self, name: str,
             description: str,
@@ -79,6 +91,9 @@ class IntOption(Option):
 
 
 class BoolOption(Option):
+    """
+    Represents a boolean option for an application command
+    """
     def __init__(
             self, name: str,
             description: str,
@@ -98,6 +113,9 @@ class BoolOption(Option):
 
 
 class UserOption(Option):
+    """
+    Represents a user option for an application command
+    """
     def __init__(
             self, name: str,
             description: str,
@@ -117,6 +135,9 @@ class UserOption(Option):
 
 
 class ChannelOption(Option):
+    """
+    Represents a channel option for an application command
+    """
     def __init__(
             self,
             name: str,
@@ -140,6 +161,9 @@ class ChannelOption(Option):
 
 
 class RoleOption(Option):
+    """
+    Represents a role option for an application command
+    """
     def __init__(
             self, name: str,
             description: str,
@@ -159,6 +183,9 @@ class RoleOption(Option):
 
 
 class MentionableOption(Option):
+    """
+    Represents a mentionable option for an application command
+    """
     def __init__(
             self, name: str,
             description: str,
@@ -178,6 +205,9 @@ class MentionableOption(Option):
 
 
 class NumberOption(Option):
+    """
+    Represents a number option for an application command
+    """
     def __init__(
             self,
             name: str,
@@ -204,6 +234,9 @@ class NumberOption(Option):
 
 
 class AttachmentOption(Option):
+    """
+    Represents an attachment option for an application command
+    """
     def __init__(
             self,
             name: str,
@@ -221,6 +254,9 @@ class AttachmentOption(Option):
 
 
 class SubCommand(Option):
+    """
+    Represents a sub-command for an application command
+    """
     def __init__(
             self,
             name: str,
@@ -239,6 +275,9 @@ class SubCommand(Option):
 
 
 class SubCommandGroup(Option):
+    """
+    Represents a sub-command group for an application command
+    """
     def __init__(
             self,
             name: str,
@@ -257,6 +296,9 @@ class SubCommandGroup(Option):
 
 
 class SlashCommand(BaseApplicationCommand):
+    """
+    Represents a Slash Command
+    """
 
     def __init__(
             self,
@@ -284,4 +326,8 @@ class SlashCommand(BaseApplicationCommand):
             return {"permissions": [perm.to_dict() for perm in self._overwrites]}
 
     def to_dict(self):
+        """
+        Returns the command as a dictionary
+        Used for serialization
+        """
         return self._payload
