@@ -13,6 +13,8 @@ Installing
     # Linux/macOS
     python3 -m pip install -U app-util
 
+.. code:: sh
+
     # Windows
     py -3 -m pip install -U app-util
 
@@ -46,9 +48,7 @@ Cog Example
 
 .. code:: py
 
-    import sys
     import asyncio
-    import traceback
     import discord
     import app_util
 
@@ -92,7 +92,14 @@ Cog Example
             embed.set_footer(text=f'Page {page_number}')
             await ctx.send_followup(embed=embed)
 
-        # user command named `Bonk`
+    def setup(bot: app_util.Bot):
+        bot.add_application_cog(Sample(bot))
+
+User Command Example
+~~~~~~~~~~~~~~~~~~~~
+
+.. code:: py
+
         @app_util.Cog.command(
             command=app_util.UserCommand(name='Bonk'),
             # guild_id not given, available for all guilds
@@ -100,14 +107,23 @@ Cog Example
         async def bonk(self, ctx: app_util.Context, user: discord.User):
             await ctx.send_response(f'{ctx.author.mention} just bonked {user.mention}!')
 
-        # message command named `Pin`
+Message Command Example
+~~~~~~~~~~~~~~~~~~~~
+
+.. code:: py
+
         @app_util.Cog.command(
             command=app_util.MessageCommand(name='Pin'),
-            guild_id=877399405056102431
+            guild_id=1234567890
         )
         async def pin(self, ctx: app_util.Context, message: discord.Message):
             await message.pin()
             await ctx.send_response(f'Message pinned by {ctx.author}', ephemeral=True)
+
+Sending Modal Example
+~~~~~~~~~~~~~~~~~~~~
+
+.. code:: py
 
         @app_util.Cog.command(
             command=app_util.SlashCommand(
@@ -117,7 +133,9 @@ Cog Example
             guild_id=1234567890
         )
         async def modal_command(self, ctx: app_util.Context, name: str):
+
             # creating a modal with author's name
+
             modal = app_util.Modal(client=self.bot, title=f'A Super Modal for {ctx.author.name}')
             modal.add_field(
                 label='About',
@@ -143,14 +161,11 @@ Cog Example
                 embed.set_author(name=f'{mcx.author.name}', icon_url=mcx.author.avatar.url)
                 await mcx.send_response(embed=embed)
 
-        # error handler
+Error Handler Example
+~~~~~~~~~~~~~~~~~~~~
+
+.. code:: py
+
         @app_util.Cog.listener
         async def on_command_error(self, ctx: app_util.Context, error: Exception):
-            stack = traceback.format_exception(type(error), error, error.__traceback__)
-            await ctx.send_followup(f'```py\n{"".join(stack)}\n```')
-
-
-    def setup(bot: app_util.Bot):
-        bot.add_application_cog(Sample(bot))
-
-
+            await ctx.send_followup(f'Something went wrong!')
