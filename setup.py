@@ -25,7 +25,7 @@ setup(
     keywords='discord.py, slash-commands, application-commands, discord-bot',
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
-    python_requires='>=3.8',
+    python_requires='>=3.8, <4',
     install_requires=[],
     project_urls={
         'Bug Reports': 'https://github.com/jnsougata/app_util/issues',
