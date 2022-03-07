@@ -1,14 +1,15 @@
 import json
+import discord
+from .modal import Modal
 from discord.utils import MISSING
 from discord.http import Route
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict
 from .enums import ApplicationCommandType, PermissionType
 from typing import List, Optional, Union, Dict
-import discord
-from .modal import Modal
 
 
-class BaseApplicationCommand:
+
+class MasterApplicationCommand:
     def __init__(self, name: str, type: ApplicationCommandType):
         self.name = name
         self.type = type

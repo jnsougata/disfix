@@ -18,7 +18,7 @@ from discord.ext import commands
 from discord.http import Route
 from discord.enums import InteractionType
 from typing import Callable, Optional, Any, Union, List, Dict, Tuple
-from .parser import _build_prams, _build_qual, _build_ctx_menu_arg, _build_modal_prams
+from .parser import _build_prams, _build_ctx_menu_arg, _build_modal_prams
 
 
 __all__ = ['Bot']
@@ -71,19 +71,19 @@ class Bot(commands.Bot):
                 await func(mc, *args, **kwargs)
         if interaction.type == InteractionType.application_command:
             c = Context(interaction)
-            qual = _build_qual(c)
+            qual = c.command._qual
             try:
                 try:
                     cog = self._aux[qual]
                 except KeyError:
                     raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
-                job = self.__jobs.get(qual)
+                before_invoke = self.__jobs.get(qual)
                 func = self._connection.hooks[qual]
-                if job:
+                if before_invoke:
                     try:
-                        is_done = await job(c)
+                        is_done = await before_invoke(c)
                     except Exception as e:
-                        raise JobFailure(f'Job named `{job.__name__}` raised an exception: ({e})')
+                        raise JobFailure(f'Job named `{before_invoke.__name__}` raised an exception: ({e})')
                     if is_done:
                         if c.type is ApplicationCommandType.CHAT_INPUT:
                             args, kwargs = _build_prams(c._parsed_options, func)

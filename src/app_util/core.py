@@ -6,16 +6,30 @@ from discord.ext import commands
 from discord.http import Route
 from .http_s import *
 from dataclasses import dataclass
-from .app import Overwrite, BaseApplicationCommand
+from .app import Overwrite, MasterApplicationCommand
 from typing import List, Optional, Union, Any, Dict
 from .enums import OptionType, ApplicationCommandType, PermissionType, try_enum
 
 
-def flake(snowflake: str) -> Union[int, None]:
+def _try_flake(snowflake: str) -> Union[int, None]:
     try:
         return int(snowflake)
     except TypeError:
         return None
+
+
+def _make_qual(name: str, guild_id: Optional[int], ctype: ApplicationCommandType, ) -> str:
+    if guild_id:
+        partial = f'{name}_{guild_id}'
+    else:
+        partial = name
+
+    if ctype is ApplicationCommandType.CHAT_INPUT:
+        return '__CHAT__' + partial
+    if ctype is ApplicationCommandType.MESSAGE:
+        return '__MESSAGE__' + partial
+    if ctype is ApplicationCommandType.USER:
+        return '__USER__' + partial
 
 
 @dataclass(frozen=True)
@@ -196,10 +210,11 @@ class ApplicationCommand:
         self.__payload = data
         self._client = client
         self.id = int(data['id'])
-        self.guild_id = flake(data.get('guild_id'))
+        self.guild_id = _try_flake(data.get('guild_id'))
         self.name = data['name']
         self.description = data['description']
         self.type = try_enum(ApplicationCommandType, data['type'])
+        self._qual = _make_qual(self.name, self.guild_id, self.type)
         self.application_id = int(data['application_id'])
         self.options = data.get('options')
         self.version = int(data['version'])
@@ -280,7 +295,7 @@ class ApplicationCommand:
         self._cache_permissions(data, guild.id)
 
 
-    async def update(self, new_command: BaseApplicationCommand) -> ApplicationCommand:
+    async def update(self, new_command: MasterApplicationCommand) -> ApplicationCommand:
         if new_command.type is self.type:
             try:
                 data = await patch_existing_command(self._client, self, new_command)

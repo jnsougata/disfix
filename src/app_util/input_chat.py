@@ -1,5 +1,5 @@
 from typing import Any, Union, List, Dict, Optional
-from .app import Overwrite, BaseApplicationCommand
+from .app import Overwrite, MasterApplicationCommand
 from .enums import ChannelType, ApplicationCommandType, OptionType
 
 
@@ -49,7 +49,8 @@ class StrOption(Option):
             description: str,
             *,
             required: bool = True,
-            choices: list[Choice] = None
+            choices: list[Choice] = None,
+            autocomplete: bool = False,
     ):
         super().__init__(name, OptionType.STRING)
         self.data = {
@@ -58,8 +59,13 @@ class StrOption(Option):
             "type": self.type.value,
             "required": required,
         }
+        if choices and autocomplete:
+            raise ValueError("Both choices and autocomplete cannot be set together")
+
         if choices:
             self.data["choices"] = [c.data for c in choices]
+        if autocomplete:
+            self.data["autocomplete"] = autocomplete
 
 
 class IntOption(Option):
@@ -73,7 +79,8 @@ class IntOption(Option):
             min_value: int = None,
             max_value: int = None,
             required: bool = True,
-            choices: list[Choice] = None
+            choices: list[Choice] = None,
+            autocomplete: bool = False
     ):
         super().__init__(name, OptionType.INTEGER)
         self.data = {
@@ -82,8 +89,13 @@ class IntOption(Option):
             "type": self.type.value,
             "required": required,
         }
+        if choices and autocomplete:
+            raise ValueError("Both choices and autocomplete cannot be set together")
+
         if choices:
             self.data["choices"] = [c.data for c in choices]
+        if autocomplete:
+            self.data["autocomplete"] = autocomplete
         if min_value:
             self.data["min_value"] = min_value
         if max_value:
@@ -216,7 +228,8 @@ class NumberOption(Option):
             min_value: float = None,
             max_value: float = None,
             required: bool = True,
-            choices: list[Choice] = None
+            choices: list[Choice] = None,
+            autocomplete: bool = False
     ):
         super().__init__(name, OptionType.NUMBER)
         self.data = {
@@ -225,12 +238,17 @@ class NumberOption(Option):
             "type": self.type.value,
             "required": required,
         }
+        if choices and autocomplete:
+            raise ValueError("Both choices and autocomplete cannot be set together")
+
         if choices:
             self.data["choices"] = [c.data for c in choices]
         if min_value:
             self.data["min_value"] = min_value
         if max_value:
             self.data["max_value"] = max_value
+        if autocomplete:
+            self.data["autocomplete"] = autocomplete
 
 
 class AttachmentOption(Option):
@@ -295,7 +313,7 @@ class SubCommandGroup(Option):
             self.data["options"] = [sc._data for sc in options]
 
 
-class SlashCommand(BaseApplicationCommand):
+class SlashCommand(MasterApplicationCommand):
     """
     Represents a Slash Command
     """
