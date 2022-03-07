@@ -4,14 +4,17 @@ from setuptools import setup, find_packages
 
 here = pathlib.Path(__file__).parent.resolve()
 
+with open('README.rst') as f:
+    readme = f.read()
+
 long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 setup(
     name='app_util',
     version='0.3.2',
     description='Integrates application commands with discord.py 2.0',
-    long_description=long_description,
-    long_description_content_type='text/markdown',
+    long_description=readme,
+    long_description_content_type="text/x-rst",
     url='https://github.com/jnsougata/app_util',
     author='jnsougata',
     author_email='jnsougata@gmail.com',
