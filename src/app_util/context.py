@@ -39,7 +39,6 @@ class Context:
     def type(self) -> ApplicationCommandType:
         """
         returns the type of the invoked application command
-        :return: ApplicationCommandType
         """
         return try_enum(ApplicationCommandType, self._ia.data['type'])
 
@@ -47,7 +46,6 @@ class Context:
     def name(self) -> str:
         """
         returns the name of the invoked application command
-        :return: str
         """
         return self._ia.data['name']
 
@@ -55,15 +53,13 @@ class Context:
     def description(self) -> str:
         """
         returns the description of the invoked application command
-        :return: str
         """
         return self._ia.data.get('description')
 
     @property
     def token(self) -> str:
         """
-        returns the token of the interaction
-        :return: str
+        returns the token of the application command interaction
         """
         return self._ia.token
 
@@ -71,15 +67,13 @@ class Context:
     def id(self) -> int:
         """
         returns the id of the interaction
-        :return: str
         """
         return int(self._ia.data['id'])
 
     @property
     def command(self) -> ApplicationCommand:
         """
-        returns the invoked application command
-        :return: ApplicationCommand
+        returns the invoked application command object
         """
         return self.client.get_application_command(self.id)
 
@@ -87,15 +81,13 @@ class Context:
     def version(self) -> int:
         """
         returns the version of the interaction
-        :return: int
         """
         return self._ia.version
 
     @property
     def data(self) -> InteractionData:
         """
-        returns the interaction data
-        :return: InteractionData
+        returns the application command data
         """
         return InteractionData(**self._ia.data)
 
@@ -103,7 +95,6 @@ class Context:
     def _modal_values(self):
         """
         returns the mapping modal values
-        :return:
         """
         options = {}
         for comp in self.data.components:
@@ -144,8 +135,8 @@ class Context:
     @property
     def options(self) -> Dict[str, ChatInputOption]:
         """
-        returns the options mapping of the interaction
-        :return: Dict[str, ChatInputOption]
+        returns the dictionary of the options of the invoked application command
+        if the command is a message/user command, this will return an empty dictionary
         """
         if self.type is ApplicationCommandType.USER:
             return {}  # type: ignore
@@ -184,16 +175,14 @@ class Context:
     @property
     def application_id(self) -> int:
         """
-        returns the application id / bot id of the interaction
-        :return: int
+        returns the application id or client id of the application command
         """
         return self._ia.application_id
 
     @property
     def responded(self) -> bool:
         """
-        returns whether the interaction is deferred
-        :return: bool
+        returns whether the application command interaction is deferred
         """
         return self._deferred
 
@@ -206,12 +195,10 @@ class Context:
 
     def thinking(self, time: float, author_only: bool = False):
         """
-        returns async context manager for thinking
-        :param time: time to wait
-        :param author_only: if only author can see the thinking
-        :return: Thinking
+        returns async context manager for controlling the thinking state
+        during the application command and the visibility of the response
         """
-        return Thinking(self, time, author_only)
+        return _Thinking(self, time, author_only)
 
 
     @property
@@ -219,7 +206,6 @@ class Context:
         """
         returns the permissions of the user who used the command
         for the channel on which the command was used
-        :return: discord.Permissions
         """
         return self._ia.permissions
 
@@ -227,7 +213,6 @@ class Context:
     def me(self):
         """
         returns the client user in member form if guild is available
-        :return:
         """
         if self.guild:
             return self.guild.me
@@ -236,7 +221,6 @@ class Context:
     def channel(self):
         """
         returns the channel on which the command was used
-        :return:
         """
         channel = self._ia.channel
         # since the channel is partial messageable
@@ -248,23 +232,19 @@ class Context:
     def guild(self):
         """
         returns the guild where the command was used
-        :return:
         """
         return self._ia.guild
 
     @property
     def author(self):
         """
-        returns the author of the interaction
-        :return: discord.Member or discord.User
+        returns the author (User/Member) of the application command
         """
         return self._ia.user
 
     async def send_modal(self, modal: Modal):
         """
-        sends a modal to as a response to the command
-        :param modal: Modal
-        :return: None
+        sends a modal as a response to the application command
         """
         await self._adapter.post_modal(modal=modal)
 
@@ -287,6 +267,9 @@ class Context:
             allowed_mentions: Optional[discord.AllowedMentions] = None,
             reference: Optional[Union[Message, PartialMessage, MessageReference]] = None,
     ):
+        """
+        sends a message to the channel on which the application command was used
+        """
         if embed and embeds:
             raise ValueError('Can not mix embed and embeds')
         if file and files:
@@ -313,7 +296,10 @@ class Context:
             view: Optional[discord.ui.View] = None,
             views: Optional[List[discord.ui.View]] = None,
             delete_after: Optional[float] = None,
-    ):
+    ) -> discord.Message:
+        """
+        sends a response to the application command
+        """
         if self._deferred:
             raise discord.ClientException('Cannot send response for already (deferred / responded) interaction')
 
@@ -341,7 +327,10 @@ class Context:
             view: Optional[discord.ui.View] = None,
             views: Optional[List[discord.ui.View]] = None,
             delete_after: Optional[float] = None,
-    ):
+    ) -> Followup:
+        """
+        sends a followup to the responded or deferred application command
+        """
         if not self._deferred:
             raise discord.ClientException('Cannot send followup to a non (deferred / responded) interaction')
 
@@ -376,6 +365,9 @@ class Context:
             views: Optional[List[discord.ui.View]] = MISSING,
             delete_after: Optional[float] = None,
     ):
+        """
+        edits the original response to the application command
+        """
         data = await self._adapter.patch_response(
             content=content, file=file, files=files, embed=embed,
             embeds=embeds, view=view, views=views, allowed_mentions=allowed_mentions)
@@ -385,11 +377,18 @@ class Context:
             state=self.client._connection, data=data, channel=self.channel)  # type: ignore
 
     async def delete_response(self):
+        """
+        deletes the original response to the application command
+        if the original message is ephemeral, it can't be deleted
+        """
         if not self._invisible:
             await self._adapter.delete_response()
 
 
 class Followup:
+    """
+    Represents a followup to an application command
+    """
     def __init__(self, parent: Context, data: dict):
         self._data = data
         self._parent = parent
@@ -398,10 +397,16 @@ class Followup:
 
     @property
     def message(self):
+        """
+        returns the message object for this followup
+        """
         return discord.Message(
             state=self._parent.client._connection, data=self._data, channel=self._parent.channel)
 
     async def delete(self):
+        """
+        deletes this followup if it is not ephemeral
+        """
         if not self._parent._invisible:
             await self._parent._adapter.delete_followup_message(self.message_id)
 
@@ -418,6 +423,9 @@ class Followup:
             views: Optional[List[discord.ui.View]] = MISSING,
             delete_after: Optional[float] = None,
     ):
+        """
+        edits this followup, does not care if it is ephemeral or not
+        """
         data = await self._parent._adapter.patch_followup(
             message_id=self.message_id, content=content, file=file, files=files,
             embed=embed, embeds=embeds, view=view, views=views, allowed_mentions=allowed_mentions)
@@ -435,7 +443,10 @@ class Followup:
             state=self._parent.client._connection, data=data, channel=self._parent.channel)
 
 
-class Thinking:
+class _Thinking:
+    """
+    Represents a contextmanager for controlling the thinking indicator
+    """
     def __init__(self, ctx, time, ep):
         self.ep = ep
         self.ctx = ctx
