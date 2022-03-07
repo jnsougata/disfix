@@ -44,7 +44,7 @@ Quick Example
     bot.run('YOUR_TOKEN')
 
 Cog Example
-~~~~~~~~~~~~~
+------------
 
 .. code:: py
 
@@ -96,7 +96,7 @@ Cog Example
         bot.add_application_cog(Sample(bot))
 
 User Command Example
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 .. code:: py
 
@@ -108,7 +108,7 @@ User Command Example
             await ctx.send_response(f'{ctx.author.mention} just bonked {user.mention}!')
 
 Message Command Example
-~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 .. code:: py
 
@@ -121,7 +121,7 @@ Message Command Example
             await ctx.send_response(f'Message pinned by {ctx.author}', ephemeral=True)
 
 Sending Modal Example
-~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 .. code:: py
 
@@ -162,7 +162,7 @@ Sending Modal Example
                 await mcx.send_response(embed=embed)
 
 Error Handler Example
-~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 .. code:: py
 
