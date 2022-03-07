@@ -52,41 +52,41 @@ class Sample(app_util.Cog):
             thumbnail: discord.Attachment, image: discord.Attachment,
             footer_icon: discord.Attachment, footer_text: str, link_button: str,
     ):
-        async with ctx.thinking(1, author_only=True):
-            slots = {}
-            if title:
-                slots['title'] = title
-            if footer_text:
-                slots['footer'] = {'text': footer_text}
-                if footer_icon:
-                    slots['footer']['icon_url'] = footer_icon.url
-            if description:
-                slots['description'] = description.replace('$/', '\n')
-            if url:
-                slots['url'] = url
-            if color:
-                slots['color'] = int(color, 16)
-            if author:
-                slots['author'] = {
-                    'name': author.name,
-                    'icon_url': author.avatar.url,
-                }
-                if author_url:
-                    slots['author']['url'] = author_url
-            if thumbnail:
-                slots['thumbnail'] = {'url': thumbnail.url}
-            if image:
-                slots['image'] = {'url': image.url}
+        await ctx.defer(ephemeral=True)
+        slots = {}
+        if title:
+            slots['title'] = title
+        if footer_text:
+            slots['footer'] = {'text': footer_text}
+            if footer_icon:
+                slots['footer']['icon_url'] = footer_icon.url
+        if description:
+            slots['description'] = description.replace('$/', '\n')
+        if url:
+            slots['url'] = url
+        if color:
+            slots['color'] = int(color, 16)
+        if author:
+            slots['author'] = {
+                'name': author.name,
+                'icon_url': author.avatar.url,
+            }
+            if author_url:
+                slots['author']['url'] = author_url
+        if thumbnail:
+            slots['thumbnail'] = {'url': thumbnail.url}
+        if image:
+            slots['image'] = {'url': image.url}
 
-            view = discord.ui.View()
+        view = discord.ui.View()
 
-            if link_button:
-                button = discord.ui.Button(style=discord.ButtonStyle.link, label='link', url=link_button)
-                view.add_item(button)
+        if link_button:
+            button = discord.ui.Button(style=discord.ButtonStyle.link, label='link', url=link_button)
+            view.add_item(button)
 
-            embed = discord.Embed.from_dict(slots)
-            await ctx.channel.send(embed=embed, view=view)
-            await ctx.send_followup(f'Embed sent successfully')
+        embed = discord.Embed.from_dict(slots)
+        await ctx.channel.send(embed=embed, view=view)
+        await ctx.send_followup(f'Embed sent successfully')
 
 
     @app_util.Cog.command(
