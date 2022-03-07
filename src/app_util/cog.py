@@ -37,6 +37,7 @@ class Cog(metaclass=type):
     def command(cls, command: BaseApplicationCommand, guild_id: int = None):
         """
         Decorator for registering an application command
+        inside any cog class subclassed from app_util.Cog
         """
         if guild_id:
             qualified_name = f"{command._qual}_{guild_id}"
@@ -55,8 +56,8 @@ class Cog(metaclass=type):
     @classmethod
     def before_invoke(cls, coroutine_job: Callable):
         """
-        Decorator for adding a pre-command job w.r.t checks
-        :job: The function containing the job to be executed
+        Decorator for adding a pre-command job
+        to handle check and responding to the user if needed
         """
 
         def decorator(func):
@@ -72,7 +73,10 @@ class Cog(metaclass=type):
     @classmethod
     def listener(cls, coro: Callable):
         """
-        Decorator for registering an error listener
+        Decorator for adding a listener to the cog
+        This listener will be called when an error occurs
+        :param coro: a coroutine function with ctx as the first argument
+        :return:
         """
         cls.__error_listener__ = coro
         return coro

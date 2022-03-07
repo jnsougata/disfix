@@ -25,6 +25,9 @@ __all__ = ['Bot']
 
 
 class Bot(commands.Bot):
+    """
+    This is the main class that is used to run the bot.
+    """
 
     def __init__(
             self,
@@ -49,7 +52,11 @@ class Bot(commands.Bot):
         self.__route = Route.BASE = f'https://discord.com/api/v10'
 
     @property
-    def application_commands(self):
+    def application_commands(self) -> List[ApplicationCommand]:
+        """
+        Returns a list of all the application commands from cache
+        :return:
+        """
         return list(self._application_commands.values())
 
 
@@ -124,10 +131,16 @@ class Bot(commands.Bot):
             else:
                 raise NonCoroutine(f'`{m.__name__}` must be a coroutine function')
 
-    def add_application_cog(self, cog: Cog):
+    def add_application_cog(self, cog: Cog) -> None:
+        """
+        Adds a cog to the application
+        :param cog: app_util.Cog
+        :return:
+        """
+
         self._walk_app_commands(cog)
 
-    async def sync_current_commands(self):
+    async def sync_current_commands(self) -> None:
         """
         Synchronize the currently implemented application commands for the specified guild or global.
         This method is called automatically when the bot is ready. however, you can call it manually
@@ -155,7 +168,7 @@ class Bot(commands.Bot):
             self._application_commands[command_id] = ApplicationCommand(self, data)
 
 
-    async def sync_global_commands(self):
+    async def sync_global_commands(self) -> None:
         """
         Syncs the global commands of the application.
         It does this automatically when the bot is ready.
@@ -166,7 +179,7 @@ class Bot(commands.Bot):
             command = ApplicationCommand(self, data)
             self._application_commands[command.id] = command
 
-    async def sync_for(self, guild: discord.Guild):
+    async def sync_for(self, guild: discord.Guild) -> None:
         """
         Automatically sync all commands for a specific guild.
         :param guild: the guild to sync commands for
@@ -221,6 +234,12 @@ class Bot(commands.Bot):
                         command._cache_permissions(ows, guild_id)
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
+        """
+        Does the login and command registrations
+        :param token: bot token
+        :param reconnect: whether to reconnect on reconnect
+        :return:
+        """
         self.add_listener(self._handle_interaction, 'on_interaction')
         self.add_listener(self._sync_overwrites, 'on_ready')
         await self.login(token)

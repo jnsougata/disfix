@@ -25,6 +25,9 @@ class Context:
 
     @property
     def client(self):
+        """
+        returns the client of the interaction
+        """
         return self._ia.client
 
     @property
@@ -33,39 +36,63 @@ class Context:
 
 
     @property
-    def type(self):
+    def type(self) -> ApplicationCommandType:
+        """
+        returns the type of the invoked application command
+        :return: ApplicationCommandType
+        """
         return try_enum(ApplicationCommandType, self._ia.data['type'])
 
     @property
     def name(self) -> str:
+        """
+        returns the name of the invoked application command
+        :return: str
+        """
         return self._ia.data['name']
 
     @property
     def description(self) -> str:
+        """
+        returns the description of the invoked application command
+        :return: str
+        """
         return self._ia.data.get('description')
 
     @property
-    def token(self):
+    def token(self) -> str:
+        """
+        returns the token of the interaction
+        :return: str
+        """
         return self._ia.token
 
     @property
-    def id(self):
+    def id(self) -> int:
+        """
+        returns the id of the interaction
+        :return: str
+        """
         return int(self._ia.data['id'])
 
     @property
     def command(self) -> ApplicationCommand:
+        """
+        returns the invoked application command
+        :return: ApplicationCommand
+        """
         return self.client.get_application_command(self.id)
 
     @property
-    def version(self):
+    def version(self) -> int:
         """
         returns the version of the interaction
-        :return:
+        :return: int
         """
         return self._ia.version
 
     @property
-    def data(self):
+    def data(self) -> InteractionData:
         """
         returns the interaction data
         :return: InteractionData
@@ -117,8 +144,8 @@ class Context:
     @property
     def options(self) -> Dict[str, ChatInputOption]:
         """
-        returns the options of the interaction
-        :return: InteractionDataOption
+        returns the options mapping of the interaction
+        :return: Dict[str, ChatInputOption]
         """
         if self.type is ApplicationCommandType.USER:
             return {}  # type: ignore
@@ -155,10 +182,10 @@ class Context:
         return {}
 
     @property
-    def application_id(self):
+    def application_id(self) -> int:
         """
         returns the application id / bot id of the interaction
-        :return:
+        :return: int
         """
         return self._ia.application_id
 
@@ -178,20 +205,39 @@ class Context:
         self._invisible = ephemeral
 
     def thinking(self, time: float, author_only: bool = False):
+        """
+        returns async context manager for thinking
+        :param time: time to wait
+        :param author_only: if only author can see the thinking
+        :return: Thinking
+        """
         return Thinking(self, time, author_only)
 
 
     @property
     def permissions(self):
+        """
+        returns the permissions of the user who used the command
+        for the channel on which the command was used
+        :return: discord.Permissions
+        """
         return self._ia.permissions
 
     @property
     def me(self):
+        """
+        returns the client user in member form if guild is available
+        :return:
+        """
         if self.guild:
             return self.guild.me
 
     @property
     def channel(self):
+        """
+        returns the channel on which the command was used
+        :return:
+        """
         channel = self._ia.channel
         # since the channel is partial messageable
         # we won't be able to check user/role permissions
@@ -201,7 +247,7 @@ class Context:
     @property
     def guild(self):
         """
-        returns the guild where the interaction was created
+        returns the guild where the command was used
         :return:
         """
         return self._ia.guild
@@ -210,11 +256,16 @@ class Context:
     def author(self):
         """
         returns the author of the interaction
-        :return: discord.Member
+        :return: discord.Member or discord.User
         """
         return self._ia.user
 
     async def send_modal(self, modal: Modal):
+        """
+        sends a modal to as a response to the command
+        :param modal: Modal
+        :return: None
+        """
         await self._adapter.post_modal(modal=modal)
 
 
