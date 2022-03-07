@@ -7,8 +7,6 @@ here = pathlib.Path(__file__).parent.resolve()
 with open('README.rst') as f:
     readme = f.read()
 
-long_description = (here / 'README.md').read_text(encoding='utf-8')
-
 setup(
     name='app_util',
     version='0.3.2',
