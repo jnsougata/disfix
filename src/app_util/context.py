@@ -24,7 +24,7 @@ class Context:
         return self.name
 
     @property
-    def client(self):
+    def client(self) -> discord.Client:
         """
         returns the client of the interaction
         """
@@ -187,6 +187,9 @@ class Context:
         return self._deferred
 
     async def defer(self, ephemeral: bool = False):
+        """
+        defers the application command interaction for responding later
+        """
         if self._deferred:
             raise discord.ClientException('Cannot defer already (deferred / responded) interaction')
         await self._adapter.post_to_delay(ephemeral)
@@ -202,7 +205,7 @@ class Context:
 
 
     @property
-    def permissions(self):
+    def permissions(self) -> discord.Permissions:
         """
         returns the permissions of the user who used the command
         for the channel on which the command was used
@@ -210,7 +213,7 @@ class Context:
         return self._ia.permissions
 
     @property
-    def me(self):
+    def me(self) -> discord.Member:
         """
         returns the client user in member form if guild is available
         """
@@ -218,7 +221,7 @@ class Context:
             return self.guild.me
 
     @property
-    def channel(self):
+    def channel(self) -> discord.abc.GuildChannel:
         """
         returns the channel on which the command was used
         """
@@ -229,14 +232,14 @@ class Context:
         return self.guild.get_channel(channel.id)
 
     @property
-    def guild(self):
+    def guild(self) -> discord.Guild:
         """
         returns the guild where the command was used
         """
         return self._ia.guild
 
     @property
-    def author(self):
+    def author(self) -> discord.Member:
         """
         returns the author (User/Member) of the application command
         """
@@ -401,7 +404,7 @@ class Followup:
         returns the message object for this followup
         """
         return discord.Message(
-            state=self._parent.client._connection, data=self._data, channel=self._parent.channel)
+            state=self._parent.client._connection, data=self._data, channel=self._parent.channel)  # type: ignore
 
     async def delete(self):
         """
@@ -440,7 +443,7 @@ class Followup:
             asyncio.create_task(delay_delete(delete_after))
 
         return discord.Message(
-            state=self._parent.client._connection, data=data, channel=self._parent.channel)
+            state=self._parent.client._connection, data=data, channel=self._parent.channel)  # type: ignore
 
 
 class _Thinking:

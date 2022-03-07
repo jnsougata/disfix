@@ -27,20 +27,22 @@ __all__ = ['Bot']
 class Bot(commands.Bot):
     """
     This is the main class that is used to run the bot.
+    As this has been subclassed from the discord.ext.commands.Bot class
+    so all functionality of the discord.ext.commands.Bot class is available
     """
 
     def __init__(
             self,
             command_prefix: Union[Callable, str],
-            intents: discord.Intents = discord.Intents.default(),
-            help_command: Optional[commands.HelpCommand] = commands.DefaultHelpCommand(),
+            intents: discord.Intents = None,
+            help_command: Optional[commands.HelpCommand] = None,
             description: Optional[str] = None,
             **options
     ):
         super().__init__(
-            intents=intents,
+            intents=intents or discord.Intents.default(),
             command_prefix=command_prefix,
-            help_command=help_command,
+            help_command=help_command or commands.DefaultHelpCommand(),
             description=description,
             **options
         )
@@ -55,7 +57,6 @@ class Bot(commands.Bot):
     def application_commands(self) -> List[ApplicationCommand]:
         """
         Returns a list of all the application commands from cache
-        :return:
         """
         return list(self._application_commands.values())
 
@@ -133,9 +134,7 @@ class Bot(commands.Bot):
 
     def add_application_cog(self, cog: Cog) -> None:
         """
-        Adds a cog to the application
-        :param cog: app_util.Cog
-        :return:
+        Adds an app_util cog to the application
         """
 
         self._walk_app_commands(cog)
@@ -145,7 +144,6 @@ class Bot(commands.Bot):
         Synchronize the currently implemented application commands for the specified guild or global.
         This method is called automatically when the bot is ready. however, you can call it manually
         to ensure that the bot is up-to-date with the latest commands.
-        :return: None
         """
         for command, guild_id in self._queue.values():
             if guild_id:
@@ -172,7 +170,6 @@ class Bot(commands.Bot):
         """
         Syncs the global commands of the application.
         It does this automatically when the bot is ready.
-        :return: None
         """
         data_arr = await fetch_global_commands(self)
         for data in data_arr:
@@ -190,17 +187,14 @@ class Bot(commands.Bot):
             command = ApplicationCommand(self, data)
             client._application_commands[command.id] = command
 
-    async def fetch_command(self, command_id: int, guild_id: int = None):
+    async def fetch_command(self, command_id: int, guild_id: int = None) -> ApplicationCommand:
         """
-        Fetch an application command by its ID.
-        :param command_id: the command id to fetch
-        :param guild_id: the guild id where the command is located
-        :return: ApplicationCommand
+        Fetch an application command by its id
         """
         data = await fetch_any_command(self, command_id, guild_id)
         return ApplicationCommand(self, data)
 
-    def get_application_command(self, command_id: int):
+    def get_application_command(self, command_id: int) -> ApplicationCommand:
         return self._application_commands.get(command_id)
 
     async def _sync_overwrites(self):
@@ -236,9 +230,6 @@ class Bot(commands.Bot):
     async def start(self, token: str, *, reconnect: bool = True) -> None:
         """
         Does the login and command registrations
-        :param token: bot token
-        :param reconnect: whether to reconnect on reconnect
-        :return:
         """
         self.add_listener(self._handle_interaction, 'on_interaction')
         self.add_listener(self._sync_overwrites, 'on_ready')

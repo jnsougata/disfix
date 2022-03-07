@@ -75,8 +75,6 @@ class Cog(metaclass=type):
         """
         Decorator for adding a listener to the cog
         This listener will be called when an error occurs
-        :param coro: a coroutine function with ctx as the first argument
-        :return:
         """
         cls.__error_listener__ = coro
         return coro
