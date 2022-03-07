@@ -12,7 +12,7 @@ long_description = (here / 'README.md').read_text(encoding='utf-8')
 setup(
     name='app_util',
     version='0.3.2',
-    description='Integrates application commands with discord.py 2.0',
+    description='Asynchronous Application Command wrapper for discord.py 2.0',
     long_description=readme,
     long_description_content_type="text/x-rst",
     url='https://github.com/jnsougata/app_util',
