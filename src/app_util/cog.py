@@ -59,8 +59,10 @@ class Cog(metaclass=type):
     @classmethod
     def before_invoke(cls, *, check: Callable = None, autocomplete: Callable = None):
         """
-        Decorator for adding a pre-command job
-        to handle check and responding to the user if needed
+        Decorator for adding a checks and sending respond if the check fails
+        Also adds an autocomplete function if provided. The autocomplete function
+        will be called when the user starts typing an option an application command
+        with autocomplete enabled.
         """
 
         def decorator(func):
