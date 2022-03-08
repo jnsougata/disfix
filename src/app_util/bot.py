@@ -18,7 +18,7 @@ from discord.ext import commands
 from discord.http import Route
 from discord.enums import InteractionType
 from typing import Callable, Optional, Any, Union, List, Dict, Tuple
-from .parser import _build_prams, _build_ctx_menu_arg, _build_modal_prams
+from .parser import _build_prams, _build_ctx_menu_arg, _build_modal_prams, _build_autocomplete_prams
 
 
 __all__ = ['Bot']
@@ -47,9 +47,10 @@ class Bot(commands.Bot):
             **options
         )
         self._aux = {}
-        self.__jobs = {}
         self._queue = {}
         self._modals = {}
+        self.__checks = {}
+        self._automatics = {}
         self._application_commands: Dict[int, ApplicationCommand] = {}
         self.__route = Route.BASE = f'https://discord.com/api/v10'
 
@@ -62,6 +63,21 @@ class Bot(commands.Bot):
 
 
     async def _handle_interaction(self, interaction: discord.Interaction):
+
+        if interaction.type is InteractionType.autocomplete:
+            c = Context(interaction)
+            qual = c.command._qual
+            try:
+                try:
+                    self._aux[qual]
+                except KeyError:
+                    raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
+                auto = self._automatics[qual]
+                args, kwargs = _build_autocomplete_prams(c._parsed_options, auto)
+                await auto(c, *args, **kwargs)
+            except discord.errors.HTTPException:
+                pass
+
         if interaction.type is InteractionType.modal_submit:
             mc = Context(interaction)
             callback_id = interaction.data['custom_id']
@@ -69,6 +85,7 @@ class Bot(commands.Bot):
                 func = self._modals.pop(callback_id)
                 args, kwargs = _build_modal_prams(mc._modal_values, func)
                 await func(mc, *args, **kwargs)
+
         if interaction.type == InteractionType.application_command:
             c = Context(interaction)
             qual = c.command._qual
@@ -77,13 +94,13 @@ class Bot(commands.Bot):
                     cog = self._aux[qual]
                 except KeyError:
                     raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
-                before_invoke = self.__jobs.get(qual)
+                check = self.__checks.get(qual)
                 func = self._connection.hooks[qual]
-                if before_invoke:
+                if check:
                     try:
-                        is_done = await before_invoke(c)
+                        is_done = await check(c)
                     except Exception as e:
-                        raise JobFailure(f'Job named `{before_invoke.__name__}` raised an exception: ({e})')
+                        raise CheckFailure(f'Check named `{check.__name__}` raised an exception: ({e})')
                     if is_done:
                         if c.type is ApplicationCommandType.CHAT_INPUT:
                             args, kwargs = _build_prams(c._parsed_options, func)
@@ -109,11 +126,17 @@ class Bot(commands.Bot):
 
     def _walk_app_commands(self, cog: Cog):
 
-        for name, job in cog.__jobs__.items():
-            if asyncio.iscoroutinefunction(job):
-                self.__jobs[name] = job
+        for name, auto in cog.__automatics__.items():
+            if asyncio.iscoroutinefunction(auto):
+                self._automatics[name] = auto
             else:
-                raise NonCoroutine(f'Job function `{name}` must be a coroutine.')
+                raise NonCoroutine(f'Autocomplete function `{auto.__name__}` must be a coroutine.')
+
+        for name, check in cog.__checks__.items():
+            if asyncio.iscoroutinefunction(check):
+                self.__checks[name] = check
+            else:
+                raise NonCoroutine(f'Check function `{check.__name__}` must be a coroutine.')
 
         for qual, data in cog.__commands__.items():
             apc, guild_id = data

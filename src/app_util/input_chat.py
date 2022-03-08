@@ -34,10 +34,7 @@ class Choice:
     Represents a choice for an application command
     """
     def __init__(self, name: str, value: Any):
-        self.data = {
-            "name": name,
-            "value": value
-        }
+        self.data = {"name": name, "value": value}
 
 
 class StrOption(Option):
@@ -111,7 +108,7 @@ class BoolOption(Option):
             description: str,
             *,
             required: bool = True,
-            choices: list[Choice] = None
+            choices: list[Choice] = None,
     ):
         super().__init__(name, OptionType.BOOLEAN)
         self.data = {

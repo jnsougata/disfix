@@ -9,7 +9,8 @@ from typing import Optional, ClassVar, Callable, List, Union, Dict, Any
 class Cog(metaclass=type):
 
     __qual__ = None
-    __mapped_jobs__: dict = {}
+    __autocomplete__ = {}
+    __mapped_checks__: dict = {}
     __mapped_container__: dict = {}
     __method_container__: dict = {}
     __command_container__: dict = {}
@@ -24,9 +25,11 @@ class Cog(metaclass=type):
         methods = cls.__method_container__.copy()
         setattr(cls, '__methods__', methods)
         cls.__method_container__.clear()
-        jobs = cls.__mapped_jobs__.copy()
-        setattr(cls, '__jobs__', jobs)
-        cls.__mapped_jobs__.clear()
+        checks = cls.__mapped_checks__.copy()
+        setattr(cls, '__checks__', checks)
+        cls.__mapped_checks__.clear()
+        automatics = cls.__autocomplete__.copy()
+        setattr(cls, '__automatics__', automatics)
         listener = cls.__error_listener__
         setattr(cls, '__listener__', listener)
         setattr(cls, '__this__', self)
@@ -34,7 +37,7 @@ class Cog(metaclass=type):
 
 
     @classmethod
-    def command(cls, command: MasterApplicationCommand, guild_id: int = None):
+    def command(cls, command: MasterApplicationCommand, *, guild_id: int = None):
         """
         Decorator for registering an application command
         inside any cog class subclassed from app_util.Cog
@@ -54,7 +57,7 @@ class Cog(metaclass=type):
         return decorator
 
     @classmethod
-    def before_invoke(cls, coroutine_job: Callable):
+    def before_invoke(cls, *, check: Callable = None, autocomplete: Callable = None):
         """
         Decorator for adding a pre-command job
         to handle check and responding to the user if needed
@@ -63,7 +66,10 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__mapped_jobs__[cls.__qual__] = coroutine_job
+                if check:
+                    cls.__mapped_checks__[cls.__qual__] = check
+                if autocomplete:
+                    cls.__autocomplete__[cls.__qual__] = autocomplete
                 return func
             return wrapper()
 

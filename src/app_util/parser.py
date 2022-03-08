@@ -82,3 +82,39 @@ def _build_modal_prams(options: Dict[str, Any], callable: Callable):
         else:
             kwargs[kw] = None
     return args, kwargs
+
+
+def _build_autocomplete_prams(options: Dict[str, Any], callable: Callable):
+    args = []
+    kwargs = {}
+    params = inspect.getfullargspec(callable)
+    default_args = params.defaults
+    default_kwargs = params.kwonlydefaults
+    if default_args:
+        default_list = [*default_args]
+        for i in range(len(params.args[:1]) - len(default_list) - 1):
+            default_list.insert(i, None)
+
+        for arg, default_value in zip(params.args[1:], default_list):
+            option = options.get(arg)
+            if option:
+                args.append(option.value)
+            else:
+                args.append(default_value)
+    else:
+        for arg in params.args[1:]:
+            option = options.get(arg)
+            if option:
+                args.append(option.value)
+            else:
+                args.append(None)
+
+    for kw in params.kwonlyargs:
+        option = options.get(kw)
+        if option:
+            kwargs[kw] = option.value
+        elif default_kwargs:
+            kwargs[kw] = default_kwargs.get(kw)
+        else:
+            kwargs[kw] = None
+    return args, kwargs

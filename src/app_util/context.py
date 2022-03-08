@@ -9,7 +9,7 @@ from discord import Message, PartialMessage, MessageReference
 from .app import _handle_edit_params, _handle_send_prams, Adapter
 from .core import InteractionData, ChatInputOption, Resolved, ApplicationCommand, DummyOption
 from .enums import ApplicationCommandType, OptionType, try_enum
-from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict
+from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict, Tuple, Coroutine
 from .modal import Modal
 
 
@@ -235,6 +235,12 @@ class Context:
         Sends a modal as a response to the application command
         """
         await self._adapter.post_modal(modal=modal)
+
+    async def send_choices(self, choices: List[Union[str, int, float]]):
+        """
+        Sends an autocomplete choices list to command UI
+        """
+        await self._adapter.post_autocomplete_response(choices)
 
 
     async def send_message(

@@ -1,3 +1,4 @@
+import os
 import sys
 import asyncio
 import traceback
@@ -16,11 +17,29 @@ async def job(ctx: app_util.Context):
         return True
 
 
+async def send_autocomplete(ctx: app_util.Context, guess: str):
+    rn = [os.urandom(16).hex() for _ in range(len(guess))]
+    await ctx.send_choices(rn)
+
+
 class Sample(app_util.Cog):
 
     def __init__(self, bot: app_util.Bot):
         self.bot = bot
 
+    @app_util.Cog.before_invoke(autocomplete=send_autocomplete)
+    @app_util.Cog.command(
+        app_util.SlashCommand(
+            name='autocomplete',
+            description='test autocomplete responses',
+            options=[
+                app_util.StrOption(name='guess', description='matching the guessed', autocomplete=True),
+            ]
+        ),
+        guild_id=877399405056102431
+    )
+    async def autocomplete_command(self, ctx: app_util.Context, guess: str):
+        await ctx.send_response(f'{ctx.author.mention} **RANDOM HASH**: `{guess}`')
 
     @app_util.Cog.command(
         command=app_util.SlashCommand(
@@ -42,7 +61,7 @@ class Sample(app_util.Cog):
         ),
         guild_id=877399405056102431
     )
-    @app_util.Cog.before_invoke(job)
+    @app_util.Cog.before_invoke(check=job)
     async def embed(
             self,
             ctx: app_util.Context,

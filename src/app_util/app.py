@@ -219,6 +219,16 @@ class Adapter:
             payload['data'] = {'flags': 64}
         await self.client.http.request(route, json=payload)
 
+    async def post_autocomplete_response(self, options: Any) -> None:
+        r = Route('POST', f'/interactions/{self.id}/{self.token}/callback')
+        payload = {
+            'type': 8,
+            'data': {
+                'choices': [{"name": str(item).lower(), "value": item} for item in options]
+            }
+        }
+        await self.client.http.request(r, json=payload)
+
 
     async def post_response(
             self, content:
