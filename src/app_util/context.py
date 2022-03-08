@@ -11,6 +11,7 @@ from .core import InteractionData, ChatInputOption, Resolved, ApplicationCommand
 from .enums import ApplicationCommandType, OptionType, try_enum
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict, Tuple, Coroutine
 from .modal import Modal
+from .input_chat import Choice
 
 
 class Context:
@@ -236,7 +237,7 @@ class Context:
         """
         await self._adapter.post_modal(modal=modal)
 
-    async def send_choices(self, choices: List[Union[str, int, float]]):
+    async def send_choices(self, choices: List[Choice]):
         """
         Sends an autocomplete choices list to command UI
         """

@@ -19,7 +19,8 @@ async def job(ctx: app_util.Context):
 
 async def send_autocomplete(ctx: app_util.Context, guess: str):
     rn = [os.urandom(16).hex() for _ in range(len(guess))]
-    await ctx.send_choices(rn)
+    choices = [app_util.Choice(name=f'{r}', value=r) for r in rn]
+    await ctx.send_choices(choices)
 
 
 class Sample(app_util.Cog):
