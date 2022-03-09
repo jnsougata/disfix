@@ -1,7 +1,7 @@
 import asyncio
 from functools import wraps
 from .errors import NonCoroutine
-from .app import MasterApplicationCommand
+from .app import ApplicationCommandOrigin
 from typing import Optional, ClassVar, Callable, List, Union, Dict, Any
 
 
@@ -37,7 +37,7 @@ class Cog(metaclass=type):
 
 
     @classmethod
-    def command(cls, command: MasterApplicationCommand, *, guild_id: int = None):
+    def command(cls, command: ApplicationCommandOrigin, *, guild_id: int = None):
         """
         Decorator for registering an application command
         inside any cog class subclassed from app_util.Cog

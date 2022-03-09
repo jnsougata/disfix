@@ -6,7 +6,7 @@ from discord.ext import commands
 from discord.http import Route
 from .http_s import *
 from dataclasses import dataclass
-from .app import Overwrite, MasterApplicationCommand
+from .app import Overwrite, ApplicationCommandOrigin
 from typing import List, Optional, Union, Any, Dict
 from .enums import OptionType, ApplicationCommandType, PermissionType, try_enum
 
@@ -289,7 +289,7 @@ class ApplicationCommand:
         self._cache_permissions(data, guild.id)
 
 
-    async def update(self, new_command: MasterApplicationCommand) -> ApplicationCommand:
+    async def update(self, new_command: ApplicationCommandOrigin) -> ApplicationCommand:
         if new_command.type is self.type:
             try:
                 data = await patch_existing_command(self._client, self, new_command)

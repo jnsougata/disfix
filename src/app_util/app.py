@@ -9,7 +9,7 @@ from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, D
 
 
 
-class MasterApplicationCommand:
+class ApplicationCommandOrigin:
     def __init__(self, name: str, type: ApplicationCommandType):
         self.name = name
         self.type = type

@@ -1,8 +1,8 @@
-from .app import Overwrite, MasterApplicationCommand
+from .app import Overwrite, ApplicationCommandOrigin
 from .enums import ApplicationCommandType
 
 
-class MessageCommand(MasterApplicationCommand):
+class MessageCommand(ApplicationCommandOrigin):
     """
     Represents a message command. Pops up in the message context menu.
     """

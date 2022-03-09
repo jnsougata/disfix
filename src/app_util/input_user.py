@@ -1,8 +1,8 @@
-from .app import Overwrite, MasterApplicationCommand
+from .app import Overwrite, ApplicationCommandOrigin
 from .enums import ApplicationCommandType
 
 
-class UserCommand(MasterApplicationCommand):
+class UserCommand(ApplicationCommandOrigin):
     """
     Represents a user command. Pops up in the user context menu.
     """

@@ -1,5 +1,5 @@
 from typing import Any, Union, List, Dict, Optional
-from .app import Overwrite, MasterApplicationCommand
+from .app import Overwrite, ApplicationCommandOrigin
 from .enums import DiscordChannelType, ApplicationCommandType, OptionType
 
 
@@ -310,7 +310,7 @@ class SubCommandGroup(Option):
             self.data["options"] = [sc._data for sc in options]
 
 
-class SlashCommand(MasterApplicationCommand):
+class SlashCommand(ApplicationCommandOrigin):
     """
     Represents a Slash Command
     """
