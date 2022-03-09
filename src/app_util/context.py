@@ -240,9 +240,9 @@ class Context:
         """
         await self._adapter.post_modal(modal=modal)
 
-    async def send_choices(self, choices: List[Choice]):
+    async def send_automated_choices(self, choices: List[Choice]):
         """
-        Sends an autocomplete choices list to command UI
+        Sends an automated choices list to application command UI
         """
         await self._adapter.post_autocomplete_response(choices)
 

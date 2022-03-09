@@ -3,6 +3,7 @@ import sys
 import asyncio
 import traceback
 import discord
+import aiohttp
 import src.app_util as app_util
 
 
@@ -17,10 +18,13 @@ async def job(ctx: app_util.Context):
         return True
 
 
-async def send_autocomplete(ctx: app_util.Context, guess: str):
-    rn = [os.urandom(16).hex() for _ in range(len(guess))]
-    choices = [app_util.Choice(name=f'{r}', value=r) for r in rn]
-    await ctx.send_choices(choices)
+async def send_autocomplete(ctx: app_util.Context, word: str):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f'https://api.datamuse.com/words?ml={word.replace(" ", "+")}&max=5') as resp:
+            data = await resp.json()
+            words = [word['word'] for word in data]
+            choices = [app_util.Choice(name=f'{w}', value=w) for w in words]
+            await ctx.send_automated_choices(choices)
 
 
 class Sample(app_util.Cog):
@@ -28,19 +32,19 @@ class Sample(app_util.Cog):
     def __init__(self, bot: app_util.Bot):
         self.bot = bot
 
-    @app_util.Cog.before_invoke(autocomplete=send_autocomplete)
+    @app_util.Cog.before_invoke(autocomplete_handler=send_autocomplete)
     @app_util.Cog.command(
         app_util.SlashCommand(
-            name='autocomplete',
-            description='test autocomplete responses',
+            name='synonyms',
+            description='shows synonyms of typed word',
             options=[
-                app_util.StrOption(name='guess', description='matching the guessed', autocomplete=True),
+                app_util.StrOption(name='word', description='word to search synonyms for', autocomplete=True),
             ]
         ),
         guild_id=877399405056102431
     )
-    async def autocomplete_command(self, ctx: app_util.Context, guess: str):
-        await ctx.send_response(f'{ctx.author.mention} **RANDOM HASH**: `{guess}`')
+    async def autocomplete_command(self, ctx: app_util.Context, word: str):
+        await ctx.send_response(f'You\'ve picked the synonym `{word}`')
 
     @app_util.Cog.command(
         command=app_util.SlashCommand(

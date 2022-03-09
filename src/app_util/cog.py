@@ -57,7 +57,7 @@ class Cog(metaclass=type):
         return decorator
 
     @classmethod
-    def before_invoke(cls, *, check: Callable = None, autocomplete: Callable = None):
+    def before_invoke(cls, *, check: Callable = None, autocomplete_handler: Callable = None):
         """
         Decorator for adding a checks and sending respond if the check fails
         Also adds an autocomplete function if provided. The autocomplete function
@@ -70,8 +70,8 @@ class Cog(metaclass=type):
             def wrapper(*args, **kwargs):
                 if check:
                     cls.__mapped_checks__[cls.__qual__] = check
-                if autocomplete:
-                    cls.__autocomplete__[cls.__qual__] = autocomplete
+                if autocomplete_handler:
+                    cls.__autocomplete__[cls.__qual__] = autocomplete_handler
                 return func
             return wrapper()
 
