@@ -3,9 +3,9 @@ import discord
 from .modal import Modal
 from discord.utils import MISSING
 from discord.http import Route
-from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict
 from .enums import ApplicationCommandType, PermissionType
 from typing import List, Optional, Union, Dict
+from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict
 
 
 
@@ -152,10 +152,10 @@ def _handle_send_prams(
         payload['components'] = view.to_components()
     elif views:
         container = []
-        _all = [view.to_components() for view in views]
-        for components in _all:
-            container.extend(components)
-        payload['components'] = concurrent
+        action_rows = [view.to_components() for view in views]
+        for row in action_rows:
+            container.extend(row)
+        payload['components'] = container
 
     if ephemeral:
         payload['flags'] = 64
