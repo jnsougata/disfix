@@ -5,18 +5,19 @@ import discord
 from discord.http import Route
 from discord.utils import MISSING
 from discord.ext import commands
-from discord import Message, PartialMessage, MessageReference
-from .app import _handle_edit_params, _handle_send_prams, Adapter
-from .core import InteractionData, ChatInputOption, Resolved, ApplicationCommand, DummyOption
-from .enums import ApplicationCommandType, OptionType, try_enum
-from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict, Tuple, Coroutine
 from .modal import Modal
 from .input_chat import Choice
+from .enums import ApplicationCommandType, OptionType, try_enum
+from discord import Message, PartialMessage, MessageReference
+from .app import _handle_edit_params, _handle_send_prams, Adapter
+from .core import InteractionData, SlashCommandOption, Resolved, ApplicationCommand, DummyOption
+from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict, Tuple, Coroutine
+
 
 
 class Context:
     def __init__(self, interaction: discord.Interaction):
-        self._ia = interaction
+        self.interaction = interaction
         self._deferred = False
         self._invisible = False
         self.original_message: Optional[discord.Message] = None
@@ -29,11 +30,11 @@ class Context:
         """
         Returns the client of the interaction
         """
-        return self._ia.client
+        return self.interaction.client
 
     @property
     def _adapter(self):
-        return Adapter(self._ia)
+        return Adapter(self.interaction)
 
 
     @property
@@ -41,35 +42,35 @@ class Context:
         """
         Returns the type of the invoked application command
         """
-        return try_enum(ApplicationCommandType, self._ia.data['type'])
+        return try_enum(ApplicationCommandType, self.interaction.data['type'])
 
     @property
     def name(self) -> str:
         """
         Returns the name of the invoked application command
         """
-        return self._ia.data['name']
+        return self.interaction.data['name']
 
     @property
     def description(self) -> str:
         """
         Returns the description of the invoked application command
         """
-        return self._ia.data.get('description')
+        return self.interaction.data['description']
 
     @property
     def token(self) -> str:
         """
         Returns the token of the application command interaction
         """
-        return self._ia.token
+        return self.interaction.token
 
     @property
     def id(self) -> int:
         """
         Returns the id of the interaction
         """
-        return int(self._ia.data['id'])
+        return int(self.interaction.data['id'])
 
     @property
     def command(self) -> ApplicationCommand:
@@ -83,14 +84,14 @@ class Context:
         """
         Returns the version of the interaction
         """
-        return self._ia.version
+        return self.interaction.version
 
     @property
     def data(self) -> InteractionData:
         """
         Returns the application command data
         """
-        return InteractionData(**self._ia.data)
+        return InteractionData(**self.interaction.data)
 
     @property
     def _modal_values(self):
@@ -119,7 +120,7 @@ class Context:
             return self._resolved.users[user_id]
 
     @property
-    def options(self) -> Dict[str, ChatInputOption]:
+    def options(self) -> Dict[str, SlashCommandOption]:
         """
         Returns the dictionary of the options of the invoked application command
         if the command is a message/user command, this will return an empty dictionary
@@ -131,7 +132,7 @@ class Context:
         return self._parsed_options
 
     @property
-    def _parsed_options(self) -> Dict[str, ChatInputOption]:
+    def _parsed_options(self) -> Dict[str, SlashCommandOption]:
         container = {}
         options = self.data.options
         if options:
@@ -139,22 +140,22 @@ class Context:
                 type = option['type']
                 name = option['name']
                 if type > OptionType.SUBCOMMAND_GROUP.value:
-                    container[name] = ChatInputOption(option, self.guild, self.client, self._resolved)
+                    container[name] = SlashCommandOption(self, option)
                 if type == OptionType.SUBCOMMAND.value:
                     family = option['name']
                     container[family] = DummyOption
                     new_options = option['options']
-                    parsed = ChatInputOption._hybrid(family, new_options)
+                    parsed = SlashCommandOption._hybrid(family, new_options)
                     for new in parsed:
-                        container[new['name']] = ChatInputOption(new, self.guild, self.client, self._resolved)
+                        container[new['name']] = SlashCommandOption(self, new)
                 if type == OptionType.SUBCOMMAND_GROUP.value:
                     origin = option['name']
                     container[origin] = DummyOption
                     for new_option in option['options']:
                         family = f"{origin}_{new_option['name']}"
-                        parsed = ChatInputOption._hybrid(family, new_option['options'])
+                        parsed = SlashCommandOption._hybrid(family, new_option['options'])
                         for new in parsed:
-                            container[new['name']] = ChatInputOption(new, self.guild, self.client, self._resolved)
+                            container[new['name']] = SlashCommandOption(self, new)
             return container
         return {}
 
@@ -163,7 +164,7 @@ class Context:
         """
         Returns the application id or client id of the application command
         """
-        return self._ia.application_id
+        return self.interaction.application_id
 
     @property
     def responded(self) -> bool:
@@ -172,12 +173,12 @@ class Context:
         """
         return self._deferred
 
-    async def defer(self, ephemeral: bool = False):
+    async def defer(self, ephemeral: bool = False) -> None:
         """
         Defers the application command interaction for responding later
         """
         if self._deferred:
-            raise discord.ClientException('Cannot defer already (deferred / responded) interaction')
+            raise discord.ClientException('Cannot defer already deferred or responded interaction')
         await self._adapter.post_to_delay(ephemeral)
         self._deferred = True
         self._invisible = ephemeral
@@ -196,7 +197,7 @@ class Context:
         Returns the permissions of the user who used the command
         for the channel on which the command was used
         """
-        return self._ia.permissions
+        return self.interaction.permissions
 
     @property
     def me(self) -> discord.Member:
@@ -211,10 +212,11 @@ class Context:
         """
         Returns the channel on which the command was used
         """
-        channel = self._ia.channel
-        # since the channel is partial messageable
-        # we won't be able to check user/role permissions
-        # rather we will use the channel id and get channel from cache
+        channel = self.interaction.channel
+
+        if not self.guild:
+            return channel  # type: ignore
+
         return self.guild.get_channel(channel.id)
 
     @property
@@ -222,14 +224,15 @@ class Context:
         """
         Returns the guild where the command was used
         """
-        return self._ia.guild
+        return self.interaction.guild
 
     @property
     def author(self) -> discord.Member:
         """
-        Returns the author (User/Member) of the application command
+        Returns the author of the application command as discord.Member
+        If the author is not in the guild, returns the discord.User
         """
-        return self._ia.user
+        return self.interaction.user
 
     async def send_modal(self, modal: Modal):
         """
@@ -272,7 +275,7 @@ class Context:
         if view and views:
             raise ValueError('Can not mix view and views')
 
-        return await self._ia.channel.send(
+        return await self.interaction.channel.send(
             content=str(content), mention_author=mention_author, tts=tts,
             file=file, files=files, embed=embed, embeds=embeds, view=view, stickers=stickers,
             reference=reference, nonce=nonce, delete_after=delete_after, allowed_mentions=allowed_mentions)

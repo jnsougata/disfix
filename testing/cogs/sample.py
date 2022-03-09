@@ -137,14 +137,14 @@ class Sample(app_util.Cog):
         modal.add_field(
             label='About',
             custom_id='about',
-            style=app_util.TextInputStyle.PARAGRAPH,
+            style=app_util.ModalTextType.LONG,
             required=False,
             hint='Write something about yourself...',
         )
         modal.add_field(
             label='Tip',
             custom_id='tip',
-            style=app_util.TextInputStyle.SHORT,
+            style=app_util.ModalTextType.SHORT,
             required=True,
             hint='Give me some tips to improve...',
             max_length=100,

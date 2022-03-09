@@ -8,12 +8,12 @@ def try_enum(enum_class, value):
         return None
 
 
-class TextInputStyle(Enum):
+class ModalTextType(Enum):
     SHORT = 1
-    PARAGRAPH = 2
+    LONG = 2
 
 
-class ModalFieldStyle(Enum):
+class ModalFieldType(Enum):
     TEXT_INPUT = 4
 
 
@@ -24,8 +24,8 @@ class ApplicationCommandType(Enum):
 
 
 class PermissionType(Enum):
-    USER = 2
     ROLE = 1
+    USER = 2
 
 
 class OptionType(Enum):
@@ -42,7 +42,7 @@ class OptionType(Enum):
     ATTACHMENT = 11
 
 
-class ChannelType(Enum):
+class DiscordChannelType(Enum):
     GUILD_TEXT = 0
     DM = 1
     GUILD_VOICE = 2

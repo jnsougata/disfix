@@ -21,7 +21,8 @@ from .errors import *
 from .app import Overwrite
 from .context import Context
 from .input_chat import *
+from .modal import Modal
 from .input_user import UserCommand
 from .input_msg import MessageCommand
-from .enums import ChannelType, TextInputStyle
-from .modal import Modal
+from .enums import DiscordChannelType, ModalTextType
+

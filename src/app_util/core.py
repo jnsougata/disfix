@@ -113,22 +113,16 @@ class DummyOption:
     value = True
 
 
-class ChatInputOption:
+class SlashCommandOption:
 
-    def __init__(
-            self,
-            data: Dict[str, Any],
-            guild: discord.Guild,
-            client: discord.Client,
-            resolved: Resolved,
-    ):
+    def __init__(self, parent, data: Dict[str, Any]):
         self._data = data
-        self._guild = guild
-        self._client = client
-        self._resolved = resolved
+        self._guild = parent.guild
+        self._client = parent.client
+        self._resolved = parent._resolved
 
     def __repr__(self):
-        return f'<ChatInputOption name={self.name} type={self.type}>'
+        return f'<SlashCommandOption name={self.name} type={self.type}>'
 
     @property
     def name(self) -> str:

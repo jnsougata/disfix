@@ -51,7 +51,7 @@ def _handle_edit_params(
 
     if content is not MISSING:
         if content is not None:
-            payload['content'] = content  # type: ignore
+            payload['content'] = str(content)  # type: ignore
         else:
             payload['content'] = None
 
@@ -62,7 +62,7 @@ def _handle_edit_params(
             payload['embeds'] = [embed.to_dict()]
     elif embeds is not MISSING:
         if len(embeds) > 10:
-            raise discord.errors.InvalidArgument('embeds has a maximum of 10 elements.')
+            raise discord.errors.InvalidArgument('A message can have at most 10 embeds.')
         payload['embeds'] = [e.to_dict() for e in embeds]
 
     if allowed_mentions is MISSING:
@@ -95,19 +95,15 @@ def _handle_edit_params(
         file_ = fs[0]
         form.append(
             {
-                'name': 'file',
-                'value': file_.fp,
-                'filename': file_.filename,
-                'content_type': 'application/octet-stream',
+                'name': 'file', 'value': file_.fp, 'filename': file_.filename,
+                'content_type': 'application/octet-stream'
             }
         )
     else:
         for index, file_ in enumerate(fs):
             form.append(
                 {
-                    'name': f'file{index}',
-                    'value': file_.fp,
-                    'filename': file_.filename,
+                    'name': f'file{index}', 'value': file_.fp, 'filename': file_.filename,
                     'content_type': 'application/octet-stream',
                 }
             )
@@ -177,9 +173,7 @@ def _handle_send_prams(
         file_ = fs[0]
         form.append(
             {
-                'name': 'file',
-                'value': file_.fp,
-                'filename': file_.filename,
+                'name': 'file', 'value': file_.fp, 'filename': file_.filename,
                 'content_type': 'application/octet-stream',
             }
         )
@@ -187,9 +181,7 @@ def _handle_send_prams(
         for index, file_ in enumerate(fs):
             form.append(
                 {
-                    'name': f'file{index}',
-                    'value': file_.fp,
-                    'filename': file_.filename,
+                    'name': f'file{index}', 'value': file_.fp, 'filename': file_.filename,
                     'content_type': 'application/octet-stream',
                 }
             )

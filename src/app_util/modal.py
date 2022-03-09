@@ -4,7 +4,7 @@ import discord
 from discord.utils import MISSING
 from typing import Callable
 from typing import Optional, Union, Any, Sequence, List, Dict
-from .enums import TextInputStyle, ModalFieldStyle
+from .enums import ModalTextType, ModalFieldType
 
 
 class Modal:
@@ -23,7 +23,7 @@ class Modal:
             label: str,
             custom_id: str,
             *,
-            style: TextInputStyle,
+            style: ModalTextType,
             value: str = None,
             hint: str = None,
             min_length: int = 0,
@@ -47,7 +47,7 @@ class Modal:
                         "max_length": max_length,
                         "placeholder": hint or "",
                         "required": required,
-                        "type": ModalFieldStyle.TEXT_INPUT.value,
+                        "type": ModalFieldType.TEXT_INPUT.value,
                     }
                 ]
             }
