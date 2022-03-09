@@ -300,6 +300,5 @@ class ApplicationCommand:
                 self._client._application_commands.pop(updated.id)
                 self._client._application_commands[updated.id] = updated
                 return updated
-        else:
-            raise TypeMismatch(f'Type mismatched while editing command `{self.name}`'
-                               f'\nexpected: {self.type} | got: {new_command.type}')
+        raise CommandTypeMismatched(
+            f'Type mismatched while editing command `{self.name}`. Expected: {self.type} & got: {new_command.type}')
