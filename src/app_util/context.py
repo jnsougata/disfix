@@ -195,7 +195,8 @@ class Context:
     def permissions(self) -> discord.Permissions:
         """
         Returns the permissions of the user who used the command
-        for the channel on which the command was used
+        for the channel on which the command was used.
+        For a non-guild context returns an empty permissions object
         """
         return self.interaction.permissions
 
