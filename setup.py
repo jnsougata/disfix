@@ -9,7 +9,7 @@ with open('README.rst') as f:
 
 setup(
     name='app_util',
-    version='0.3.3',
+    version='0.3.4',
     description='Asynchronous Application Command wrapper for discord.py 2.0',
     long_description=readme,
     long_description_content_type="text/x-rst",

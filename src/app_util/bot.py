@@ -52,7 +52,6 @@ class Bot(commands.Bot):
         self.__checks = {}
         self._automatics = {}
         self._application_commands: Dict[int, ApplicationCommand] = {}
-        self.__route = Route.BASE = f'https://discord.com/api/v10'
 
     @property
     def application_commands(self) -> List[ApplicationCommand]:
@@ -124,7 +123,7 @@ class Bot(commands.Bot):
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
 
 
-    def _walk_app_commands(self, cog: Cog):
+    async def _walk_app_commands(self, cog: Cog):
 
         for name, auto in cog.__automatics__.items():
             if asyncio.iscoroutinefunction(auto):
@@ -155,12 +154,12 @@ class Bot(commands.Bot):
             else:
                 raise NonCoroutine(f'`{m.__name__}` must be a coroutine function')
 
-    def add_application_cog(self, cog: Cog) -> None:
+    async def add_application_cog(self, cog: Cog) -> None:
         """
         Adds an app_util cog to the application
         """
 
-        self._walk_app_commands(cog)
+        await self._walk_app_commands(cog)
 
     async def sync_current_commands(self) -> None:
         """

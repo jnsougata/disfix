@@ -163,5 +163,5 @@ class Sample(app_util.Cog):
             await mcx.send_response(embed=embed)
 
 
-def setup(bot: app_util.Bot):
-    bot.add_application_cog(Sample(bot))
+async def setup(bot: app_util.Bot):
+    await bot.add_application_cog(Sample(bot))

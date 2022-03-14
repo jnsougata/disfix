@@ -46,7 +46,7 @@ class StrOption(Option):
             description: str,
             *,
             required: bool = True,
-            choices: list[Choice] = None,
+            choices: List[Choice] = None,
             autocomplete: bool = False,
     ):
         super().__init__(name, OptionType.STRING)
@@ -76,7 +76,7 @@ class IntOption(Option):
             min_value: int = None,
             max_value: int = None,
             required: bool = True,
-            choices: list[Choice] = None,
+            choices: List[Choice] = None,
             autocomplete: bool = False
     ):
         super().__init__(name, OptionType.INTEGER)
@@ -108,7 +108,7 @@ class BoolOption(Option):
             description: str,
             *,
             required: bool = True,
-            choices: list[Choice] = None,
+            choices: List[Choice] = None,
     ):
         super().__init__(name, OptionType.BOOLEAN)
         self.data = {
@@ -130,7 +130,7 @@ class UserOption(Option):
             description: str,
             *,
             required: bool = True,
-            choices: list[Choice] = None
+            choices: List[Choice] = None
     ):
         super().__init__(name, OptionType.USER)
         self.data = {
@@ -153,7 +153,7 @@ class ChannelOption(Option):
             description: str,
             *,
             required: bool = True,
-            choices: list[Choice] = None,
+            choices: List[Choice] = None,
             channel_types: [DiscordChannelType] = None
     ):
         super().__init__(name, OptionType.CHANNEL)
@@ -200,7 +200,7 @@ class MentionableOption(Option):
             description: str,
             *,
             required: bool = True,
-            choices: list[Choice] = None
+            choices: List[Choice] = None
     ):
         super().__init__(name, OptionType.MENTIONABLE)
         self.data = {
@@ -222,10 +222,10 @@ class NumberOption(Option):
             name: str,
             description: str,
             *,
-            min_value: float = None,
-            max_value: float = None,
+            min_value: Union[float, int] = None,
+            max_value: Union[float, int] = None,
             required: bool = True,
-            choices: list[Choice] = None,
+            choices: List[Choice] = None,
             autocomplete: bool = False
     ):
         super().__init__(name, OptionType.NUMBER)
@@ -286,7 +286,7 @@ class SubCommand(Option):
             "type": self.type.value,
         }
         if options:
-            self.data["options"] = [op._data for op in options]
+            self.data["options"] = [op.data for op in options]
 
 
 class SubCommandGroup(Option):
@@ -307,7 +307,7 @@ class SubCommandGroup(Option):
             "type": self.type.value,
         }
         if options:
-            self.data["options"] = [sc._data for sc in options]
+            self.data["options"] = [sc.data for sc in options]
 
 
 class SlashCommand(ApplicationCommandOrigin):
@@ -322,7 +322,7 @@ class SlashCommand(ApplicationCommandOrigin):
             *,
             options: List[Union[Option, SubCommand, SubCommandGroup]] = None,
             default_access: bool = True,
-            overwrites: list[Overwrite] = None,
+            overwrites: List[Overwrite] = None,
     ) -> None:
         fmt_name = name.lower().replace(' ', '_')
         super().__init__(fmt_name, ApplicationCommandType.CHAT_INPUT)

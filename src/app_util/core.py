@@ -36,6 +36,7 @@ def _make_qual(name: str, guild_id: Optional[int], ctype: ApplicationCommandType
 class InteractionData:
     name: str = None
     type: int = None
+    guild_id: Optional[str] = None
     id: Union[int, str] = None
     resolved: Optional[dict] = None
     options: Optional[List[dict]] = None
@@ -50,63 +51,45 @@ class InteractionData:
 
 
 class Resolved:
-    def __init__(self, payload: dict, ctx):
-        self._ctx = ctx
-        self._payload = payload
-        self._client = ctx.client
+    def __init__(self, data: dict, c):
+        self._c = c
+        self.data = data
+        self.client = c.client
+
 
     @property
     def users(self) -> Dict[int, discord.User]:
-        if self._payload.get('users'):
-            return {
-                int(key): discord.User(
-                    data=payload,
-                    state=self._client._connection)
-                for key, payload in self._payload['users'].items()}
+        if self.data.get('users'):
+            return {int(key): discord.User(data=payload, state=self.client._connection)
+                    for key, payload in self.data['users'].items()}
 
     @property
     def members(self) -> Dict[int, discord.Member]:
-        if self._payload.get('members'):
-            return {
-                int(key): self._ctx.guild.get_member(int(key))
-                for key, _ in self._payload['members'].items()}
+        if self.data.get('members'):
+            return {int(key): self._c.guild.get_member(int(key)) for key, _ in self.data['members'].items()}
 
     @property
     def roles(self) -> Dict[int, discord.Role]:
-        if self._payload.get('roles'):
-            return {
-                int(key): discord.Role(
-                    guild=self._ctx.guild,
-                    data=payload,
-                    state=self._client._connection)
-                for key, payload in self._payload['roles'].items()}
+        if self.data.get('roles'):
+            return {int(key): discord.Role(guild=self._c.guild, data=payload, state=self.client._connection)
+                    for key, payload in self.data['roles'].items()}
 
     @property
     def channels(self) -> Dict[int, discord.abc.GuildChannel]:
-        if self._payload.get('channels'):
-            return {
-                int(key): self._ctx.guild.get_channel(int(key))
-                for key, _ in self._payload['channels'].items()
-            }
+        if self.data.get('channels'):
+            return {int(key): self._c.guild.get_channel(int(key)) for key, _ in self.data['channels'].items()}
 
     @property
     def messages(self) -> Dict[int, discord.Message]:
-        if self._payload.get('messages'):
-            return {
-                int(key): discord.Message(
-                    data=payload,
-                    state=self._client._connection,
-                    channel=self._ctx.channel)
-                for key, payload in self._payload['messages'].items()}
+        if self.data.get('messages'):
+            return {int(key): discord.Message(data=payload, state=self.client._connection, channel=self._c.channel)
+                    for key, payload in self.data['messages'].items()}
 
     @property
     def attachments(self) -> Dict[int, discord.Attachment]:
-        if self._payload.get('attachments'):
-            return {
-                int(key): discord.Attachment(
-                    data=payload,
-                    state=self._client._connection)
-                for key, payload in self._payload['attachments'].items()}
+        if self.data.get('attachments'):
+            return {int(key): discord.Attachment(data=payload, state=self.client._connection)
+                    for key, payload in self.data['attachments'].items()}
 
 
 class DummyOption:
@@ -115,62 +98,57 @@ class DummyOption:
 
 class SlashCommandOption:
 
-    def __init__(self, parent, data: Dict[str, Any]):
-        self._data = data
-        self._guild = parent.guild
-        self._client = parent.client
-        self._resolved = parent._resolved
+    def __init__(self, p, data: Dict[str, Any]):
+        self.data = data
+        self.guild = p.guild
+        self.client = p.client
+        self._resolved = p._resolved
 
     def __repr__(self):
         return f'<SlashCommandOption name={self.name} type={self.type}>'
 
     @property
     def name(self) -> str:
-        return self._data['name']
+        return self.data['name']
 
     @property
     def type(self):
-        value = self._data['type']
+        value = self.data['type']
         return try_enum(OptionType, value)
 
     @staticmethod
     def _hybrid(family: str, options: List[Dict[str, Any]]):
-        return [
-            {
-                'type': generic['type'],
-                'value': generic['value'],
-                'name': f'{family}_{generic["name"]}'
-            } for generic in options
-        ]
+        return [{'type': generic['type'], 'value': generic['value'], 'name': f'{family}_{generic["name"]}'}
+                for generic in options]
 
     @property
     def value(self) -> Any:
 
         if self.type is OptionType.STRING:
-            return self._data.get('value')
+            return self.data.get('value')
 
         elif self.type is OptionType.INTEGER:
-            return self._data.get('value')
+            return self.data.get('value')
 
         elif self.type is OptionType.BOOLEAN:
-            return self._data.get('value')
+            return self.data.get('value')
 
         elif self.type is OptionType.USER:
-            user_id = int(self._data.get('value'))
+            user_id = int(self.data.get('value'))
             return self._resolved.users[user_id]
 
         elif self.type is OptionType.CHANNEL:
-            channel_id = int(self._data.get('value'))
+            channel_id = int(self.data.get('value'))
             return self._resolved.channels[channel_id]
 
         elif self.type is OptionType.ROLE:
-            role_id = int(self._data.get('value'))
+            role_id = int(self.data.get('value'))
             return self._resolved.roles[role_id]
 
         elif self.type is OptionType.MENTIONABLE:
-            target_id = int(self._data.get('value'))
+            target_id = int(self.data.get('value'))
             map = {}
-            if not self._guild:
+            if not self.guild:
                 if self._resolved.users:
                     map.update(self._resolved.users)
                 if self._resolved.roles:
@@ -185,17 +163,17 @@ class SlashCommandOption:
             return map[target_id]
 
         elif self.type is OptionType.NUMBER:
-            return self._data['value']
+            return self.data['value']
 
         elif self.type is OptionType.ATTACHMENT:
-            attachment_id = int(self._data['value'])
+            attachment_id = int(self.data['value'])
             return self._resolved.attachments[attachment_id]
         else:
-            return self._data.get('value')
+            return self.data.get('value')
 
     @property
     def focused(self) -> bool:
-        return self._data.get('focused')
+        return self.data.get('focused')
 
 
 class ApplicationCommand:
