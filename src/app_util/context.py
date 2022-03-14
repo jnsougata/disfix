@@ -17,9 +17,9 @@ from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, D
 
 class Context:
     def __init__(self, interaction: discord.Interaction):
-        self.interaction = interaction
         self._deferred = False
         self._invisible = False
+        self.interaction = interaction
         self.original_message: Optional[discord.Message] = None
 
     def __repr__(self):

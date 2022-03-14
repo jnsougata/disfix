@@ -20,16 +20,16 @@ def _try_flake(snowflake: str) -> Union[int, None]:
 
 def _make_qual(name: str, guild_id: Optional[int], ctype: ApplicationCommandType, ) -> str:
     if guild_id:
-        partial = f'{name}_{guild_id}'
+        post_fix = f'{name}_{guild_id}'
     else:
-        partial = name
+        post_fix = name
 
     if ctype is ApplicationCommandType.CHAT_INPUT:
-        return '__CHAT__' + partial
+        return '__CHAT__' + post_fix
     if ctype is ApplicationCommandType.MESSAGE:
-        return '__MESSAGE__' + partial
+        return '__MESSAGE__' + post_fix
     if ctype is ApplicationCommandType.USER:
-        return '__USER__' + partial
+        return '__USER__' + post_fix
 
 
 @dataclass(frozen=True)
@@ -52,7 +52,7 @@ class InteractionData:
 
 class Resolved:
     def __init__(self, data: dict, c):
-        self._c = c
+        self.__c = c
         self.data = data
         self.client = c.client
 
@@ -66,23 +66,23 @@ class Resolved:
     @property
     def members(self) -> Dict[int, discord.Member]:
         if self.data.get('members'):
-            return {int(key): self._c.guild.get_member(int(key)) for key, _ in self.data['members'].items()}
+            return {int(key): self.__c.guild.get_member(int(key)) for key, _ in self.data['members'].items()}
 
     @property
     def roles(self) -> Dict[int, discord.Role]:
         if self.data.get('roles'):
-            return {int(key): discord.Role(guild=self._c.guild, data=payload, state=self.client._connection)
+            return {int(key): discord.Role(guild=self.__c.guild, data=payload, state=self.client._connection)
                     for key, payload in self.data['roles'].items()}
 
     @property
     def channels(self) -> Dict[int, discord.abc.GuildChannel]:
         if self.data.get('channels'):
-            return {int(key): self._c.guild.get_channel(int(key)) for key, _ in self.data['channels'].items()}
+            return {int(key): self.__c.guild.get_channel(int(key)) for key, _ in self.data['channels'].items()}
 
     @property
     def messages(self) -> Dict[int, discord.Message]:
         if self.data.get('messages'):
-            return {int(key): discord.Message(data=payload, state=self.client._connection, channel=self._c.channel)
+            return {int(key): discord.Message(data=payload, state=self.client._connection, channel=self.__c.channel)
                     for key, payload in self.data['messages'].items()}
 
     @property
