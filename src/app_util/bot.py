@@ -63,18 +63,22 @@ class Bot(commands.Bot):
     async def _handle_interaction(self, interaction: discord.Interaction):
 
         if interaction.type is InteractionType.autocomplete:
-            c = Context(interaction)
-            qual = c.command._qual
-            try:
+
+            async def wrapped_task():
+                c = Context(interaction)
+                qual = c.command._qual
                 try:
-                    self._aux[qual]
-                except KeyError:
-                    raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
-                auto = self._automatics[qual]
-                args, kwargs = _build_autocomplete_prams(c._parsed_options, auto)
-                await auto(c, *args, **kwargs)
-            except discord.errors.HTTPException:
-                pass
+                    try:
+                        self._aux[qual]
+                    except KeyError:
+                        raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
+                    auto = self._automatics[qual]
+                    args, kwargs = _build_autocomplete_prams(c._parsed_options, auto)
+                    await auto(c, *args, **kwargs)
+                except discord.errors.HTTPException:
+                    pass
+
+            await self.loop.create_task(wrapped_task())
 
         if interaction.type is InteractionType.modal_submit:
 
