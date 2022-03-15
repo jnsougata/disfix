@@ -41,7 +41,7 @@ def _build_prams(options: Dict[str, Any], callable: Callable):
     return args, kwargs
 
 
-def _build_ctx_menu_arg(c: Context):
+def _build_ctx_menu_param(c: Context):
     if c.type is ApplicationCommandType.USER:
         return c._target_user
     elif c.type is ApplicationCommandType.MESSAGE:

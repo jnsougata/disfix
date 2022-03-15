@@ -15,10 +15,9 @@ from .input_chat import SlashCommand
 from .input_user import UserCommand
 from .input_msg import MessageCommand
 from discord.ext import commands
-from discord.http import Route
 from discord.enums import InteractionType
 from typing import Callable, Optional, Any, Union, List, Dict, Tuple
-from .parser import _build_prams, _build_ctx_menu_arg, _build_modal_prams, _build_autocomplete_prams
+from .parser import _build_prams, _build_ctx_menu_param, _build_modal_prams, _build_autocomplete_prams
 
 
 __all__ = ['Bot']
@@ -78,49 +77,58 @@ class Bot(commands.Bot):
                 pass
 
         if interaction.type is InteractionType.modal_submit:
-            mc = Context(interaction)
-            callback_id = interaction.data['custom_id']
-            if callback_id in self._modals:
-                func = self._modals.pop(callback_id)
-                args, kwargs = _build_modal_prams(mc._modal_values, func)
-                await func(mc, *args, **kwargs)
+
+            async def wrapped_task():
+                m = Context(interaction)
+                target = interaction.data['custom_id']
+                if target in self._modals:
+                    func = self._modals.pop(target)
+                    args, kwargs = _build_modal_prams(m._modal_values, func)
+                    await func(m, *args, **kwargs)
+
+            await self.loop.create_task(wrapped_task())
+
 
         if interaction.type == InteractionType.application_command:
-            c = Context(interaction)
-            qual = c.command._qual
-            try:
+
+            async def wrapped_task():
+                c = Context(interaction)
+                qual = c.command._qual
                 try:
-                    cog = self._aux[qual]
-                except KeyError:
-                    raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
-                check = self.__checks.get(qual)
-                func = self._connection.hooks[qual]
-                if check:
                     try:
-                        is_done = await check(c)
-                    except Exception as e:
-                        raise CheckFailure(f'Check named `{check.__name__}` raised an exception: ({e})')
-                    if is_done:
-                        if c.type is ApplicationCommandType.CHAT_INPUT:
-                            args, kwargs = _build_prams(c._parsed_options, func)
-                            await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
-                        else:
-                            arg = _build_ctx_menu_arg(c)
-                            await self._connection.call_hooks(qual, cog, c, arg)
-                else:
+                        cog = self._aux[qual]
+                    except KeyError:
+                        raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
+                    check = self.__checks.get(qual)
+                    func = self._connection.hooks[qual]
+                    if check:
+                        try:
+                            is_done = await check(c)
+                        except Exception as e:
+                            raise CheckFailure(f'Check named `{check.__name__}` raised an exception: ({e})')
+                        if is_done:
+                            if c.type is ApplicationCommandType.CHAT_INPUT:
+                                args, kwargs = _build_prams(c._parsed_options, func)
+                                return await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
+
+                            param = _build_ctx_menu_param(c)
+                            return await self._connection.call_hooks(qual, cog, c, param)
+
                     if c.type is ApplicationCommandType.CHAT_INPUT:
                         args, kwargs = _build_prams(c._parsed_options, func)
-                        await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
-                    else:
-                        arg = _build_ctx_menu_arg(c)
-                        await self._connection.call_hooks(qual, cog, c, arg)
-            except Exception as e:
-                eh = self._connection.hooks.get('on_command_error')
-                if eh:
-                    await eh(c, e)
-                    return
-                print(f'Ignoring exception while invoking application command `{c!r}`\n', file=sys.stderr)
-                traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
+                        return await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
+
+                    param = _build_ctx_menu_param(c)
+                    await self._connection.call_hooks(qual, cog, c, param)
+
+                except Exception as e:
+                    eh = self._connection.hooks.get('on_command_error')
+                    if eh:
+                        return await eh(c, e)
+                    print(f'Ignoring exception while invoking application command `{c!r}`\n', file=sys.stderr)
+                    traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
+
+            await self.loop.create_task(wrapped_task())
 
 
     async def _walk_app_commands(self, cog: Cog):
