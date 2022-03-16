@@ -1,5 +1,5 @@
 import pathlib
-from app_util import __version__, __author__
+from src.app_util import __version__, __author__
 from setuptools import setup, find_packages
 
 
