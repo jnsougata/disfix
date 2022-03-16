@@ -20,4 +20,3 @@ from .modal import Modal
 from .input_user import UserCommand
 from .input_msg import MessageCommand
 from .enums import DiscordChannelType, ModalTextType
-
