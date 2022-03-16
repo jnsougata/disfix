@@ -1,5 +1,4 @@
 import pathlib
-from src.app_util import __version__, __author__
 from setuptools import setup, find_packages
 
 
@@ -10,7 +9,7 @@ with open('README.rst') as f:
 
 setup(
     name='app_util',
-    version=__version__,
+    version='0.3.5',
     description='Asynchronous Application Command wrapper for discord.py 2.0',
     long_description=readme,
     long_description_content_type="text/x-rst",
@@ -18,7 +17,8 @@ setup(
         'Documentation': 'https://app-util.readthedocs.io/en/latest/',
         'Source': 'https://github.com/jnsougata/app_util'
     },
-    author=__author__,
+    author='jnsougata',
+    author_email='jnsougata@gmail.com',
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Intended Audience :: Developers',

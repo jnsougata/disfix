@@ -8,10 +8,6 @@ A basic slash command extension for discord.py.
 :license: MIT, see LICENSE for more details.
 
 """
-__version__ = '0.3.5'
-__title__ = 'app_util'
-__author__ = 'jnsougata'
-__copyright__ = 'Copyright 2022-present jnsougata'
 
 
 from .bot import Bot
