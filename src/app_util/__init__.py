@@ -2,7 +2,7 @@
 Discord API Wrapper Extension
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A basic slash command extension for discord.py.
+A basic application command extension for discord.py.
 
 :copyright: (c) 2022-present jnsougata
 :license: MIT, see LICENSE for more details.
