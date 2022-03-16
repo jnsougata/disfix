@@ -51,6 +51,11 @@ class Bot(commands.Bot):
         self.__checks = {}
         self._automatics = {}
         self._application_commands: Dict[int, ApplicationCommand] = {}
+        self.tree.error(self.__supress)   # type: ignore
+
+
+    async def __supress(self, a, b, c):
+        pass
 
     @property
     def application_commands(self) -> List[ApplicationCommand]:
@@ -268,8 +273,8 @@ class Bot(commands.Bot):
         self.add_listener(self._handle_interaction, 'on_interaction')
         self.add_listener(self._sync_overwrites, 'on_ready')
         await self.login(token)
-        app_info = await self.application_info()
-        self._connection.application_id = app_info.id
+        app = await self.application_info()
+        self._connection.application_id = app.id
         await self.sync_global_commands()
         await self.sync_current_commands()
         await self.connect(reconnect=reconnect)
