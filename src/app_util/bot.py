@@ -101,10 +101,10 @@ class Bot(commands.Bot):
                 func = self._connection.hooks[qual]
                 if check is not None:
                     try:
-                        is_done = await check(c)
+                        done = await check(c)
                     except Exception as e:
                         raise CheckFailure(f'Check named `{check.__name__}` raised an exception: ({e})')
-                    if is_done:
+                    if done is True:
                         if c.type is ApplicationCommandType.CHAT_INPUT:
                             args, kwargs = _build_prams(c._parsed_options, func)
                             await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
