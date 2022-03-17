@@ -99,7 +99,7 @@ class Bot(commands.Bot):
                     raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
                 check = self.__checks.get(qual)
                 func = self._connection.hooks[qual]
-                if check:
+                if check is not None:
                     try:
                         is_done = await check(c)
                     except Exception as e:
@@ -107,17 +107,17 @@ class Bot(commands.Bot):
                     if is_done:
                         if c.type is ApplicationCommandType.CHAT_INPUT:
                             args, kwargs = _build_prams(c._parsed_options, func)
-                            return await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
-
+                            await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
+                        else:
+                            param = _build_ctx_menu_param(c)
+                            await self._connection.call_hooks(qual, cog, c, param)
+                else:
+                    if c.type is ApplicationCommandType.CHAT_INPUT:
+                        args, kwargs = _build_prams(c._parsed_options, func)
+                        await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
+                    else:
                         param = _build_ctx_menu_param(c)
-                        return await self._connection.call_hooks(qual, cog, c, param)
-
-                if c.type is ApplicationCommandType.CHAT_INPUT:
-                    args, kwargs = _build_prams(c._parsed_options, func)
-                    return await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
-
-                param = _build_ctx_menu_param(c)
-                await self._connection.call_hooks(qual, cog, c, param)
+                        await self._connection.call_hooks(qual, cog, c, param)
 
             except Exception as e:
                 eh = self._connection.hooks.get('on_command_error')
