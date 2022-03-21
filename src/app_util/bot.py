@@ -253,8 +253,8 @@ class Bot(commands.Bot):
         """
         Does the login and command registrations
         """
-        self.add_listener(self._handle_interaction, 'on_interaction')
         self.add_listener(self._sync_overwrites, 'on_ready')
+        self.add_listener(self._handle_interaction, 'on_interaction')
         await self.login(token)
         app = await self.application_info()
         self._connection.application_id = app.id
