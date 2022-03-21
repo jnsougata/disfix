@@ -45,7 +45,7 @@ class Bot(commands.Bot):
             description=description,
             **options
         )
-        self._aux = {}
+        self.__objs = {}
         self._queue = {}
         self._modals = {}
         self.__checks = {}
@@ -71,7 +71,7 @@ class Bot(commands.Bot):
             c = Context(interaction)
             qual = c.command._qual
             try:
-                self._aux[qual]
+                self.__objs[qual]
             except KeyError:
                 raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
             auto = self._automatics[qual]
@@ -82,20 +82,20 @@ class Bot(commands.Bot):
             m = Context(interaction)
             target = interaction.data['custom_id']
             if target in self._modals:
-                func = self._modals.pop(target)
-                args, kwargs = _build_modal_prams(m._modal_values, func)
-                self.loop.create_task(func(m, *args, **kwargs))
+                on_submit = self._modals.pop(target)
+                args, kwargs = _build_modal_prams(m._modal_values, on_submit)
+                await on_submit(m, *args, **kwargs)
 
         if interaction.type == InteractionType.application_command:
             c = Context(interaction)
             qual = c.command._qual
             try:
                 try:
-                    cog = self._aux[qual]
+                    cog = self.__objs[qual]
                 except KeyError:
                     raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
                 check = self.__checks.get(qual)
-                func = self._connection.hooks[qual]
+                on_submit = self._connection.hooks[qual]
                 if check is not None:
                     try:
                         done = await check(c)
@@ -103,25 +103,25 @@ class Bot(commands.Bot):
                         raise CheckFailure(f'Check named `{check.__name__}` raised an exception: ({e})')
                     if done is True:
                         if c.type is ApplicationCommandType.CHAT_INPUT:
-                            args, kwargs = _build_prams(c._parsed_options, func)
-                            self.loop.create_task(self._connection.call_hooks(qual, cog, c, *args, **kwargs))
+                            args, kwargs = _build_prams(c._parsed_options, on_submit)
+                            await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
                         else:
                             param = _build_ctx_menu_param(c)
-                            self.loop.create_task(self._connection.call_hooks(qual, cog, c, param))
+                            await self._connection.call_hooks(qual, cog, c, param)
                 else:
                     if c.type is ApplicationCommandType.CHAT_INPUT:
-                        args, kwargs = _build_prams(c._parsed_options, func)
-                        self.loop.create_task(self._connection.call_hooks(qual, cog, c, *args, **kwargs))
+                        args, kwargs = _build_prams(c._parsed_options, on_submit)
+                        await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
                     else:
                         param = _build_ctx_menu_param(c)
-                        self.loop.create_task(self._connection.call_hooks(qual, cog, c, param))
-
+                        await self._connection.call_hooks(qual, cog, c, param)
             except Exception as e:
                 error_handler = self._connection.hooks.get('on_command_error')
                 if error_handler:
-                    return self.loop.create_task(error_handler(c, e))
-                print(f'Ignoring exception while invoking application command `{c!r}`\n', file=sys.stderr)
-                traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
+                    self.loop.create_task(error_handler(c, e))
+                else:
+                    print(f'Ignoring exception while invoking application command `{c!r}`\n', file=sys.stderr)
+                    traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
 
     async def _walk_app_commands(self, cog: Cog):
 
@@ -139,7 +139,7 @@ class Bot(commands.Bot):
 
         for qual, data in cog.__commands__.items():
             apc, guild_id = data
-            self._aux[qual] = cog.__this__
+            self.__objs[qual] = cog.__this__
             hook = cog.__methods__[qual]
             if asyncio.iscoroutinefunction(hook):
                 self._queue[qual] = apc, guild_id
@@ -148,11 +148,11 @@ class Bot(commands.Bot):
                 if eh:
                     if asyncio.iscoroutinefunction(eh):
                         self._connection.hooks[eh.__name__] = eh
-                        self._aux['exec'] = cog.__this__
+                        # self.__objs['self'] = cog.__this__
                     else:
                         raise NonCoroutine(f'listener `{eh.__name__}` must be a coroutine function')
             else:
-                raise NonCoroutine(f'`{m.__name__}` must be a coroutine function')
+                raise NonCoroutine(f'`{hook.__name__}` must be a coroutine function')
 
     async def add_application_cog(self, cog: Cog) -> None:
         """

@@ -33,6 +33,13 @@ class Sample(app_util.Cog):
     def __init__(self, bot: app_util.Bot):
         self.bot = bot
 
+    @app_util.Cog.listener
+    async def on_command_error(self, ctx: app_util.Context, error: Exception):
+        if ctx.responded:
+            await ctx.send_followup(f'**Error:** {error}')
+        else:
+            await ctx.send_response(f'**Error:** {error}')
+
     @app_util.Cog.before_invoke(autocomplete_handler=send_autocomplete)
     @app_util.Cog.command(
         app_util.SlashCommand(
@@ -45,7 +52,7 @@ class Sample(app_util.Cog):
         guild_id=877399405056102431
     )
     async def autocomplete_command(self, ctx: app_util.Context, channel: str):
-        await ctx.send_response(f'You\'ve picked the channel `{channel}`')
+        await ctx.send_response(f'You\'ve picked the channel {channel}')
 
     @app_util.Cog.command(
         command=app_util.SlashCommand(
@@ -77,6 +84,7 @@ class Sample(app_util.Cog):
             thumbnail: discord.Attachment, image: discord.Attachment,
             footer_icon: discord.Attachment, footer_text: str, link_button: str,
     ):
+        print(1/0)
         await ctx.defer(ephemeral=True)
         slots = {}
         if title:

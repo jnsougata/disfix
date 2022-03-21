@@ -300,7 +300,7 @@ class Context:
         Sends a response to the application command
         """
         if self._deferred:
-            raise discord.ClientException('Cannot send response for already (deferred / responded) interaction')
+            raise discord.ClientException('Cannot send response to already responded or deferred context')
 
         await self._adapter.post_response(
             tts=tts, view=view, file=file, files=files, views=views, embed=embed,
@@ -331,7 +331,7 @@ class Context:
         Sends a followup to the responded or deferred application command
         """
         if not self._deferred:
-            raise discord.ClientException('Cannot send followup to a non (deferred / responded) interaction')
+            raise discord.ClientException('Cannot send followup to a non responded or deferred context')
 
         data = await self._adapter.post_followup(
             tts=tts, file=file, view=view, files=files, embed=embed, views=views,
