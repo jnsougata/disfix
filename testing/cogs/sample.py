@@ -84,7 +84,6 @@ class Sample(app_util.Cog):
             thumbnail: discord.Attachment, image: discord.Attachment,
             footer_icon: discord.Attachment, footer_text: str, link_button: str,
     ):
-        print(1/0)
         await ctx.defer(ephemeral=True)
         slots = {}
         if title:
