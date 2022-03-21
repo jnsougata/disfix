@@ -214,7 +214,10 @@ class Adapter:
     async def post_autocomplete_response(self, choices) -> None:
         r = Route('POST', f'/interactions/{self.id}/{self.token}/callback')
         payload = {'type': 8, 'data': {'choices': [c.data for c in choices]}}
-        await self.client.http.request(r, json=payload)
+        try:
+            await self.client.http.request(r, json=payload)
+        except discord.errors.NotFound:
+            pass
 
 
     async def post_response(

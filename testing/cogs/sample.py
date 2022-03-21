@@ -4,10 +4,11 @@ import asyncio
 import traceback
 import discord
 import aiohttp
+from aiotube import Search
 import src.app_util as app_util
 
 
-async def job(ctx: app_util.Context):
+async def check(ctx: app_util.Context):
     if not ctx.guild:
         await ctx.send_response(f'{ctx.author.mention} please use command `{ctx.name}` inside a guild')
     elif not ctx.author.guild_permissions.administrator:
@@ -18,13 +19,13 @@ async def job(ctx: app_util.Context):
         return True
 
 
-async def send_autocomplete(ctx: app_util.Context, word: str):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f'https://api.datamuse.com/words?ml={word.replace(" ", "+")}&max=5') as resp:
-            data = await resp.json()
-            words = [word['word'] for word in data]
-            choices = [app_util.Choice(name=f'{w}', value=w) for w in words]
-            await ctx.send_automated_choices(choices)
+async def send_autocomplete(ctx: app_util.Context, channel: str):
+    if channel:
+        channels = Search.channels(channel, limit=5)
+        urls = channels.urls
+        names = channels.names
+        choices = [app_util.Choice(name=ch_name, value=url) for ch_name, url in zip(names, urls)]
+        await ctx.send_automated_choices(choices)
 
 
 class Sample(app_util.Cog):
@@ -35,16 +36,16 @@ class Sample(app_util.Cog):
     @app_util.Cog.before_invoke(autocomplete_handler=send_autocomplete)
     @app_util.Cog.command(
         app_util.SlashCommand(
-            name='synonyms',
-            description='shows synonyms of typed word',
+            name='find',
+            description='find YouTube channels by name',
             options=[
-                app_util.StrOption(name='word', description='word to search synonyms for', autocomplete=True),
+                app_util.StrOption(name='channel', description='channel name to search', autocomplete=True),
             ]
         ),
         guild_id=877399405056102431
     )
-    async def autocomplete_command(self, ctx: app_util.Context, word: str):
-        await ctx.send_response(f'You\'ve picked the synonym `{word}`')
+    async def autocomplete_command(self, ctx: app_util.Context, channel: str):
+        await ctx.send_response(f'You\'ve picked the channel `{channel}`')
 
     @app_util.Cog.command(
         command=app_util.SlashCommand(
@@ -66,7 +67,7 @@ class Sample(app_util.Cog):
         ),
         guild_id=877399405056102431
     )
-    @app_util.Cog.before_invoke(check=job)
+    @app_util.Cog.before_invoke(check=check)
     async def embed(
             self,
             ctx: app_util.Context,
