@@ -97,12 +97,9 @@ class Bot(commands.Bot):
                 try:
                     check = self.__checks.get(qualified_name)
                     on_invoke = self._connection.hooks.get('on_app_command')
-                    on_completion = self._connection.hooks.get('on_app_command_completion')
                     hooked_method = self._connection.hooks[qualified_name]
                     if on_invoke:
-                        self.loop.create_task(on_invoke(c))
-                    if on_completion:
-                        self.loop.create_task(on_completion(c))
+                        self.loop.create_task(on_invoke(cog, c))
                     if check is not None:
                         try:
                             done = await check(c)
@@ -125,10 +122,14 @@ class Bot(commands.Bot):
                 except Exception as e:
                     error_handler = self._connection.hooks.get('on_app_command_error')
                     if error_handler:
-                        self.loop.create_task(error_handler(c, e))
+                        self.loop.create_task(error_handler(cog, c, e))
                     else:
                         print(f'Ignoring exception while invoking application command `{c!r}`\n', file=sys.stderr)
                         traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
+                else:
+                    on_completion = self._connection.hooks.get('on_app_command_completion')
+                    if on_completion:
+                        self.loop.create_task(on_completion(cog, c))
 
     async def _walk_app_commands(self, cog: Cog):
 

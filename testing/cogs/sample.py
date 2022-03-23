@@ -40,6 +40,14 @@ class Sample(app_util.Cog):
         else:
             await ctx.send_response(f'**Error:** {error}')
 
+    @app_util.Cog.listener
+    async def on_app_command(self, ctx: app_util.Context):
+        print(f'{ctx.author} just ran the command {ctx.name}')
+
+    @app_util.Cog.listener
+    async def on_app_command_completion(self, ctx: app_util.Context):
+        print(f'{ctx.author} just finished running the command {ctx.name}')
+
     @app_util.Cog.before_invoke(autocomplete_handler=send_autocomplete)
     @app_util.Cog.command(
         app_util.SlashCommand(
