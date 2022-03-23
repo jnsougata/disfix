@@ -45,10 +45,10 @@ class Bot(commands.Bot):
             description=description,
             **options
         )
-        self.__objs = {}
         self._queue = {}
         self._modals = {}
         self.__checks = {}
+        self.__origins = {}
         self._automatics = {}
         self._application_commands: Dict[int, ApplicationCommand] = {}
         self.tree.error(self.__supress)   # type: ignore
@@ -69,12 +69,12 @@ class Bot(commands.Bot):
 
         if interaction.type is InteractionType.autocomplete:
             c = Context(interaction)
-            qual = c.command._qual
+            qualified_name = c.command._qual
             try:
-                self.__objs[qual]
+                self.__origins[qualified_name]
             except KeyError:
                 raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
-            auto = self._automatics[qual]
+            auto = self._automatics[qualified_name]
             args, kwargs = _build_autocomplete_prams(c._parsed_options, auto)
             self.loop.create_task(auto(c, *args, **kwargs))
 
@@ -88,42 +88,55 @@ class Bot(commands.Bot):
 
         if interaction.type == InteractionType.application_command:
             c = Context(interaction)
-            qual = c.command._qual
+            qualified_name = c.command._qual
             try:
+                cog = self.__origins[qualified_name]
+            except KeyError:
+                print(f'CommandNotImplemented: Application Command `{c!r}` is not implemented', file=sys.stderr)
+            else:
                 try:
-                    cog = self.__objs[qual]
-                except KeyError:
-                    raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
-                check = self.__checks.get(qual)
-                on_submit = self._connection.hooks[qual]
-                if check is not None:
-                    try:
-                        done = await check(c)
-                    except Exception as e:
-                        raise CheckFailure(f'Check named `{check.__name__}` raised an exception: ({e})')
-                    if done is True:
+                    check = self.__checks.get(qualified_name)
+                    on_invoke = self._connection.hooks.get('on_app_command')
+                    on_completion = self._connection.hooks.get('on_app_command_completion')
+                    hooked_method = self._connection.hooks[qualified_name]
+                    if on_invoke:
+                        self.loop.create_task(on_invoke(c))
+                    if on_completion:
+                        self.loop.create_task(on_completion(c))
+                    if check is not None:
+                        try:
+                            done = await check(c)
+                        except Exception as e:
+                            raise CheckFailure(f'Check named `{check.__name__}` raised an exception: ({e})')
+                        if done is True:
+                            if c.type is ApplicationCommandType.CHAT_INPUT:
+                                args, kwargs = _build_prams(c._parsed_options, hooked_method)
+                                await self._connection.call_hooks(qualified_name, cog, c, *args, **kwargs)
+                            else:
+                                param = _build_ctx_menu_param(c)
+                                await self._connection.call_hooks(qualified_name, cog, c, param)
+                    else:
                         if c.type is ApplicationCommandType.CHAT_INPUT:
-                            args, kwargs = _build_prams(c._parsed_options, on_submit)
-                            await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
+                            args, kwargs = _build_prams(c._parsed_options, hooked_method)
+                            await self._connection.call_hooks(qualified_name, cog, c, *args, **kwargs)
                         else:
                             param = _build_ctx_menu_param(c)
-                            await self._connection.call_hooks(qual, cog, c, param)
-                else:
-                    if c.type is ApplicationCommandType.CHAT_INPUT:
-                        args, kwargs = _build_prams(c._parsed_options, on_submit)
-                        await self._connection.call_hooks(qual, cog, c, *args, **kwargs)
+                            await self._connection.call_hooks(qualified_name, cog, c, param)
+                except Exception as e:
+                    error_handler = self._connection.hooks.get('on_app_command_error')
+                    if error_handler:
+                        self.loop.create_task(error_handler(c, e))
                     else:
-                        param = _build_ctx_menu_param(c)
-                        await self._connection.call_hooks(qual, cog, c, param)
-            except Exception as e:
-                error_handler = self._connection.hooks.get('on_command_error')
-                if error_handler:
-                    self.loop.create_task(error_handler(c, e))
-                else:
-                    print(f'Ignoring exception while invoking application command `{c!r}`\n', file=sys.stderr)
-                    traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
+                        print(f'Ignoring exception while invoking application command `{c!r}`\n', file=sys.stderr)
+                        traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
 
     async def _walk_app_commands(self, cog: Cog):
+
+        for name, listener in cog.__listeners__.items():
+            if asyncio.iscoroutinefunction(listener):
+                self._connection.hooks[name] = listener
+            else:
+                raise NonCoroutine(f'listener `{name}` must be a coroutine function')
 
         for name, auto in cog.__automatics__.items():
             if asyncio.iscoroutinefunction(auto):
@@ -137,22 +150,15 @@ class Bot(commands.Bot):
             else:
                 raise NonCoroutine(f'Check function `{check.__name__}` must be a coroutine.')
 
-        for qual, data in cog.__commands__.items():
-            apc, guild_id = data
-            self.__objs[qual] = cog.__this__
-            hook = cog.__methods__[qual]
-            if asyncio.iscoroutinefunction(hook):
-                self._queue[qual] = apc, guild_id
-                self._connection.hooks[qual] = hook
-                eh = cog.__listener__
-                if eh:
-                    if asyncio.iscoroutinefunction(eh):
-                        self._connection.hooks[eh.__name__] = eh
-                        # self.__objs['self'] = cog.__this__
-                    else:
-                        raise NonCoroutine(f'listener `{eh.__name__}` must be a coroutine function')
+        for mapping_name, data in cog.__commands__.items():
+            raw_app_command, guild_id = data
+            self.__origins[mapping_name] = cog.__self__
+            meth = cog.__methods__[mapping_name]
+            if asyncio.iscoroutinefunction(meth):
+                self._connection.hooks[mapping_name] = meth
+                self._queue[mapping_name] = raw_app_command, guild_id
             else:
-                raise NonCoroutine(f'`{hook.__name__}` must be a coroutine function')
+                raise NonCoroutine(f'`{meth.__name__}` must be a coroutine function')
 
     async def add_application_cog(self, cog: Cog) -> None:
         """

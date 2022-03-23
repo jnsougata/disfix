@@ -14,7 +14,7 @@ class Cog(metaclass=type):
     __mapped_container__: dict = {}
     __method_container__: dict = {}
     __command_container__: dict = {}
-    __error_listener__: Any = None
+    __temp_listeners__: dict = {}
 
 
     def __new__(cls, *args, **kwargs):
@@ -30,9 +30,10 @@ class Cog(metaclass=type):
         cls.__mapped_checks__.clear()
         automatics = cls.__autocomplete__.copy()
         setattr(cls, '__automatics__', automatics)
-        listener = cls.__error_listener__
-        setattr(cls, '__listener__', listener)
-        setattr(cls, '__this__', self)
+        listeners = cls.__temp_listeners__.copy()
+        setattr(cls, '__listeners__', listeners)
+        cls.__temp_listeners__.clear()
+        setattr(cls, '__self__', self)
         return self
 
 
@@ -84,5 +85,13 @@ class Cog(metaclass=type):
         Decorator for adding a listener to the cog
         This listener will be called when an error occurs
         """
-        cls.__error_listener__ = coro
+        if coro.__name__ == 'on_app_command':
+            cls.__temp_listeners__['on_app_command'] = coro
+
+        if coro.__name__ == 'on_app_command_error':
+            cls.__temp_listeners__['on_app_command_error'] = coro
+
+        if coro.__name__ == 'on_app_command_completion':
+            cls.__temp_listeners__['on_app_command_completion'] = coro
+
         return coro
