@@ -46,7 +46,8 @@ class Sample(app_util.Cog):
 
     @app_util.Cog.listener
     async def on_app_command_completion(self, ctx: app_util.Context):
-        print(f'{ctx.author} just finished running the command {ctx.name}')
+        print(f'{ctx.author} just finished running the command {ctx.name}'
+              f'\nExecution Time: {ctx.time_taken} seconds')
 
     @app_util.Cog.before_invoke(autocomplete_handler=send_autocomplete)
     @app_util.Cog.command(

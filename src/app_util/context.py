@@ -20,6 +20,7 @@ class Context:
         self._deferred = False
         self._invisible = False
         self.interaction = interaction
+        self.time_taken: Optional[float] = None
         self.original_message: Optional[discord.Message] = None
 
     def __repr__(self):

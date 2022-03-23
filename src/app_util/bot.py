@@ -1,5 +1,6 @@
 from __future__ import annotations
 import sys
+import time
 import discord
 import asyncio
 import traceback
@@ -98,6 +99,7 @@ class Bot(commands.Bot):
                     check = self.__checks.get(qualified_name)
                     on_invoke = self._connection.hooks.get('on_app_command')
                     hooked_method = self._connection.hooks[qualified_name]
+                    exec_start = time.perf_counter()
                     if on_invoke:
                         self.loop.create_task(on_invoke(cog, c))
                     if check is not None:
@@ -119,6 +121,8 @@ class Bot(commands.Bot):
                         else:
                             param = _build_ctx_menu_param(c)
                             await self._connection.call_hooks(qualified_name, cog, c, param)
+                    exec_end = time.perf_counter()
+                    c.time_taken = (exec_end - exec_start)
                 except Exception as e:
                     error_handler = self._connection.hooks.get('on_app_command_error')
                     if error_handler:
