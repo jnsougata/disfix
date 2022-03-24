@@ -83,7 +83,7 @@ class Sample(app_util.Cog):
         ),
         guild_id=877399405056102431
     )
-    @app_util.Cog.before_invoke(check=check)
+    @app_util.Cog.before_invoke(check_handler=check)
     async def embed(
             self,
             ctx: app_util.Context,

@@ -15,6 +15,7 @@ class Cog(metaclass=type):
     __method_container__: dict = {}
     __command_container__: dict = {}
     __temp_listeners__: dict = {}
+    __cooldown_container__: dict = {}
 
 
     def __new__(cls, *args, **kwargs):
@@ -58,7 +59,13 @@ class Cog(metaclass=type):
         return decorator
 
     @classmethod
-    def before_invoke(cls, *, check: Callable = None, autocomplete_handler: Callable = None):
+    def before_invoke(
+            cls,
+            *,
+            check_handler: Callable = None,
+            cooldown_handler: Callable = None,
+            autocomplete_handler: Callable = None,
+    ):
         """
         Decorator for adding a checks and sending respond if the check fails
         Also adds an autocomplete function if provided. The autocomplete function
@@ -69,10 +76,12 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                if check:
-                    cls.__mapped_checks__[cls.__qual__] = check
+                if check_handler:
+                    cls.__mapped_checks__[cls.__qual__] = check_handler
                 if autocomplete_handler:
                     cls.__autocomplete__[cls.__qual__] = autocomplete_handler
+                if cooldown_handler:
+                    cls.__cooldown_container__[cls.__qual__] = cooldown_handler
                 return func
             return wrapper()
 
