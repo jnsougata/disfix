@@ -22,14 +22,14 @@ class ApplicationCommandOrigin:
 
 
 class Overwrite:
-    def __init__(self, entity: Union[discord.Role, discord.User], *, allow: bool = True):
-        if isinstance(entity, discord.Role):
+    def __init__(self, entity_id: int, entity_type: Union[discord.Role, discord.User], *, allow: bool = True):
+        if isinstance(entity_type, discord.Role):
             type_value = PermissionType.ROLE.value
-        elif isinstance(entity, discord.User):
+        elif isinstance(entity_type, discord.User):
             type_value = PermissionType.USER.value
         else:
-            raise TypeError('entity must be a discord.Role or discord.User')
-        self._payload = {'id': str(entity.id), 'type': type_value, 'permission': allow}
+            raise TypeError('entity type must be a discord.Role or discord.User')
+        self._payload = {'id': str(id), 'type': type_value, 'permission': allow}
 
     def to_dict(self):
         return self._payload
