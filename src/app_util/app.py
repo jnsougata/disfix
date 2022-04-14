@@ -22,17 +22,19 @@ class ApplicationCommandOrigin:
 
 
 class Overwrite:
-    def __init__(self, entity_id: int, entity_type: Union[discord.Role, discord.User], *, allow: bool = True):
-        if isinstance(entity_type, discord.Role):
-            type_value = PermissionType.ROLE.value
-        elif isinstance(entity_type, discord.User):
-            type_value = PermissionType.USER.value
-        else:
-            raise TypeError('entity type must be a discord.Role or discord.User')
-        self._payload = {'id': str(id), 'type': type_value, 'permission': allow}
+    def __init__(self, data: Dict[str, Any]):
+        self.__data = data
 
-    def to_dict(self):
-        return self._payload
+    @classmethod
+    def for_role(cls, id: int, *, allow: bool = True):
+        return cls({'id': str(id), 'type': PermissionType.ROLE.value, 'permission': allow})
+
+    @classmethod
+    def for_user(cls, id: int, *, allow: bool = True):
+        return cls({'id': str(id), 'type': PermissionType.USER.value, 'permission': allow})
+
+    def to_dict(self) -> Dict[str, Any]:
+        return self.__data
 
 
 # send / edit parameter handlers
