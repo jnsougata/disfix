@@ -180,7 +180,7 @@ class Bot(commands.Bot):
                 data = await post_command(self, command, guild_id)
                 if command.overwrites:
                     perms = await put_overwrites(self, data['id'], guild_id, command.overwrites)
-                    data['permissions'] = {guild_id: {int(p['id']): p['permission'] for p in perms['permissions']}}
+                    data['permissions'] = {guild_id: perms['permissions']}
                 else:
                     try:
                         perms = await fetch_overwrites(self, data['id'], guild_id)

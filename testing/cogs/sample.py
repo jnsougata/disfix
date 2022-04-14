@@ -67,6 +67,7 @@ class Sample(app_util.Cog):
         command=app_util.SlashCommand(
             name='embed',
             description='creates an embed to current channel',
+            default_access=False,
             options=[
                 app_util.StrOption('title', 'title of the embed', required=False),
                 app_util.StrOption('description', 'description of the embed', required=False),
@@ -80,6 +81,8 @@ class Sample(app_util.Cog):
                 app_util.AttachmentOption('footer_icon', 'file for embed', required=False),
                 app_util.StrOption('link_button', 'sends a link in button form with embed', required=False),
             ],
+            overwrites=[app_util.Overwrite.for_user(516649677001719819),
+                        app_util.Overwrite.for_role(836650774599041034, allow=False)]
         ),
         guild_id=877399405056102431
     )
