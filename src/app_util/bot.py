@@ -55,9 +55,6 @@ class Bot(commands.Bot):
         self.tree.error(self.__supress)   # type: ignore
 
 
-    async def __supress(self, a, b, c):
-        pass
-
     @property
     def application_commands(self) -> List[ApplicationCommand]:
         """
@@ -259,6 +256,11 @@ class Bot(commands.Bot):
                         pass
                     else:
                         command._cache_permissions(ows, guild_id)
+
+    async def __supress(self, a, b):
+        """ Danny is breaking the lib a lot"""
+        pass
+
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
         """
