@@ -24,6 +24,10 @@ from .parser import _build_prams, _build_ctx_menu_param, _build_modal_prams, _bu
 __all__ = ['Bot']
 
 
+async def _supress_tree_error(interaction: any, error: Any):
+    pass
+
+
 class Bot(commands.Bot):
     """
     This is the main class that is used to run the bot.
@@ -51,8 +55,8 @@ class Bot(commands.Bot):
         self.__checks = {}
         self.__origins = {}
         self._automatics = {}
+        self.tree.error(_supress_tree_error)
         self._application_commands: Dict[int, ApplicationCommand] = {}
-        self.tree.error(self.__supress)   # type: ignore
 
 
     @property
@@ -256,10 +260,6 @@ class Bot(commands.Bot):
                         pass
                     else:
                         command._cache_permissions(ows, guild_id)
-
-    async def __supress(self, a, b):
-        """ Danny is breaking the lib a lot"""
-        pass
 
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
