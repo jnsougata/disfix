@@ -8,11 +8,10 @@ from typing import List, Optional, Union, Dict
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict
 
 
-
 class ApplicationCommandOrigin:
-    def __init__(self, name: str, type: ApplicationCommandType):
+    def __init__(self, name: str, command_type: ApplicationCommandType):
         self.name = name
-        self.type = type
+        self.type = command_type
         if self.type is ApplicationCommandType.MESSAGE:
             self._qual = '__MESSAGE__' + name  # name for mapping
         elif self.type is ApplicationCommandType.USER:
@@ -26,12 +25,16 @@ class Overwrite:
         self.__data = data
 
     @classmethod
-    def for_role(cls, id: int, *, allow: bool = True):
-        return cls({'id': str(id), 'type': PermissionType.ROLE.value, 'permission': allow})
+    def for_role(cls, role_id: int, *, allow: bool = True):
+        return cls({'id': str(role_id), 'type': PermissionType.ROLE.value, 'permission': allow})
 
     @classmethod
-    def for_user(cls, id: int, *, allow: bool = True):
-        return cls({'id': str(id), 'type': PermissionType.USER.value, 'permission': allow})
+    def for_user(cls, user_id: int, *, allow: bool = True):
+        return cls({'id': str(user_id), 'type': PermissionType.USER.value, 'permission': allow})
+
+    @classmethod
+    def for_channel(cls, channel_id: int, *, allow: bool = True):
+        return cls({'id': str(channel_id), 'type': PermissionType.CHANNEL.value, 'permission': allow})
 
     def to_dict(self) -> Dict[str, Any]:
         return self.__data
@@ -205,7 +208,6 @@ class Adapter:
         r = Route('POST', f'/interactions/{self.id}/{self.token}/callback')
         await self.client.http.request(r, json=modal.to_payload())
 
-
     async def post_to_delay(self, ephemeral: bool = False):
         route = Route('POST', f'/interactions/{self.id}/{self.token}/callback')
         payload = {'type': 5}
@@ -220,7 +222,6 @@ class Adapter:
             await self.client.http.request(r, json=payload)
         except discord.errors.NotFound:
             pass
-
 
     async def post_response(
             self, content:

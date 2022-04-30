@@ -65,6 +65,18 @@ class Sample(app_util.Cog):
 
     @app_util.Cog.command(
         command=app_util.SlashCommand(
+            name='hi',
+            description='say hi',
+            dm_access=False,
+            required_permission=discord.Permissions.manage_guild
+        ),
+        guild_id=877399405056102431
+    )
+    async def hi_command(self, ctx: app_util.Context):
+        await ctx.send_response(f'Hi {ctx.author.mention}')
+
+    @app_util.Cog.command(
+        command=app_util.SlashCommand(
             name='embed',
             description='creates an embed to current channel',
             default_access=False,
@@ -132,7 +144,6 @@ class Sample(app_util.Cog):
         await ctx.channel.send(embed=embed, view=view)
         await ctx.send_followup(f'Embed sent successfully')
 
-
     @app_util.Cog.command(
         command=app_util.UserCommand(name='Bonk'),
         guild_id=877399405056102431
@@ -155,7 +166,7 @@ class Sample(app_util.Cog):
         ),
         guild_id=877399405056102431
     )
-    async def modal_command(self, ctx: app_util.Context, name: str):
+    async def modal_command(self, ctx: app_util.Context):
 
         modal = app_util.Modal(client=self.bot, title=f'A Super Modal for {ctx.author.name}')
         modal.add_field(

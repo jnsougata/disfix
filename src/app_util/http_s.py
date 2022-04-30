@@ -2,7 +2,6 @@ import discord
 from discord.http import Route
 
 
-
 async def post_command(client, command, guild_id: int = None):
     if guild_id:
         r = Route('POST', f'/applications/{client.application_id}/guilds/{guild_id}/commands')

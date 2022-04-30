@@ -58,14 +58,12 @@ class Bot(commands.Bot):
         self.tree.error(_supress_tree_error)
         self._application_commands: Dict[int, ApplicationCommand] = {}
 
-
     @property
     def application_commands(self) -> List[ApplicationCommand]:
         """
         Returns a list of all the application commands from cache
         """
         return list(self._application_commands.values())
-
 
     async def _handle_interaction(self, interaction: discord.Interaction):
 
@@ -182,21 +180,21 @@ class Bot(commands.Bot):
         for command, guild_id in self._queue.values():
             if guild_id:
                 data = await post_command(self, command, guild_id)
-                # if command.overwrites:
-                #    perms = await put_overwrites(self, data['id'], guild_id, command.overwrites)
-                #    data['permissions'] = {guild_id: perms['permissions']}
-                # else:
                 try:
                     perms = await fetch_overwrites(self, data['id'], guild_id)
                 except discord.errors.NotFound:
                     pass
                 else:
                     data['permissions'] = {guild_id: perms['permissions']}
+
+                '''if command.overwrites:
+                    perms = await put_overwrites(self, data['id'], guild_id, command.overwrites)
+                    data['permissions'] = {guild_id: perms['permissions']}'''
+
             else:
                 data = await post_command(self, command)
             command_id = int(data['id'])
             self._application_commands[command_id] = ApplicationCommand(self, data)
-
 
     async def sync_global_commands(self) -> None:
         """
@@ -211,8 +209,6 @@ class Bot(commands.Bot):
     async def sync_for(self, guild: discord.Guild) -> None:
         """
         Automatically sync all commands for a specific guild.
-        :param guild: the guild to sync commands for
-        :return: None
         """
         data_arr = await fetch_guild_commands(self, guild.id)
         for data in data_arr:
@@ -258,7 +254,6 @@ class Bot(commands.Bot):
                         pass
                     else:
                         command._cache_permissions(ows, guild_id)
-
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
         """
