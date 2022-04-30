@@ -180,21 +180,20 @@ class Bot(commands.Bot):
         for command, guild_id in self._queue.values():
             if guild_id:
                 data = await post_command(self, command, guild_id)
-                if command.overwrites:
-                    perms = await put_overwrites(self, data['id'], guild_id, command.overwrites)
-                    data['permissions'] = {guild_id: perms['permissions']}
+                try:
+                    perms = await fetch_overwrites(self, data['id'], guild_id)
+                except discord.errors.NotFound:
+                    pass
                 else:
-                    try:
-                        perms = await fetch_overwrites(self, data['id'], guild_id)
-                    except discord.errors.NotFound:
-                        pass
-                    else:
-                        data['permissions'] = {guild_id: perms['permissions']}
+                    data['permissions'] = {guild_id: perms['permissions']}
+
+                '''if command.overwrites:
+                    perms = await put_overwrites(self, data['id'], guild_id, command.overwrites)
+                    data['permissions'] = {guild_id: perms['permissions']}'''
+
             else:
                 data = await post_command(self, command)
-
             command_id = int(data['id'])
-
             self._application_commands[command_id] = ApplicationCommand(self, data)
 
     async def sync_global_commands(self) -> None:

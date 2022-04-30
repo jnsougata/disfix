@@ -5,7 +5,6 @@ import src.app_util as app
 
 
 intents = discord.Intents.default()
-intents.members = True
 
 
 class MyBot(app.Bot):

@@ -68,7 +68,7 @@ class Sample(app_util.Cog):
             name='hi',
             description='say hi',
             dm_access=False,
-            required_permission=discord.Permissions().manage_roles,
+            required_permission=discord.Permissions.manage_guild
         ),
         guild_id=877399405056102431
     )
@@ -166,7 +166,7 @@ class Sample(app_util.Cog):
         ),
         guild_id=877399405056102431
     )
-    async def modal_command(self, ctx: app_util.Context, name: str):
+    async def modal_command(self, ctx: app_util.Context):
 
         modal = app_util.Modal(client=self.bot, title=f'A Super Modal for {ctx.author.name}')
         modal.add_field(

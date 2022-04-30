@@ -325,7 +325,7 @@ class SlashCommand(ApplicationCommandOrigin):
             dm_access: bool = True,
             default_access: bool = True,
             overwrites: List[Overwrite] = None,
-            required_permission: int = None,
+            required_permission: discord.Permissions = None,
 
 
     ) -> None:
@@ -338,7 +338,7 @@ class SlashCommand(ApplicationCommandOrigin):
             "dm_permission": dm_access,
             "default_permission": default_access,
             "options": [option.data for option in options] if options else [],
-            "default_member_permissions": str(required_permission) if required_permission is not None else '0',
+            "default_member_permissions": str(required_permission.flag) if required_permission is not None else '0',
         }
         self._overwrites = overwrites
 
