@@ -4,11 +4,10 @@ from .enums import ApplicationCommandType
 from typing import List, Dict, Any, Optional, Union, Callable
 
 
-
-def _build_prams(options: Dict[str, Any], callable: Callable):
+def _build_prams(options: Dict[str, Any], func: Callable):
     args = []
     kwargs = {}
-    params = inspect.getfullargspec(callable)
+    params = inspect.getfullargspec(func)
     default_args = params.defaults
     default_kwargs = params.kwonlydefaults
     if default_args:
@@ -48,10 +47,10 @@ def _build_ctx_menu_param(c: Context):
         return c._target_message
 
 
-def _build_modal_prams(options: Dict[str, Any], callable: Callable):
+def _build_modal_prams(options: Dict[str, Any], func: Callable):
     args = []
     kwargs = {}
-    params = inspect.getfullargspec(callable)
+    params = inspect.getfullargspec(func)
     default_args = params.defaults
     default_kwargs = params.kwonlydefaults
     if default_args:
@@ -84,10 +83,10 @@ def _build_modal_prams(options: Dict[str, Any], callable: Callable):
     return args, kwargs
 
 
-def _build_autocomplete_prams(options: Dict[str, Any], callable: Callable):
+def _build_autocomplete_prams(options: Dict[str, Any], func: Callable):
     args = []
     kwargs = {}
-    params = inspect.getfullargspec(callable)
+    params = inspect.getfullargspec(func)
     default_args = params.defaults
     default_kwargs = params.kwonlydefaults
     if default_args:

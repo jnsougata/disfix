@@ -26,6 +26,7 @@ class ApplicationCommandType(Enum):
 class PermissionType(Enum):
     ROLE = 1
     USER = 2
+    CHANNEL = 3
 
 
 class OptionType(Enum):

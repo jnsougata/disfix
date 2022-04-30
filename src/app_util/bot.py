@@ -199,7 +199,6 @@ class Bot(commands.Bot):
 
             self._application_commands[command_id] = ApplicationCommand(self, data)
 
-
     async def sync_global_commands(self) -> None:
         """
         Syncs the global commands of the application.

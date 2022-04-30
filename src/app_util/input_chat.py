@@ -1,3 +1,4 @@
+import discord
 from typing import Any, Union, List, Dict, Optional
 from .app import Overwrite, ApplicationCommandOrigin
 from .enums import DiscordChannelType, ApplicationCommandType, OptionType
@@ -321,17 +322,23 @@ class SlashCommand(ApplicationCommandOrigin):
             description: str,
             *,
             options: List[Union[Option, SubCommand, SubCommandGroup]] = None,
+            dm_access: bool = True,
             default_access: bool = True,
             overwrites: List[Overwrite] = None,
+            required_permission: int = None,
+
+
     ) -> None:
         fmt_name = name.lower().replace(' ', '_')
         super().__init__(fmt_name, ApplicationCommandType.CHAT_INPUT)
         self._payload = {
             "name": fmt_name,
-            "description": description,
             "type": self.type.value,
-            "options": [option.data for option in options] if options else [],
+            "description": description,
+            "dm_permission": dm_access,
             "default_permission": default_access,
+            "options": [option.data for option in options] if options else [],
+            "default_member_permissions": str(required_permission) if required_permission is not None else '0',
         }
         self._overwrites = overwrites
 
