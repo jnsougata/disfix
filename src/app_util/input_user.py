@@ -1,5 +1,7 @@
 from .app import Overwrite, ApplicationCommandOrigin
 from .enums import ApplicationCommandType
+import discord
+from typing import Union, List, Optional
 
 
 class UserCommand(ApplicationCommandOrigin):
@@ -10,22 +12,16 @@ class UserCommand(ApplicationCommandOrigin):
             self,
             name: str,
             *,
-            default_access: bool = True,
-            overwrites: [Overwrite] = None,
+            dm_access: bool = True,
+            permission: Optional[discord.Permissions] = None
     ):
         super().__init__(name, ApplicationCommandType.USER)
         self._payload = {
             'name': name,
             'type': ApplicationCommandType.USER.value,
-            'default_permission': default_access,
+            "dm_permission": dm_access,
+            "default_member_permissions": str(permission.flag) if permission is not None else '0',
         }
-        self._overwrites = overwrites
-        self.type = ApplicationCommandType.USER
-
-    @property
-    def overwrites(self):
-        if self._overwrites:
-            return {"permissions": [ow.to_dict() for ow in self._overwrites]}
 
     def to_dict(self) -> dict:
         return self._payload
