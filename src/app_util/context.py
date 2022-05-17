@@ -37,7 +37,6 @@ class Context:
     def _adapter(self):
         return Adapter(self.interaction)
 
-
     @property
     def type(self) -> ApplicationCommandType:
         """

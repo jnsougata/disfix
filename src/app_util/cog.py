@@ -3,8 +3,7 @@ import discord
 from functools import wraps
 from .errors import NonCoroutine
 from .app import ApplicationCommandOrigin
-from typing import Optional, ClassVar, Callable, List, Union, Dict, Any
-
+from typing import Optional, ClassVar, Callable, List, Union, Dict, Any, Coroutine
 
 
 class Cog(metaclass=type):
@@ -67,10 +66,37 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                if permission:
-                    cls.__permission_container__[cls.__qual__] = permission
+                cls.__permission_container__[cls.__qual__] = permission
                 return func
+
             return wrapper()
+
+        return decorator
+
+    @classmethod
+    def auto_complete(cls, coro: Coroutine):
+
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                cls.__autocomplete__[cls.__qual__] = coro
+                return func
+
+            return wrapper()
+
+        return decorator
+
+    @classmethod
+    def check(cls, coro: Coroutine):
+
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                cls.__mapped_checks__[cls.__qual__] = coro
+                return func
+
+            return wrapper()
+
         return decorator
 
     @classmethod
