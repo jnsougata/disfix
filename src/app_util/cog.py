@@ -62,7 +62,7 @@ class Cog(metaclass=type):
         return decorator
 
     @classmethod
-    def set_permission(cls, permission: discord.Permissions):
+    def default_permission(cls, permission: discord.Permissions):
 
         def decorator(func):
             @wraps(func)

@@ -63,7 +63,7 @@ class Sample(app_util.Cog):
     async def autocomplete_command(self, ctx: app_util.Context, channel: str):
         await ctx.send_response(f'You\'ve picked the channel {channel}')
 
-    @app_util.Cog.set_permission(discord.Permissions.manage_guild)
+    @app_util.Cog.default_permission(discord.Permissions.manage_guild)
     @app_util.Cog.command(
         command=app_util.SlashCommand(
             name='hi',

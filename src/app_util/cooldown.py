@@ -36,5 +36,3 @@ class CooldownHandler:
 
     def _get_invoke_count(self, key: int, value: Any):
         pass
-
-
