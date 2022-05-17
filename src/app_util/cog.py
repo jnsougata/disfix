@@ -1,4 +1,5 @@
 import asyncio
+import discord
 from functools import wraps
 from .errors import NonCoroutine
 from .app import ApplicationCommandOrigin
@@ -16,7 +17,7 @@ class Cog(metaclass=type):
     __command_container__: dict = {}
     __temp_listeners__: dict = {}
     __cooldown_container__: dict = {}
-
+    __permission_container__: dict = {}
 
     def __new__(cls, *args, **kwargs):
         self = super().__new__(cls)
@@ -34,9 +35,11 @@ class Cog(metaclass=type):
         listeners = cls.__temp_listeners__.copy()
         setattr(cls, '__listeners__', listeners)
         cls.__temp_listeners__.clear()
+        perms = cls.__permission_container__.copy()
+        setattr(cls, '__permissions__', perms)
+        cls.__permission_container__.clear()
         setattr(cls, '__self__', self)
         return self
-
 
     @classmethod
     def command(cls, command: ApplicationCommandOrigin, *, guild_id: int = None):
@@ -56,6 +59,18 @@ class Cog(metaclass=type):
             def wrapper(*args, **kwargs):
                 return func
             cls.__method_container__[qualified_name] = wrapper()
+        return decorator
+
+    @classmethod
+    def set_permission(cls, permission: discord.Permissions):
+
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                if permission:
+                    cls.__permission_container__[cls.__qual__] = permission
+                return func
+            return wrapper()
         return decorator
 
     @classmethod
@@ -84,9 +99,7 @@ class Cog(metaclass=type):
                     cls.__cooldown_container__[cls.__qual__] = cooldown_handler
                 return func
             return wrapper()
-
         return decorator
-
 
     @classmethod
     def listener(cls, coro: Callable):

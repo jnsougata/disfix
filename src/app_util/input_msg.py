@@ -8,20 +8,11 @@ class MessageCommand(ApplicationCommandOrigin):
     """
     Represents a message command. Pops up in the message context menu.
     """
-    def __init__(
-            self,
-            name: str,
-            *,
-            dm_access: bool = True,
-            permissions: Optional[discord.Permissions] = None
-    ):
-        super().__init__(name, ApplicationCommandType.MESSAGE)
+    def __init__(self, name: str, *, dm_access: bool = True):
         self._payload = {
             'name': name,
-            'type': self.type.value,
+            'type': None,
             "dm_permission": dm_access,
-            "default_member_permissions": str(permissions.flag) if permissions is not None else '0',
+            "default_member_permissions": None,
         }
-
-    def to_dict(self) -> dict:
-        return self._payload
+        super().__init__(name=name, payload=self._payload, command_type=ApplicationCommandType.MESSAGE)

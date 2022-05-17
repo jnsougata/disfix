@@ -63,12 +63,12 @@ class Sample(app_util.Cog):
     async def autocomplete_command(self, ctx: app_util.Context, channel: str):
         await ctx.send_response(f'You\'ve picked the channel {channel}')
 
+    @app_util.Cog.set_permission(discord.Permissions.manage_guild)
     @app_util.Cog.command(
         command=app_util.SlashCommand(
             name='hi',
             description='say hi',
             dm_access=False,
-            permissions=discord.Permissions.manage_guild
         ),
         guild_id=877399405056102431
     )
@@ -79,7 +79,6 @@ class Sample(app_util.Cog):
         command=app_util.SlashCommand(
             name='embed',
             description='creates an embed to current channel',
-            permissions=discord.Permissions.manage_guild,
             options=[
                 app_util.StrOption('title', 'title of the embed', required=False),
                 app_util.StrOption('description', 'description of the embed', required=False),

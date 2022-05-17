@@ -323,22 +323,14 @@ class SlashCommand(ApplicationCommandOrigin):
             *,
             options: List[Union[Option, SubCommand, SubCommandGroup]] = None,
             dm_access: bool = True,
-            permissions: Optional[discord.Permissions] = None,
     ) -> None:
         fmt_name = name.lower().replace(' ', '_')
-        super().__init__(fmt_name, ApplicationCommandType.CHAT_INPUT)
         self._payload = {
             "name": fmt_name,
-            "type": self.type.value,
+            "type": None,
             "description": description,
             "dm_permission": dm_access,
             "options": [option.data for option in options] if options else [],
-            "default_member_permissions": str(permissions.flag) if permissions is not None else '0',
+            "default_member_permissions": None,
         }
-
-    def to_dict(self):
-        """
-        Returns the command as a dictionary
-        Used for serialization
-        """
-        return self._payload
+        super().__init__(name=fmt_name, payload=self._payload, command_type=ApplicationCommandType.CHAT_INPUT)

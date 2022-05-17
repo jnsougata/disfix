@@ -69,7 +69,7 @@ class Bot(commands.Bot):
 
         if interaction.type is InteractionType.autocomplete:
             c = Context(interaction)
-            qualified_name = c.command._qual
+            qualified_name = c.command.qualified_name
             try:
                 self.__origins[qualified_name]
             except KeyError:
@@ -88,7 +88,7 @@ class Bot(commands.Bot):
 
         if interaction.type == InteractionType.application_command:
             c = Context(interaction)
-            qualified_name = c.command._qual
+            qualified_name = c.command.qualified_name
             try:
                 cog = self.__origins[qualified_name]
             except KeyError:
@@ -158,6 +158,8 @@ class Bot(commands.Bot):
             raw_app_command, guild_id = data
             self.__origins[mapping_name] = cog.__self__
             meth = cog.__methods__[mapping_name]
+            perms = cog.__permissions__.get(mapping_name)
+            raw_app_command.inject_permission(perms)
             if asyncio.iscoroutinefunction(meth):
                 self._connection.hooks[mapping_name] = meth
                 self._queue[mapping_name] = raw_app_command, guild_id
@@ -184,13 +186,6 @@ class Bot(commands.Bot):
                     perms = await fetch_overwrites(self, data['id'], guild_id)
                 except discord.errors.NotFound:
                     pass
-                else:
-                    data['permissions'] = {guild_id: perms['permissions']}
-
-                '''if command.overwrites:
-                    perms = await put_overwrites(self, data['id'], guild_id, command.overwrites)
-                    data['permissions'] = {guild_id: perms['permissions']}'''
-
             else:
                 data = await post_command(self, command)
             command_id = int(data['id'])
@@ -225,41 +220,10 @@ class Bot(commands.Bot):
     def get_application_command(self, command_id: int) -> ApplicationCommand:
         return self._application_commands.get(command_id)
 
-    async def _sync_overwrites(self):
-        for guild in self.guilds:
-            guild_id = guild.id
-            try:
-                resp = await fetch_guild_commands(self, guild_id)
-            except (discord.errors.Forbidden, discord.errors.NotFound):
-                pass
-            else:
-                for data in resp:
-                    if int(data['id']) not in self._application_commands:
-                        apc = ApplicationCommand(self, data)
-                        self._application_commands[apc.id] = apc
-                        try:
-                            ows = await fetch_overwrites(self, apc.id, guild_id)
-                        except (discord.errors.NotFound, discord.errors.Forbidden):
-                            pass
-                        else:
-                            apc._cache_permissions(ows, guild_id)
-
-        guild_ids = [g.id for g in self.guilds]
-        for command_id, command in self._application_commands.items():
-            if not command.guild_id:
-                for guild_id in guild_ids:
-                    try:
-                        ows = await fetch_overwrites(self, command_id, guild_id)
-                    except (discord.errors.NotFound, discord.errors.Forbidden):
-                        pass
-                    else:
-                        command._cache_permissions(ows, guild_id)
-
     async def start(self, token: str, *, reconnect: bool = True) -> None:
         """
         Does the login and command registrations
         """
-        self.add_listener(self._sync_overwrites, 'on_ready')
         self.add_listener(self._handle_interaction, 'on_interaction')
         await self.login(token)
         app = await self.application_info()

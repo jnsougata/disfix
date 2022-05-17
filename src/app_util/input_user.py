@@ -8,20 +8,11 @@ class UserCommand(ApplicationCommandOrigin):
     """
     Represents a user command. Pops up in the user context menu.
     """
-    def __init__(
-            self,
-            name: str,
-            *,
-            dm_access: bool = True,
-            permission: Optional[discord.Permissions] = None
-    ):
-        super().__init__(name, ApplicationCommandType.USER)
+    def __init__(self, name: str, *, dm_access: bool = True):
         self._payload = {
             'name': name,
-            'type': ApplicationCommandType.USER.value,
+            'type': None,
             "dm_permission": dm_access,
-            "default_member_permissions": str(permission.flag) if permission is not None else '0',
+            "default_member_permissions": None,
         }
-
-    def to_dict(self) -> dict:
-        return self._payload
+        super().__init__(name=name, payload=self._payload, command_type=ApplicationCommandType.USER)

@@ -186,15 +186,12 @@ class ApplicationCommand:
         self.name = data['name']
         self.description = data['description']
         self.type = try_enum(ApplicationCommandType, data['type'])
-        self._qual = _make_qual(self.name, self.guild_id, self.type)
+        self.qualified_name = _make_qual(self.name, self.guild_id, self.type)
         self.application_id = int(data['application_id'])
-        self.options = data.get('options')
         self.version = int(data['version'])
-        self.default_access = data['default_permission']
-        self.dm_access = self.default_access or False
-        self._permissions = data.get('permissions') or {}
-        self.overwrites = {}
-        self.__parse_permissions()
+        self.options = data.get('options')
+        self.dm_allowed = data.get('dm_permission') or False
+        self.permissions = data.get('default_member_permissions')
         self.name_locale = data.get('name_localizations')
         self.description_locale = data.get('description_localizations')
 
@@ -220,57 +217,16 @@ class ApplicationCommand:
             return self._client.get_guild(self.guild_id)
         return None
 
-    def overwrite_for(self, guild: discord.Guild, entity: Union[discord.Role, discord.User]) -> bool:
-        permission = self.overwrites.get(guild.id)
-        if permission is None:
-            return self.default_access
-        for_entity = permission.get(entity.id)
-        if for_entity is None:
-            return self.default_access
-        return for_entity['allowed']
-
     async def delete(self):
         await delete_command(self._client, self.id, self.guild_id)
 
         await self._client.http.request(route)
         self._client._application_commands.pop(self.id)
 
-    def __parse_permissions(self):
-        for guild_id, perms in self._permissions.items():
-            for p in perms:
-                self.overwrites[int(guild_id)] = {int(p['id']): {'allowed': p['permission'], 'type': p['type']}}
-
-    def _cache_permissions(self, ows: dict, guild_id: int):
-        self._permissions[guild_id] = ows['permissions']
-        self.__parse_permissions()
-
-    def _build_overwrites(self, guild_id: int):
-        overwrites = self.overwrites.get(guild_id)
-        if ows:
-            return [{'id': str(entity_id), 'type': ovrt['type'], 'permission': ovrt['allowed']}
-                    for entity_id, ovrt in ows.items()]
-
-    async def edit_overwrites(self, guild: discord.Guild, overwrites: List[Overwrite]):
-        payload = {'permissions': [o.to_dict() for o in overwrites]}
-        data = await put_overwrites(self._client, self.id, guild.id, payload)
-        self._cache_permissions(data, guild.id)
-
-    async def edit_overwrite_for(self, guild: discord.Guild, overwrite: Overwrite):
-        container = self._build_overwrites(guild.id)
-        new = overwrite.to_dict()
-        for ovrt in container:
-            if ovrt['id'] == new['id']:
-                container.remove(ovrt)
-        container.append(new)
-        payload = {'permissions': container}
-        data = await put_overwrites(self._client, self.id, guild.id, payload)
-        self._cache_permissions(data, guild.id)
-
-
-    async def update(self, new_command: ApplicationCommandOrigin) -> ApplicationCommand:
-        if new_command.type is self.type:
+    async def update(self, new: ApplicationCommandOrigin) -> ApplicationCommand:
+        if new.type is self.type:
             try:
-                data = await patch_existing_command(self._client, self, new_command)
+                data = await patch_existing_command(self._client, self, new)
             except discord.errors.HTTPException as e:
                 raise e
             else:
@@ -279,4 +235,4 @@ class ApplicationCommand:
                 self._client._application_commands[updated.id] = updated
                 return updated
         raise CommandTypeMismatched(
-            f'Type mismatched while editing command `{self.name}`. Expected: {self.type} & got: {new_command.type}')
+            f'Type mismatched while editing command `{self.name}`. Expected: {self.type} & got: {new.type}')
