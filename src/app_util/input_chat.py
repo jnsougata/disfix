@@ -323,11 +323,7 @@ class SlashCommand(ApplicationCommandOrigin):
             *,
             options: List[Union[Option, SubCommand, SubCommandGroup]] = None,
             dm_access: bool = True,
-            default_access: bool = True,
-            overwrites: List[Overwrite] = None,
-            required_permission: discord.Permissions = None,
-
-
+            permissions: Optional[discord.Permissions] = None,
     ) -> None:
         fmt_name = name.lower().replace(' ', '_')
         super().__init__(fmt_name, ApplicationCommandType.CHAT_INPUT)
@@ -336,16 +332,9 @@ class SlashCommand(ApplicationCommandOrigin):
             "type": self.type.value,
             "description": description,
             "dm_permission": dm_access,
-            "default_permission": default_access,
             "options": [option.data for option in options] if options else [],
-            "default_member_permissions": str(required_permission.flag) if required_permission is not None else '0',
+            "default_member_permissions": str(permissions.flag) if permissions is not None else '0',
         }
-        self._overwrites = overwrites
-
-    @property
-    def overwrites(self):
-        if self._overwrites:
-            return {"permissions": [perm.to_dict() for perm in self._overwrites]}
 
     def to_dict(self):
         """

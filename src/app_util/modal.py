@@ -1,10 +1,10 @@
 import os
 import asyncio
 import discord
-from discord.utils import MISSING
 from typing import Callable
-from typing import Optional, Union, Any, Sequence, List, Dict
+from discord.utils import MISSING
 from .enums import ModalTextType, ModalFieldType
+from typing import Optional, Union, Any, Sequence, List, Dict
 
 
 class Modal:
@@ -23,17 +23,21 @@ class Modal:
             label: str,
             custom_id: str,
             *,
-            style: ModalTextType,
-            value: str = None,
+            required: bool = True,
             hint: str = None,
+            default_text: str = None,
             min_length: int = 0,
             max_length: int = 4000,
-            required: bool = True,
-
+            style: ModalTextType = ModalTextType.SHORT
     ):
         """
         Adds a field to the modal. Max allowed fields is 5.
         """
+        if max_length > 4000:
+            raise ValueError("Maximum 4000 characters is allowed")
+        if min_length < 0:
+            raise ValueError("Minimum 0 characters is allowed")
+
         self.data["components"].append(
             {
                 "type": 1,
@@ -41,7 +45,7 @@ class Modal:
                     {
                         "label": label,
                         "style": style.value,
-                        "value": value,
+                        "value": default_text,
                         "custom_id": custom_id,
                         "min_length": min_length,
                         "max_length": max_length,
