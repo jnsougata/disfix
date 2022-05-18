@@ -44,3 +44,25 @@ class CommandTypeMismatched(Exception):
     """
     def __init__(self, message: str):
         super().__init__(message)
+
+
+class ReturnNotBoolean(Exception):
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class BeforeInvokeJobFailure(Exception):
+    """
+    Raised when a before invoke job fails
+    """
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class AfterInvokeJobFailure(Exception):
+    """
+    Raised when a before invoke job fails
+    """
+    def __init__(self, message: str):
+        super().__init__(message)

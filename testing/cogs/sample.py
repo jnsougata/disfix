@@ -1,11 +1,19 @@
 import os
 import sys
-import asyncio
-import traceback
-import discord
 import aiohttp
+import asyncio
+import discord
+import traceback
 from aiotube import Search
 import src.app_util as app_util
+
+
+async def before(ctx: app_util.Context):
+    print('Used before invoke decorator')
+
+
+async def after(ctx: app_util.Context):
+    print('Used after invoke decorator')
 
 
 async def check(ctx: app_util.Context):
@@ -22,8 +30,8 @@ async def check(ctx: app_util.Context):
 async def send_autocomplete(ctx: app_util.Context, channel: str):
     if channel:
         channels = Search.channels(channel, limit=5)
-        urls = channels.urls
-        names = channels.names
+        urls = [channel_dict['url'] for channel_dict in channels.values()]
+        names = [channel_dict['name'] for channel_dict in channels.values()]
         choices = [app_util.Choice(name=ch_name, value=url) for ch_name, url in zip(names, urls)]
         await ctx.send_automated_choices(choices)
 
@@ -36,20 +44,22 @@ class Sample(app_util.Cog):
     @app_util.Cog.listener
     async def on_app_command_error(self, ctx: app_util.Context, error: Exception):
         if ctx.responded:
-            await ctx.send_followup(f'**Error:** {error}')
+            await ctx.send_followup(f'**Error:** *{error}*')
         else:
-            await ctx.send_response(f'**Error:** {error}')
+            await ctx.send_response(f'**Error:** *{error}*')
 
     @app_util.Cog.listener
     async def on_app_command(self, ctx: app_util.Context):
-        print(f'{ctx.author} just ran the command {ctx.name}')
+        print(f'{ctx.author} just ran the command [{ctx.name}]')
 
     @app_util.Cog.listener
     async def on_app_command_completion(self, ctx: app_util.Context):
-        print(f'{ctx.author} just finished running the command {ctx.name}'
-              f'\nExecution Time: {ctx.time_taken} seconds')
+        print(f'{ctx.author} just finished running the command [{ctx.name}]'
+              f'\n[Execution Time: {ctx.time_taken} seconds]')
 
-    @app_util.Cog.before_invoke(autocomplete_handler=send_autocomplete)
+    @app_util.Cog.default_permission(discord.Permissions.manage_guild)
+    @app_util.Cog.check(check)
+    @app_util.Cog.auto_complete(send_autocomplete)
     @app_util.Cog.command(
         app_util.SlashCommand(
             name='find',
@@ -64,6 +74,8 @@ class Sample(app_util.Cog):
         await ctx.send_response(f'You\'ve picked the channel {channel}')
 
     @app_util.Cog.default_permission(discord.Permissions.manage_guild)
+    @app_util.Cog.before_invoke(before)
+    @app_util.Cog.after_invoke(after)
     @app_util.Cog.command(
         command=app_util.SlashCommand(
             name='hi',
@@ -75,6 +87,8 @@ class Sample(app_util.Cog):
     async def hi_command(self, ctx: app_util.Context):
         await ctx.send_response(f'Hi {ctx.author.mention}')
 
+    @app_util.Cog.before_invoke(before)
+    @app_util.Cog.after_invoke(after)
     @app_util.Cog.command(
         command=app_util.SlashCommand(
             name='embed',
@@ -95,7 +109,7 @@ class Sample(app_util.Cog):
         ),
         guild_id=877399405056102431
     )
-    @app_util.Cog.before_invoke(check_handler=check)
+    @app_util.Cog.check(coro=check)
     async def embed(
             self,
             ctx: app_util.Context,
@@ -146,7 +160,7 @@ class Sample(app_util.Cog):
         guild_id=877399405056102431
     )
     async def promote_command(self, ctx: app_util.Context, user: discord.User):
-        await ctx.send_response(f'{user.mention} **{ctx.author}** just bonked you', delete_after=5)
+        await ctx.send_response(f'{user.mention} **{ctx.author}** just bonked you')
 
     @app_util.Cog.command(
         command=app_util.MessageCommand(name='Pin'),
@@ -154,7 +168,7 @@ class Sample(app_util.Cog):
     )
     async def pin_command(self, ctx: app_util.Context, message: discord.Message):
         await message.pin()
-        await ctx.send_response(f'Message pinned by {ctx.author.mention}')
+        await ctx.send_response(f'Message pinned by {ctx.author.mention}', delete_after=5)
 
     @app_util.Cog.command(
         command=app_util.SlashCommand(

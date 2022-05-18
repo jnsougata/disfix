@@ -30,11 +30,10 @@ class ApplicationCommandOrigin:
     def inject_permission(self, permission: discord.Permissions):
         if permission:
             self._payload["default_member_permissions"] = str(permission.flag)
-        self._payload["default_role_permissions"] = str(discord.Permissions.send_messages.flag)
+        self._payload["default_member_permissions"] = str(discord.Permissions.send_messages.flag)
 
     def to_dict(self):
         self._payload['type'] = self.type.value
-        print(self._payload)
         return self._payload
 
 

@@ -55,6 +55,8 @@ class Bot(commands.Bot):
         self.__checks = {}
         self.__origins = {}
         self._automatics = {}
+        self.__after_invoke_jobs = {}
+        self.__before_invoke_jobs = {}
         self.tree.error(_supress_tree_error)
         self._application_commands: Dict[int, ApplicationCommand] = {}
 
@@ -97,6 +99,8 @@ class Bot(commands.Bot):
                 try:
                     check = self.__checks.get(qualified_name)
                     on_invoke = self._connection.hooks.get('on_app_command')
+                    before_invoke_job = self.__before_invoke_jobs.get(qualified_name)
+                    after_invoke_job = self.__after_invoke_jobs.get(qualified_name)
                     hooked_method = self._connection.hooks[qualified_name]
                     exec_start = time.perf_counter()
                     if on_invoke:
@@ -106,14 +110,22 @@ class Bot(commands.Bot):
                             done = await check(c)
                         except Exception as e:
                             raise CheckFailure(f'Check named `{check.__name__}` raised an exception: ({e})')
-                        if done is True:
-                            if c.type is ApplicationCommandType.CHAT_INPUT:
-                                args, kwargs = _build_prams(c._parsed_options, hooked_method)
-                                await self._connection.call_hooks(qualified_name, cog, c, *args, **kwargs)
-                            else:
-                                param = _build_ctx_menu_param(c)
-                                await self._connection.call_hooks(qualified_name, cog, c, param)
+                        else:
+                            if type(done) is not bool:
+                                raise ReturnNotBoolean('Check functions must return a boolean.')
+                            elif done is True:
+                                if before_invoke_job:
+                                    self.loop.create_task(before_invoke_job(c))
+                                if c.type is ApplicationCommandType.CHAT_INPUT:
+                                    args, kwargs = _build_prams(c._parsed_options, hooked_method)
+                                    await self._connection.call_hooks(qualified_name, cog, c, *args, **kwargs)
+                                else:
+                                    param = _build_ctx_menu_param(c)
+                                    await self._connection.call_hooks(qualified_name, cog, c, param)
                     else:
+                        if before_invoke_job:
+                            self.loop.create_task(before_invoke_job(c))
+
                         if c.type is ApplicationCommandType.CHAT_INPUT:
                             args, kwargs = _build_prams(c._parsed_options, hooked_method)
                             await self._connection.call_hooks(qualified_name, cog, c, *args, **kwargs)
@@ -121,7 +133,7 @@ class Bot(commands.Bot):
                             param = _build_ctx_menu_param(c)
                             await self._connection.call_hooks(qualified_name, cog, c, param)
                     exec_end = time.perf_counter()
-                    c.time_taken = (exec_end - exec_start)
+                    c.time_taken = exec_end - exec_start
                 except Exception as e:
                     error_handler = self._connection.hooks.get('on_app_command_error')
                     if error_handler:
@@ -130,6 +142,8 @@ class Bot(commands.Bot):
                         print(f'Ignoring exception while invoking application command `{c!r}`\n', file=sys.stderr)
                         traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
                 else:
+                    if after_invoke_job:
+                        self.loop.create_task(after_invoke_job(c))
                     on_completion = self._connection.hooks.get('on_app_command_completion')
                     if on_completion:
                         self.loop.create_task(on_completion(cog, c))
@@ -154,15 +168,27 @@ class Bot(commands.Bot):
             else:
                 raise NonCoroutine(f'Check function `{check.__name__}` must be a coroutine.')
 
+        for name, job in cog.__before_invoke__.items():
+            if asyncio.iscoroutinefunction(job):
+                self.__before_invoke_jobs[name] = job
+            else:
+                raise NonCoroutine(f'Before invoke function `{job.__name__}` must be a coroutine.')
+
+        for name, job in cog.__after_invoke__.items():
+            if asyncio.iscoroutinefunction(job):
+                self.__after_invoke_jobs[name] = job
+            else:
+                raise NonCoroutine(f'After invoke function `{job.__name__}` must be a coroutine.')
+
         for mapping_name, data in cog.__commands__.items():
-            raw_app_command, guild_id = data
+            app_command, guild_id = data
             self.__origins[mapping_name] = cog.__self__
             meth = cog.__methods__[mapping_name]
             perms = cog.__permissions__.get(mapping_name)
-            raw_app_command.inject_permission(perms)
+            app_command.inject_permission(perms)
             if asyncio.iscoroutinefunction(meth):
                 self._connection.hooks[mapping_name] = meth
-                self._queue[mapping_name] = raw_app_command, guild_id
+                self._queue[mapping_name] = app_command, guild_id
             else:
                 raise NonCoroutine(f'`{meth.__name__}` must be a coroutine function')
 
@@ -182,10 +208,6 @@ class Bot(commands.Bot):
         for command, guild_id in self._queue.values():
             if guild_id:
                 data = await post_command(self, command, guild_id)
-                try:
-                    perms = await fetch_overwrites(self, data['id'], guild_id)
-                except discord.errors.NotFound:
-                    pass
             else:
                 data = await post_command(self, command)
             command_id = int(data['id'])
