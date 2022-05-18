@@ -11,13 +11,13 @@ class Cog(metaclass=type):
     __identifier__ = None
     __autocomplete__ = {}
     __mapped_checks__: dict = {}
+    __temp_listeners__: dict = {}
     __mapped_container__: dict = {}
     __method_container__: dict = {}
     __command_container__: dict = {}
-    __temp_listeners__: dict = {}
     __permission_container__: dict = {}
-    __before_invoke_container__: dict = {}
     __after_invoke_container__: dict = {}
+    __before_invoke_container__: dict = {}
 
     def __new__(cls, *args, **kwargs):
         self = super().__new__(cls)
