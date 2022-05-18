@@ -56,7 +56,6 @@ class Resolved:
         self.data = data
         self.client = c.client
 
-
     @property
     def users(self) -> Dict[int, discord.User]:
         if self.data.get('users'):

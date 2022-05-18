@@ -8,7 +8,7 @@ from typing import Optional, ClassVar, Callable, List, Union, Dict, Any
 
 class Cog(metaclass=type):
 
-    __identifier__ = None
+    __uuid__ = None
     __autocomplete__ = {}
     __mapped_checks__: dict = {}
     __temp_listeners__: dict = {}
@@ -54,17 +54,17 @@ class Cog(metaclass=type):
         inside any cog class subclassed from app_util.Cog
         """
         if guild_id:
-            cls.__identifier__ = f"{command._qual}_{guild_id}"
+            cls.__uuid__ = f"{command.uuid}_{guild_id}"
         else:
-            cls.__identifier__ = command._qual
+            cls.__uuid__ = command.uuid
 
-        cls.__command_container__[cls.__identifier__] = (command, guild_id)
+        cls.__command_container__[cls.__uuid__] = (command, guild_id)
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            cls.__method_container__[cls.__identifier__] = wrapper()
+            cls.__method_container__[cls.__uuid__] = wrapper()
         return decorator
 
     @classmethod
@@ -73,7 +73,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__permission_container__[cls.__identifier__] = permission
+                cls.__permission_container__[cls.__uuid__] = permission
                 return func
             return wrapper()
         return decorator
@@ -84,7 +84,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__autocomplete__[cls.__identifier__] = coro
+                cls.__autocomplete__[cls.__uuid__] = coro
                 return func
             return wrapper()
         return decorator
@@ -95,7 +95,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__mapped_checks__[cls.__identifier__] = coro
+                cls.__mapped_checks__[cls.__uuid__] = coro
                 return func
             return wrapper()
         return decorator
@@ -106,7 +106,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__before_invoke_container__[cls.__identifier__] = coro
+                cls.__before_invoke_container__[cls.__uuid__] = coro
                 return func
             return wrapper()
         return decorator
@@ -117,7 +117,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__after_invoke_container__[cls.__identifier__] = coro
+                cls.__after_invoke_container__[cls.__uuid__] = coro
                 return func
             return wrapper()
 

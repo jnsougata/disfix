@@ -10,22 +10,16 @@ from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, D
 
 class ApplicationCommandOrigin:
 
-    def __init__(
-            self,
-            *,
-            name: str,
-            payload: Dict[str, Any],
-            command_type: ApplicationCommandType,
-    ):
+    def __init__(self, *, name: str, payload: Dict[str, Any], command_type: ApplicationCommandType):
         self.name = name
         self.type = command_type
         self._payload = payload
         if self.type is ApplicationCommandType.MESSAGE:
-            self._qual = '__MESSAGE__' + name  # name for mapping
+            self.uuid = '__MESSAGE__' + name
         elif self.type is ApplicationCommandType.USER:
-            self._qual = '__USER__' + name  # name for mapping
+            self.uuid = '__USER__' + name
         elif self.type is ApplicationCommandType.CHAT_INPUT:
-            self._qual = '__CHAT__' + name
+            self.uuid = '__CHAT__' + name
 
     def inject_permission(self, permission: discord.Permissions):
         if permission:
