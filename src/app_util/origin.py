@@ -24,5 +24,4 @@ class ApplicationCommandOrigin:
 
     def to_dict(self):
         self._payload['type'] = self.type.value
-        print(self._payload)
         return self._payload
