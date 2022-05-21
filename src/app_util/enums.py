@@ -23,12 +23,6 @@ class ApplicationCommandType(Enum):
     CHAT_INPUT = 1
 
 
-class PermissionType(Enum):
-    ROLE = 1
-    USER = 2
-    CHANNEL = 3
-
-
 class OptionType(Enum):
     SUBCOMMAND = 1
     SUBCOMMAND_GROUP = 2
@@ -43,7 +37,7 @@ class OptionType(Enum):
     ATTACHMENT = 11
 
 
-class DiscordChannelType(Enum):
+class ChannelType(Enum):
     GUILD_TEXT = 0
     DM = 1
     GUILD_VOICE = 2

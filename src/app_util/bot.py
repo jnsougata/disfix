@@ -7,7 +7,6 @@ import traceback
 from .errors import *
 from .cog import Cog
 from .http_s import *
-from .app import Overwrite
 from discord.http import Route
 from .context import Context
 from discord.ext import commands

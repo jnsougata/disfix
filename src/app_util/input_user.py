@@ -1,6 +1,6 @@
-from .app import Overwrite, ApplicationCommandOrigin
-from .enums import ApplicationCommandType
 import discord
+from .origin import ApplicationCommandOrigin
+from .enums import ApplicationCommandType
 from typing import Union, List, Optional
 
 

@@ -13,10 +13,9 @@ A basic application command extension for discord.py.
 from .bot import Bot
 from .cog import Cog
 from .errors import *
-from .app import Overwrite
+from .modal import Modal
 from .context import Context
 from .input_chat import *
-from .modal import Modal
 from .input_user import UserCommand
 from .input_msg import MessageCommand
-from .enums import DiscordChannelType, ModalTextType
+from .enums import ChannelType, ModalTextType

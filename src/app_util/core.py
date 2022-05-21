@@ -2,13 +2,13 @@ from __future__ import annotations
 import sys
 import discord
 from .errors import *
-from discord.ext import commands
-from discord.http import Route
 from .http_s import *
+from discord.http import Route
+from discord.ext import commands
 from dataclasses import dataclass
-from .app import Overwrite, ApplicationCommandOrigin
+from .origin import ApplicationCommandOrigin
 from typing import List, Optional, Union, Any, Dict
-from .enums import OptionType, ApplicationCommandType, PermissionType, try_enum
+from .enums import OptionType, ApplicationCommandType, try_enum
 
 
 def _try_flake(snowflake: str) -> Union[int, None]:
@@ -146,20 +146,20 @@ class SlashCommandOption:
 
         elif self.type is OptionType.MENTIONABLE:
             target_id = int(self.data.get('value'))
-            map = {}
+            map_ = {}
             if not self.guild:
                 if self._resolved.users:
-                    map.update(self._resolved.users)
+                    map_.update(self._resolved.users)
                 if self._resolved.roles:
-                    map.update(self._resolved.roles)
+                    map_.update(self._resolved.roles)
             else:
                 if self._resolved.users:
-                    map.update(self._resolved.users)
+                    map_.update(self._resolved.users)
                 if self._resolved.roles:
-                    map.update(self._resolved.roles)
+                    map_.update(self._resolved.roles)
                 if self._resolved.members:
-                    map.update(self._resolved.members)
-            return map[target_id]
+                    map_.update(self._resolved.members)
+            return map_[target_id]
 
         elif self.type is OptionType.NUMBER:
             return self.data['value']

@@ -1,7 +1,7 @@
 import discord
 from typing import Any, Union, List, Dict, Optional
-from .app import Overwrite, ApplicationCommandOrigin
-from .enums import DiscordChannelType, ApplicationCommandType, OptionType
+from .origin import ApplicationCommandOrigin
+from .enums import ChannelType, ApplicationCommandType, OptionType
 
 
 __all__ = [
@@ -155,7 +155,7 @@ class ChannelOption(Option):
             *,
             required: bool = True,
             choices: List[Choice] = None,
-            channel_types: [DiscordChannelType] = None
+            channel_types: [ChannelType] = None
     ):
         super().__init__(name, OptionType.CHANNEL)
         self.data = {

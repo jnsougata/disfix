@@ -2,7 +2,7 @@ import asyncio
 import discord
 from functools import wraps
 from .errors import NonCoroutine
-from .app import ApplicationCommandOrigin
+from .origin import ApplicationCommandOrigin
 from typing import Optional, ClassVar, Callable, List, Union, Dict, Any
 
 

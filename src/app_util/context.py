@@ -6,13 +6,13 @@ from discord.http import Route
 from discord.utils import MISSING
 from discord.ext import commands
 from .modal import Modal
+from .adp import Adapter
 from .input_chat import Choice
 from .enums import ApplicationCommandType, OptionType, try_enum
 from discord import Message, PartialMessage, MessageReference
-from .app import _handle_edit_params, _handle_send_prams, Adapter
+from .utils import _handle_edit_params, _handle_send_prams
 from .core import InteractionData, SlashCommandOption, Resolved, ApplicationCommand, DummyOption
 from typing import Optional, Any, Union, Sequence, Iterable, NamedTuple, List, Dict, Tuple, Coroutine
-
 
 
 class Context:
@@ -101,7 +101,6 @@ class Context:
                 options[sub_comp['custom_id']] = sub_comp['value']
         return options
 
-
     @property
     def _resolved(self):
         r_data = self.data.resolved
@@ -137,18 +136,18 @@ class Context:
         options = self.data.options
         if options:
             for option in options:
-                type = option['type']
+                command_type = option['type']
                 name = option['name']
-                if type > OptionType.SUBCOMMAND_GROUP.value:
+                if command_type > OptionType.SUBCOMMAND_GROUP.value:
                     container[name] = SlashCommandOption(self, option)
-                if type == OptionType.SUBCOMMAND.value:
+                if command_type == OptionType.SUBCOMMAND.value:
                     family = option['name']
                     container[family] = DummyOption
                     new_options = option['options']
                     parsed = SlashCommandOption._hybrid(family, new_options)
                     for new in parsed:
                         container[new['name']] = SlashCommandOption(self, new)
-                if type == OptionType.SUBCOMMAND_GROUP.value:
+                if command_type == OptionType.SUBCOMMAND_GROUP.value:
                     origin = option['name']
                     container[origin] = DummyOption
                     for new_option in option['options']:
@@ -189,7 +188,6 @@ class Context:
         during the application command and the visibility of the response
         """
         return _Thinking(self, time, author_only)
-
 
     @property
     def permissions(self) -> discord.Permissions:
@@ -246,7 +244,6 @@ class Context:
         Sends an automated choices list to application command UI
         """
         await self._adapter.post_autocomplete_response(choices)
-
 
     async def send_message(
             self,
@@ -350,7 +347,6 @@ class Context:
 
         return followup_message
 
-
     async def edit_response(
             self,
             content: Optional[Union[str, Any]] = MISSING,
@@ -392,7 +388,6 @@ class Followup:
         self._data = data
         self._parent = parent
         self.message_id = int(data['id'])
-
 
     @property
     def message(self):
