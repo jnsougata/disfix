@@ -110,8 +110,8 @@ class Bot(commands.Bot):
                         except Exception as e:
                             raise CheckFailure(f'Check named `{check.__name__}` raised an exception: ({e})')
                         else:
-                            if type(done) is not bool:
-                                raise ReturnNotBoolean('Check functions must return a boolean.')
+                            if type(done) is not bool and done is not None:
+                                raise ReturnNotBoolean('Check function must return a boolean.')
                             elif done is True:
                                 if before_invoke_job:
                                     self.loop.create_task(before_invoke_job(c))
@@ -124,7 +124,6 @@ class Bot(commands.Bot):
                     else:
                         if before_invoke_job:
                             self.loop.create_task(before_invoke_job(c))
-
                         if c.type is ApplicationCommandType.CHAT_INPUT:
                             args, kwargs = _build_prams(c._parsed_options, hooked_method)
                             await self._connection.call_hooks(qualified_name, cog, c, *args, **kwargs)

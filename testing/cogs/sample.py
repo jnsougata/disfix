@@ -17,11 +17,7 @@ async def after(ctx: app_util.Context):
 
 
 async def check(ctx: app_util.Context):
-    if not ctx.guild:
-        await ctx.send_response(f'{ctx.author.mention} please use command `{ctx.name}` inside a guild')
-    elif not ctx.author.guild_permissions.administrator:
-        await ctx.send_response(f'{ctx.author.mention} you are not an administrator')
-    elif not ctx.options:
+    if not ctx.options:
         await ctx.send_response(f'{ctx.author.mention} please select any valid option')
     else:
         return True
@@ -57,7 +53,6 @@ class Sample(app_util.Cog):
         print(f'{ctx.author} just finished running the command [{ctx.name}]'
               f'\n[Execution Time: {ctx.time_taken} seconds]')
 
-    @app_util.Cog.default_permission(discord.Permissions.manage_guild)
     @app_util.Cog.check(check)
     @app_util.Cog.auto_complete(send_autocomplete)
     @app_util.Cog.command(
@@ -74,8 +69,6 @@ class Sample(app_util.Cog):
         await ctx.send_response(f'You\'ve picked the channel {channel}')
 
     @app_util.Cog.default_permission(discord.Permissions.manage_guild)
-    @app_util.Cog.before_invoke(before)
-    @app_util.Cog.after_invoke(after)
     @app_util.Cog.command(
         command=app_util.SlashCommand(
             name='hi',
@@ -87,8 +80,7 @@ class Sample(app_util.Cog):
     async def hi_command(self, ctx: app_util.Context):
         await ctx.send_response(f'Hi {ctx.author.mention}')
 
-    @app_util.Cog.before_invoke(before)
-    @app_util.Cog.after_invoke(after)
+    @app_util.Cog.check(check)
     @app_util.Cog.command(
         command=app_util.SlashCommand(
             name='embed',
