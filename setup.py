@@ -1,4 +1,3 @@
-import random
 import pathlib
 from setuptools import setup, find_packages
 
@@ -8,11 +7,9 @@ here = pathlib.Path(__file__).parent.resolve()
 with open('README.rst') as f:
     readme = f.read()
 
-version_ext = random.randbytes(5).hex()
-
 setup(
     name='app_util',
-    version=f'0.3.8{version_ext}',
+    version='0.3.8',
     description='Asynchronous Application Command wrapper for discord.py 2.0',
     long_description=readme,
     long_description_content_type="text/x-rst",
