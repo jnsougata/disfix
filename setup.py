@@ -12,7 +12,7 @@ version_ext = random.randbytes(5).hex()
 
 setup(
     name='app_util',
-    version=f'0.3.8+{version_ext}',
+    version=f'0.3.8{version_ext}',
     description='Asynchronous Application Command wrapper for discord.py 2.0',
     long_description=readme,
     long_description_content_type="text/x-rst",
