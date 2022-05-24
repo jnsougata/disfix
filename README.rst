@@ -153,6 +153,28 @@ Sending Modal Example
                 embed.set_author(name=f'{mcx.author.name}', icon_url=mcx.author.avatar.url)
                 await mcx.send_response(embed=embed)
 
+Subcommand Example
+------------------
+
+.. code:: py
+
+        @app_util.Cog.default_permission(discord.Permissions.manage_guild)
+        @app_util.Cog.command(
+            name='greet', description='greet the user', dm_access=False,
+            category=app_util.ApplicationCommandType.SLASH,
+            guild_id=877399405056102431
+        )
+        async def greet(self, ctx: app_util.Context):
+            pass
+
+        @greet.subcommand(name='hi', description='greet the user with hi')
+        async def hello(self, ctx: app_util.Context):
+            await ctx.send_response(f'Hi {ctx.author.mention}')
+
+        @greet.subcommand(name='bye', description='greet the user with bye')
+        async def bye(self, ctx: app_util.Context):
+            await ctx.send_response(f'Bye {ctx.author.mention}')
+
 Error Handler Example
 ---------------------
 
