@@ -344,4 +344,4 @@ class SlashCommand(ApplicationCommandOrigin):
             "options": [option.data for option in options] if options else [],
             "default_member_permissions": None,
         }
-        super().__init__(name=fmt_name, payload=self._payload, command_type=ApplicationCommandType.CHAT_INPUT)
+        super().__init__(name=fmt_name, payload=self._payload, command_type=ApplicationCommandType.SLASH)

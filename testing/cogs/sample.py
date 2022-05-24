@@ -30,7 +30,7 @@ class Sample(app_util.Cog):
     @app_util.Cog.default_permission(discord.Permissions.manage_guild)
     @app_util.Cog.command(
         name='greet', description='greet the user', dm_access=False,
-        category=app_util.ApplicationCommandType.CHAT_INPUT,
+        category=app_util.ApplicationCommandType.SLASH,
         guild_id=877399405056102431
     )
     async def greet(self, ctx: app_util.Context):
@@ -51,7 +51,7 @@ class Sample(app_util.Cog):
         options=[
             app_util.StrOption(name='query', description='query to search', required=True),
         ],
-        category=app_util.ApplicationCommandType.CHAT_INPUT
+        category=app_util.ApplicationCommandType.SLASH
     )
     async def search(self, ctx: app_util.Context, query: str):
         video = Search.video(query)
@@ -59,7 +59,7 @@ class Sample(app_util.Cog):
 
     @app_util.Cog.command(
         name='modal', description='sends a cool modal', dm_access=False,
-        category=app_util.ApplicationCommandType.CHAT_INPUT
+        category=app_util.ApplicationCommandType.SLASH
     )
     async def modal(self, ctx: app_util.Context):
         modal = app_util.Modal(f'Cool modal for {ctx.author.name}')

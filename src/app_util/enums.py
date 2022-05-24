@@ -18,9 +18,9 @@ class ModalFieldType(Enum):
 
 
 class ApplicationCommandType(Enum):
+    SLASH = 1
     USER = 2
     MESSAGE = 3
-    CHAT_INPUT = 1
 
 
 class OptionType(Enum):

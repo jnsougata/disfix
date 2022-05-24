@@ -72,7 +72,11 @@ class Cog(metaclass=type):
         """
         if options and category is ApplicationCommandType.USER or category is ApplicationCommandType.MESSAGE:
             raise ValueError("Options are only allowed for slash commands")
-        if category is ApplicationCommandType.CHAT_INPUT:
+
+        if description and category is ApplicationCommandType.USER or category is ApplicationCommandType.MESSAGE:
+            raise ValueError("Description is only allowed for slash commands")
+
+        if category is ApplicationCommandType.SLASH:
             command = SlashCommand(name, description, options=options, dm_access=dm_access)
         elif category is ApplicationCommandType.USER:
             command = UserCommand(name, dm_access=dm_access)

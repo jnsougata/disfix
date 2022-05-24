@@ -127,7 +127,7 @@ class Bot(commands.Bot):
                             elif done is True:
                                 if before_invoke_job:
                                     self.loop.create_task(before_invoke_job(c))
-                                if c.type is ApplicationCommandType.CHAT_INPUT:
+                                if c.type is ApplicationCommandType.SLASH:
                                     args, kwargs = _build_prams(c._parsed_options, hooked_method)
                                     await self._connection.call_hooks(hook_name, cog, c, *args, **kwargs)
                                 else:
@@ -136,7 +136,7 @@ class Bot(commands.Bot):
                     else:
                         if before_invoke_job:
                             self.loop.create_task(before_invoke_job(c))
-                        if c.type is ApplicationCommandType.CHAT_INPUT:
+                        if c.type is ApplicationCommandType.SLASH:
                             args, kwargs = _build_prams(c._parsed_options, hooked_method)
                             await self._connection.call_hooks(hook_name, cog, c, *args, **kwargs)
                         else:
@@ -198,7 +198,7 @@ class Bot(commands.Bot):
             app_command._inject_permission(perms)
             for alias, method, subcommand in cog.__subcommands__.values():
                 if asyncio.iscoroutinefunction(method):
-                    if app_command.type == ApplicationCommandType.CHAT_INPUT and mapping_name in alias:
+                    if app_command.type == ApplicationCommandType.SLASH and mapping_name in alias:
                         self._connection.hooks[alias] = method
                         app_command._inject_subcommand(subcommand)
                 else:

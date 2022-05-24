@@ -24,7 +24,7 @@ def _make_qual(name: str, guild_id: Optional[int], ctype: ApplicationCommandType
     else:
         post_fix = name
 
-    if ctype is ApplicationCommandType.CHAT_INPUT:
+    if ctype is ApplicationCommandType.SLASH:
         return '__CHAT__' + post_fix
     if ctype is ApplicationCommandType.MESSAGE:
         return '__MESSAGE__' + post_fix

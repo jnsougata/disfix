@@ -60,24 +60,23 @@ Cog Example
 
         # slash command named `book`
         @app_util.Cog.command(
-            command=app_util.SlashCommand(
-                name='book',
-                description='get a sample book',
-                options=[
-                    app_util.StrOption(
-                        name='book_name',
-                        description='the name of the book you want to get',
-                        required=True,
-                    ),
-                    app_util.IntOption(
-                        name='page',
-                        description='the page number to look for',
-                        max_value=10,
-                        min_value=1,
-                        required=True,
-                    )
-                ]
-            ),
+            name='book',
+            description='get a sample book',
+            category=ApplicationCommandType.SLASH,
+            options=[
+                app_util.StrOption(
+                    name='book_name',
+                    description='the name of the book you want to get',
+                    required=True,
+                ),
+                app_util.IntOption(
+                    name='page',
+                    description='the page number to look for',
+                    max_value=10,
+                    min_value=1,
+                    required=True,
+                )
+            ],
             guild_id=1234567890
             # if None, available for all guilds
         )
@@ -100,10 +99,7 @@ User Command Example
 
 .. code:: py
 
-        @app_util.Cog.command(
-            command=app_util.UserCommand(name='Bonk'),
-            # guild_id not given, available for all guilds
-        )
+        @app_util.Cog.command(name='Bonk', category=ApplicationCommandType.USER)
         async def bonk(self, ctx: app_util.Context, user: discord.User):
             await ctx.send_response(f'{ctx.author.mention} just bonked {user.mention}!')
 
@@ -112,10 +108,7 @@ Message Command Example
 
 .. code:: py
 
-        @app_util.Cog.command(
-            command=app_util.MessageCommand(name='Pin'),
-            guild_id=1234567890
-        )
+        @app_util.Cog.command(name='Pin', category=ApplicationCommandType.MESSAGE))
         async def pin(self, ctx: app_util.Context, message: discord.Message):
             await message.pin()
             await ctx.send_response(f'Message pinned by {ctx.author}', ephemeral=True)
@@ -126,17 +119,16 @@ Sending Modal Example
 .. code:: py
 
         @app_util.Cog.command(
-            command=app_util.SlashCommand(
-                name='modal',
-                description='sends a placeholder modal',
-            ),
+            name='modal',
+            description='sends a placeholder modal',
+            category=ApplicationCommandType.SLASH,
             guild_id=1234567890
         )
-        async def modal_command(self, ctx: app_util.Context, name: str):
+        async def modal_command(self, ctx: app_util.Context):
 
             # creating a modal with author's name
 
-            modal = app_util.Modal(client=self.bot, title=f'A Super Modal for {ctx.author.name}')
+            modal = app_util.Modal(title=f'A Super Modal for {ctx.author.name}')
             modal.add_field(
                 label='About',
                 custom_id='about',
@@ -154,7 +146,7 @@ Sending Modal Example
             )
             await ctx.send_modal(modal)  # sending the modal
 
-            @modal.callback  # in-place callback for the modal
+            @modal.callback(self.bot)  # in-place callback for the modal
             async def on_submit(mcx: app_util.Context, about: str, tip: str):
                 embed = discord.Embed(
                     description=f'**About:** {about}\n**Tip:** {tip}')

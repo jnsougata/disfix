@@ -13,7 +13,7 @@ class ApplicationCommandOrigin:
             self.uuid = '__MESSAGE__' + name
         elif self.type is ApplicationCommandType.USER:
             self.uuid = '__USER__' + name
-        elif self.type is ApplicationCommandType.CHAT_INPUT:
+        elif self.type is ApplicationCommandType.SLASH:
             self.uuid = '__CHAT__' + name
 
     def _inject_permission(self, permission: discord.Permissions):
