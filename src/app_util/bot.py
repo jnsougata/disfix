@@ -6,7 +6,7 @@ import asyncio
 import traceback
 from .errors import *
 from .cog import Cog
-from .http_s import *
+from .https import *
 from discord.http import Route
 from .context import Context
 from discord.ext import commands
@@ -100,7 +100,16 @@ class Bot(commands.Bot):
                     on_invoke = self._connection.hooks.get('on_app_command')
                     before_invoke_job = self.__before_invoke_jobs.get(qualified_name)
                     after_invoke_job = self.__after_invoke_jobs.get(qualified_name)
-                    hooked_method = self._connection.hooks[qualified_name]
+                    if c._parsed_options['EXECUTION_TYPE'] == 0:
+                        hook_name = qualified_name
+                        hooked_method = self._connection.hooks[qualified_name]
+                    else:
+                        family = c._parsed_options['FAMILY']
+                        hook_name = f'{qualified_name}_SUBCOMMAND_{family}'
+                        hooked_method = self._connection.hooks.get(f'{qualified_name}_SUBCOMMAND_{family}')
+                        if not hooked_method:
+                            raise CommandNotImplemented(
+                                f'Subcommand `{family}` for application command `{c!r}` is not implemented.')
                     exec_start = time.perf_counter()
                     if on_invoke:
                         self.loop.create_task(on_invoke(cog, c))
@@ -117,19 +126,19 @@ class Bot(commands.Bot):
                                     self.loop.create_task(before_invoke_job(c))
                                 if c.type is ApplicationCommandType.CHAT_INPUT:
                                     args, kwargs = _build_prams(c._parsed_options, hooked_method)
-                                    await self._connection.call_hooks(qualified_name, cog, c, *args, **kwargs)
+                                    await self._connection.call_hooks(hook_name, cog, c, *args, **kwargs)
                                 else:
                                     param = _build_ctx_menu_param(c)
-                                    await self._connection.call_hooks(qualified_name, cog, c, param)
+                                    await self._connection.call_hooks(hook_name, cog, c, param)
                     else:
                         if before_invoke_job:
                             self.loop.create_task(before_invoke_job(c))
                         if c.type is ApplicationCommandType.CHAT_INPUT:
                             args, kwargs = _build_prams(c._parsed_options, hooked_method)
-                            await self._connection.call_hooks(qualified_name, cog, c, *args, **kwargs)
+                            await self._connection.call_hooks(hook_name, cog, c, *args, **kwargs)
                         else:
                             param = _build_ctx_menu_param(c)
-                            await self._connection.call_hooks(qualified_name, cog, c, param)
+                            await self._connection.call_hooks(hook_name, cog, c, param)
                     exec_end = time.perf_counter()
                     c.time_taken = exec_end - exec_start
                 except Exception as e:
@@ -183,7 +192,14 @@ class Bot(commands.Bot):
             self.__origins[mapping_name] = cog.__self__
             meth = cog.__methods__[mapping_name]
             perms = cog.__permissions__.get(mapping_name)
-            app_command.inject_permission(perms)
+            app_command._inject_permission(perms)
+            for alias, method, subcommand in cog.__subcommands__.values():
+                if asyncio.iscoroutinefunction(method):
+                    if app_command.type == ApplicationCommandType.CHAT_INPUT and mapping_name in alias:
+                        self._connection.hooks[alias] = method
+                        app_command._inject_subcommand(subcommand)
+                else:
+                    raise NonCoroutine(f'`{method.__name__}` must be a coroutine function')
             if asyncio.iscoroutinefunction(meth):
                 self._connection.hooks[mapping_name] = meth
                 self._queue[mapping_name] = app_command, guild_id

@@ -25,9 +25,9 @@ class Option:
     """
     Represents an option for an application command
     """
-    def __init__(self, name: str, type: OptionType):
+    def __init__(self, name: str, type_: OptionType):
         self.name = name.lower().replace(' ', '_')
-        self.type = type
+        self.type = type_
 
 
 class Choice:
@@ -269,7 +269,7 @@ class AttachmentOption(Option):
         }
 
 
-class SubCommand(Option):
+class SubCommand:
     """
     Represents a sub-command for an application command
     """
@@ -280,7 +280,8 @@ class SubCommand(Option):
             *,
             options: [Option] = None
     ):
-        super().__init__(name, OptionType.SUBCOMMAND)
+        self.name = name.lower().replace(' ', '_')
+        self.type = OptionType.SUBCOMMAND
         self.data = {
             "name": self.name,
             "description": description,
@@ -321,7 +322,17 @@ class SlashCommand(ApplicationCommandOrigin):
             name: str,
             description: str,
             *,
-            options: List[Union[Option, SubCommand, SubCommandGroup]] = None,
+            options: List[Union[
+                IntOption,
+                StrOption,
+                BoolOption,
+                AttachmentOption,
+                MentionableOption,
+                NumberOption,
+                RoleOption,
+                ChannelOption,
+                UserOption
+            ]] = None,
             dm_access: bool = True,
     ) -> None:
         fmt_name = name.lower().replace(' ', '_')

@@ -2,7 +2,7 @@ from __future__ import annotations
 import sys
 import discord
 from .errors import *
-from .http_s import *
+from .https import *
 from discord.http import Route
 from discord.ext import commands
 from dataclasses import dataclass

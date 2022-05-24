@@ -3,6 +3,10 @@ import discord
 from functools import wraps
 from .errors import NonCoroutine
 from .origin import ApplicationCommandOrigin
+from .input_chat import SubCommand, Option, SlashCommand
+from .input_user import UserCommand
+from .input_msg import MessageCommand
+from .utils import ApplicationCommandType
 from typing import Optional, ClassVar, Callable, List, Union, Dict, Any
 
 
@@ -14,6 +18,7 @@ class Cog(metaclass=type):
     __temp_listeners__: dict = {}
     __mapped_container__: dict = {}
     __method_container__: dict = {}
+    __sub_method_container__: dict = {}
     __command_container__: dict = {}
     __permission_container__: dict = {}
     __after_invoke_container__: dict = {}
@@ -44,15 +49,38 @@ class Cog(metaclass=type):
         after_invoke = cls.__after_invoke_container__.copy()
         setattr(cls, '__after_invoke__', after_invoke)
         cls.__after_invoke_container__.clear()
+        subcommands = cls.__sub_method_container__.copy()
+        setattr(cls, '__subcommands__', subcommands)
+        cls.__sub_method_container__.clear()
         setattr(cls, '__self__', self)
         return self
 
     @classmethod
-    def command(cls, command: ApplicationCommandOrigin, *, guild_id: int = None):
+    def command(
+            cls,
+            *,
+            name: str,
+            description: str,
+            dm_access: bool = True,
+            category: ApplicationCommandType,
+            options: Optional[List[Option]] = None,
+            guild_id: int = None
+    ):
         """
         Decorator for registering an application command
         inside any cog class subclassed from app_util.Cog
         """
+        if options and category is ApplicationCommandType.USER or category is ApplicationCommandType.MESSAGE:
+            raise ValueError("Options are only allowed for slash commands")
+        if category is ApplicationCommandType.CHAT_INPUT:
+            command = SlashCommand(name, description, options=options, dm_access=dm_access)
+        elif category is ApplicationCommandType.USER:
+            command = UserCommand(name, dm_access=dm_access)
+        elif category is ApplicationCommandType.MESSAGE:
+            command = MessageCommand(name, dm_access=dm_access)
+        else:
+            raise ValueError("Invalid command type")
+
         if guild_id:
             cls.__uuid__ = f"{command.uuid}_{guild_id}"
         else:
@@ -65,6 +93,20 @@ class Cog(metaclass=type):
             def wrapper(*args, **kwargs):
                 return func
             cls.__method_container__[cls.__uuid__] = wrapper()
+            return cls
+        return decorator
+
+    @classmethod
+    def subcommand(cls, *, name: str, description: str, options: [Option] = None):
+        subcommand = SubCommand(name, description, options=options)
+        mapping_name = f"{cls.__uuid__}_SUBCOMMAND_{subcommand.name}"
+
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                return func
+            cls.__sub_method_container__[mapping_name] = mapping_name, wrapper(), subcommand
+            return cls
         return decorator
 
     @classmethod

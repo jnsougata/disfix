@@ -16,11 +16,14 @@ class ApplicationCommandOrigin:
         elif self.type is ApplicationCommandType.CHAT_INPUT:
             self.uuid = '__CHAT__' + name
 
-    def inject_permission(self, permission: discord.Permissions):
+    def _inject_permission(self, permission: discord.Permissions):
         if permission:
             self._payload["default_member_permissions"] = str(permission.flag)
         else:
             self._payload["default_member_permissions"] = str(discord.Permissions.send_messages.flag)
+
+    def _inject_subcommand(self, subcommand):
+        self._payload['options'].append(subcommand.data)
 
     def to_dict(self):
         self._payload['type'] = self.type.value

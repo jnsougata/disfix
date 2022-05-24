@@ -125,9 +125,9 @@ class Context:
         if the command is a message/user command, this will return an empty dictionary
         """
         if self.type is ApplicationCommandType.USER:
-            return {}  # type: ignore
+            return {'EXECUTION_TYPE': 0}  # type: ignore
         if self.type is ApplicationCommandType.MESSAGE:
-            return {}  # type: ignore
+            return {'EXECUTION_TYPE': 0}  # type: ignore
         return self._parsed_options
 
     @property
@@ -138,16 +138,21 @@ class Context:
             for option in options:
                 command_type = option['type']
                 name = option['name']
+
                 if command_type > OptionType.SUBCOMMAND_GROUP.value:
                     container[name] = SlashCommandOption(self, option)
+                    container['EXECUTION_TYPE'] = 0
+
                 if command_type == OptionType.SUBCOMMAND.value:
-                    family = option['name']
-                    container[family] = DummyOption
+                    container['EXECUTION_TYPE'] = 1
+                    container['FAMILY'] = option['name']
                     new_options = option['options']
-                    parsed = SlashCommandOption._hybrid(family, new_options)
-                    for new in parsed:
-                        container[new['name']] = SlashCommandOption(self, new)
+                    for new_option in new_options:
+                        new_name = new_option['name']
+                        container[new_name] = SlashCommandOption(self, new_option)
+
                 if command_type == OptionType.SUBCOMMAND_GROUP.value:
+                    container['EXECUTION_TYPE'] = 2
                     origin = option['name']
                     container[origin] = DummyOption
                     for new_option in option['options']:
