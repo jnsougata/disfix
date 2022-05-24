@@ -8,14 +8,6 @@ from aiotube import Search
 import src.app_util as app_util
 
 
-async def before(ctx: app_util.Context):
-    print('Used before invoke decorator')
-
-
-async def after(ctx: app_util.Context):
-    print('Used after invoke decorator')
-
-
 async def check(ctx: app_util.Context):
     if not ctx.options:
         await ctx.send_response(f'{ctx.author.mention} please select any valid option')
