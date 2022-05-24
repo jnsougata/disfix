@@ -162,7 +162,6 @@ class Cog(metaclass=type):
                 cls.__after_invoke_container__[cls.__uuid__] = coro
                 return func
             return wrapper()
-
         return decorator
 
     @classmethod

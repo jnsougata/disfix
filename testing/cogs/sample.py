@@ -61,6 +61,19 @@ class Sample(app_util.Cog):
     async def bye(self, ctx: app_util.Context):
         await ctx.send_response(f'Bye {ctx.author.mention}')
 
+    @app_util.Cog.command(
+        name='search',
+        description='search youtube video',
+        dm_access=False,
+        options=[
+            app_util.StrOption(name='query', description='query to search', required=True),
+        ],
+        category=app_util.ApplicationCommandType.CHAT_INPUT
+    )
+    async def search(self, ctx: app_util.Context, query: str):
+        video = Search.video(query)
+        await ctx.send_response(f'{video.url}')
+
 
 async def setup(bot: app_util.Bot):
     await bot.add_application_cog(Sample(bot))
