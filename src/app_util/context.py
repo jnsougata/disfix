@@ -131,7 +131,7 @@ class Context:
         return self._parsed_options
 
     @property
-    def _parsed_options(self) -> Dict[str, SlashCommandOption]:
+    def _parsed_options(self) -> Dict[str, Union[SlashCommandOption, int]]:
         container = {}
         options = self.data.options
         if options:
@@ -161,7 +161,7 @@ class Context:
                         for new in parsed:
                             container[new['name']] = SlashCommandOption(self, new)
             return container
-        return {}
+        return {'EXECUTION_TYPE': 0}
 
     @property
     def application_id(self) -> int:

@@ -83,13 +83,16 @@ class Bot(commands.Bot):
             m = Context(interaction)
             target = interaction.data['custom_id']
             if target in self._modals:
-                on_submit = self._modals.pop(target)
-                args, kwargs = _build_modal_prams(m._modal_values, on_submit)
-                await on_submit(m, *args, **kwargs)
+                callback = self._modals.pop(target)
+                args, kwargs = _build_modal_prams(m._modal_values, callback)
+                await callback(m, *args, **kwargs)
 
         if interaction.type == InteractionType.application_command:
             c = Context(interaction)
-            qualified_name = c.command.qualified_name
+            try:
+                qualified_name = c.command.qualified_name
+            except AttributeError:
+                raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
             try:
                 cog = self.__origins[qualified_name]
             except KeyError:

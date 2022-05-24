@@ -74,6 +74,22 @@ class Sample(app_util.Cog):
         video = Search.video(query)
         await ctx.send_response(f'{video.url}')
 
+    @app_util.Cog.command(
+        name='modal', description='sends a cool modal', dm_access=False,
+        category=app_util.ApplicationCommandType.CHAT_INPUT
+    )
+    async def modal(self, ctx: app_util.Context):
+        modal = app_util.Modal(f'Cool modal for {ctx.author.name}')
+        modal.add_field(label='Field 1', custom_id='field1')
+        modal.add_field(label='Field 2', custom_id='field2')
+        modal.add_field(label='Field 3', custom_id='field3')
+        modal.add_field(label='Field 4', custom_id='field4')
+        await ctx.send_modal(modal)
+
+        @modal.callback(self.bot)
+        async def on_submit(mcx: app_util.Context, field1: str, field2: str, field3: str, field4: str):
+            await mcx.send_response(f'{field1} {field2} {field3} {field4}')
+
 
 async def setup(bot: app_util.Bot):
     await bot.add_application_cog(Sample(bot))

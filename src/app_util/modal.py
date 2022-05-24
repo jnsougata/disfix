@@ -1,6 +1,7 @@
 import os
 import asyncio
 import discord
+from functools import wraps
 from typing import Callable
 from discord.utils import MISSING
 from .enums import ModalTextType, ModalFieldType
@@ -12,9 +13,8 @@ class Modal:
     Represents a modal. This is a class that can be used to create a modal.
     """
 
-    def __init__(self, client: discord.Client, title: str, *, custom_id: str = None):
+    def __init__(self, title: str, *, custom_id: str = None):
         self.title = title
-        self.client = client
         self.custom_id = custom_id or os.urandom(16).hex()
         self.data = {"title": title, "custom_id": self.custom_id, "components": []}
 
@@ -23,7 +23,7 @@ class Modal:
             label: str,
             custom_id: str,
             *,
-            required: bool = True,
+            required: bool = False,
             hint: str = None,
             default_text: str = None,
             min_length: int = 0,
@@ -69,11 +69,18 @@ class Modal:
 
         return {'type': 9, 'data': self.data}
 
-    def callback(self, coro: Callable):
+    def callback(self, client: discord.Client):
         """
         A decorator that adds a callback function to the modal.
         That coroutine callback function will be called when the modal is submitted.
         """
-        if not asyncio.iscoroutinefunction(coro):
-            raise TypeError("callback method must be a coroutine")
-        self.client._modals[self.custom_id] = coro
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                return func
+            callback = wrapper()
+            if not asyncio.iscoroutinefunction(callback):
+                raise TypeError("callback must be a coroutine")
+            client._modals[self.custom_id] = callback
+            return self
+        return decorator
