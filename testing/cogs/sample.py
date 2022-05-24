@@ -35,15 +35,6 @@ class Sample(app_util.Cog):
         else:
             await ctx.send_response(f'**Error:** *{error}*')
 
-    @app_util.Cog.listener
-    async def on_app_command(self, ctx: app_util.Context):
-        print(f'{ctx.author} just ran the command [{ctx.name}]')
-
-    @app_util.Cog.listener
-    async def on_app_command_completion(self, ctx: app_util.Context):
-        print(f'{ctx.author} just finished running the command [{ctx.name}]'
-              f'\n[Execution Time: {ctx.time_taken} seconds]')
-
     @app_util.Cog.default_permission(discord.Permissions.manage_guild)
     @app_util.Cog.command(
         name='greet', description='greet the user', dm_access=False,
@@ -80,15 +71,18 @@ class Sample(app_util.Cog):
     )
     async def modal(self, ctx: app_util.Context):
         modal = app_util.Modal(f'Cool modal for {ctx.author.name}')
-        modal.add_field(label='Field 1', custom_id='field1')
-        modal.add_field(label='Field 2', custom_id='field2')
-        modal.add_field(label='Field 3', custom_id='field3')
-        modal.add_field(label='Field 4', custom_id='field4')
+        modal.add_field(label='Name', custom_id='name')
+        modal.add_field(label='Age', custom_id='age')
+        modal.add_field(label='Gender', custom_id='gender')
+        modal.add_field(label='Religion', custom_id='religion')
         await ctx.send_modal(modal)
 
         @modal.callback(self.bot)
-        async def on_submit(mcx: app_util.Context, field1: str, field2: str, field3: str, field4: str):
-            await mcx.send_response(f'{field1} {field2} {field3} {field4}')
+        async def on_submit(mcx: app_util.Context, name: str, age: str, gender: str, religion: str):
+            await mcx.send_response(f'**Name:** {name}'
+                                    f'\n**Age:** {age}'
+                                    f'\n**Gender:** {gender}'
+                                    f'\n**Religion:** {religion}')
 
 
 async def setup(bot: app_util.Bot):
