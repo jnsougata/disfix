@@ -11,7 +11,7 @@ A basic application command extension for discord.py.
 
 
 from .bot import Bot
-from .cog import Cog
+from .cog import cog
 from .errors import *
 from .modal import Modal
 from .context import Context

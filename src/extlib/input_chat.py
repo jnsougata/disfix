@@ -300,7 +300,7 @@ class SubCommandGroup(Option):
             name: str,
             description: str,
             *,
-            options: [SubCommand] = None
+            subcommands: [SubCommand] = None
     ):
         super().__init__(name, OptionType.SUBCOMMAND_GROUP)
         self.data = {
@@ -308,8 +308,8 @@ class SubCommandGroup(Option):
             "description": description,
             "type": self.type.value,
         }
-        if options:
-            self.data["options"] = [sc.data for sc in options]
+        if subcommands:
+            self.data["options"] = [sc.data for sc in subcommands]
 
 
 class SlashCommand(ApplicationCommandOrigin):

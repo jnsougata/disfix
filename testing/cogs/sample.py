@@ -15,20 +15,20 @@ async def check(ctx: extlib.Context):
         return True
 
 
-class Sample(extlib.Cog):
+class Sample(extlib.cog):
 
     def __init__(self, bot: extlib.Bot):
         self.bot = bot
 
-    @extlib.Cog.listener
+    @extlib.cog.listener
     async def on_app_command_error(self, ctx: extlib.Context, error: Exception):
         if ctx.responded:
             await ctx.send_followup(f'**Error:** *{error}*')
         else:
             await ctx.send_response(f'**Error:** *{error}*')
 
-    @extlib.Cog.default_permission(discord.Permissions.manage_guild)
-    @extlib.Cog.command(
+    @extlib.cog.default_permission(discord.Permissions.manage_guild)
+    @extlib.cog.command(
         name='greet', description='greet the user', dm_access=False,
         category=extlib.CommandType.SLASH,
         guild_id=877399405056102431
@@ -44,7 +44,7 @@ class Sample(extlib.Cog):
     async def bye(self, ctx: extlib.Context):
         await ctx.send_response(f'Bye {ctx.author.mention}')
 
-    @extlib.Cog.command(
+    @extlib.cog.command(
         name='search',
         description='search youtube video',
         dm_access=False,
@@ -57,7 +57,7 @@ class Sample(extlib.Cog):
         video = Search.video(query)
         await ctx.send_response(f'{video.url}')
 
-    @extlib.Cog.command(
+    @extlib.cog.command(
         name='modal', description='sends a cool modal', dm_access=False,
         category=extlib.CommandType.SLASH
     )
@@ -75,6 +75,26 @@ class Sample(extlib.Cog):
                                     f'\n**Age:** {age}'
                                     f'\n**Gender:** {gender}'
                                     f'\n**Religion:** {religion}')
+
+    @extlib.cog.command(name='perms', description='handles permissions', category=extlib.CommandType.SLASH)
+    async def perms(self, ctx: extlib.Context):
+        pass
+
+    @perms.subcommand_group(name='add', description='adds a permission')
+    async def add(self, ctx: extlib.Context):
+        pass
+
+    @perms.subcommand_group(name='remove', description='removes a permission')
+    async def remove(self, ctx: extlib.Context):
+        pass
+
+    @add.subcommand(name='role', description='adds a role permission')
+    async def add_role(self, ctx: extlib.Context, role: discord.Role):
+        pass
+
+    @remove.subcommand(name='role', description='removes a role permission')
+    async def remove_role(self, ctx: extlib.Context, role: discord.Role):
+        pass
 
 
 async def setup(bot: extlib.Bot):

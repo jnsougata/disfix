@@ -1,13 +1,13 @@
 import asyncio
 import discord
 from functools import wraps
+from .utils import CommandType
 from .errors import NonCoroutine
-from .origin import ApplicationCommandOrigin
-from .input_chat import SubCommand, Option, SlashCommand
 from .input_user import UserCommand
 from .input_msg import MessageCommand
-from .utils import CommandType
+from .origin import ApplicationCommandOrigin
 from typing import Optional, ClassVar, Callable, List, Union, Dict, Any
+from .input_chat import SubCommand, Option, SlashCommand, SubCommandGroup
 
 
 class Cog(metaclass=type):
@@ -19,6 +19,7 @@ class Cog(metaclass=type):
     __mapped_container__: dict = {}
     __method_container__: dict = {}
     __sub_method_container__: dict = {}
+    __sub_group_method_container__: dict = {}
     __command_container__: dict = {}
     __permission_container__: dict = {}
     __after_invoke_container__: dict = {}
@@ -114,6 +115,20 @@ class Cog(metaclass=type):
         return decorator
 
     @classmethod
+    def subcommand_group(cls, *, name: str, description: str, subcommands: [SubCommand] = None):
+        subcommand_group = SubCommandGroup(name, description, subcommands=subcommands)
+        mapping_name = f"{cls.__uuid__}_SUBCOMMAND_GROUP_{subcommand_group.name}"
+        print(mapping_name)
+
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                return func
+            cls.__sub_group_method_container__[mapping_name] = mapping_name, wrapper(), subcommand_group
+            return cls
+        return decorator
+
+    @classmethod
     def default_permission(cls, permission: discord.Permissions):
 
         def decorator(func):
@@ -184,3 +199,6 @@ class Cog(metaclass=type):
         else:
             cls.__temp_listeners__[coro.__name__] = coro
             return cls
+
+
+cog = Cog
