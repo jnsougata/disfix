@@ -7,7 +7,7 @@ import src.extlib as extlib
 intents = discord.Intents.default()
 
 
-class MyBot(extlib.Bot):
+class Bot(extlib.Bot):
     def __init__(self):
         super().__init__(command_prefix='-', intents=intents)
 
@@ -19,5 +19,5 @@ class MyBot(extlib.Bot):
         await self.load_extension('cogs.sample')
 
 
-bot = MyBot()
+bot = Bot()
 bot.run(os.getenv('DISCORD_TOKEN'))
