@@ -11,12 +11,12 @@ Installing
 .. code:: sh
 
     # Linux/macOS
-    python3 -m pip install -U app-util
+    python3 -m pip install git+https://github.com/jnsougata/extlib
 
 .. code:: sh
 
     # Windows
-    py -3 -m pip install -U app-util
+    py -3 -m pip install git+https://github.com/jnsougata/extlib
 
 Quick Example
 --------------
