@@ -1,6 +1,6 @@
 class InvalidCog(Exception):
     """
-    Raised when a cog is not the correct type (app_util.Cog)
+    Raised when a cog is not the correct type (extlib.Cog)
     """
     def __init__(self, message: str):
         super().__init__(message)

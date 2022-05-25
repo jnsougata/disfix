@@ -17,7 +17,7 @@ class ModalFieldType(Enum):
     TEXT_INPUT = 4
 
 
-class ApplicationCommandType(Enum):
+class CommandType(Enum):
     SLASH = 1
     USER = 2
     MESSAGE = 3

@@ -13,11 +13,11 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
-import src.app_util
+import src.extlib
 
 # -- Project information -----------------------------------------------------
 
-project = 'app_util'
+project = 'extlib'
 copyright = '2022, jnsougata'
 author = 'jnsougata'
 

@@ -8,7 +8,7 @@ from discord.ext import commands
 from .modal import Modal
 from .adp import Adapter
 from .input_chat import Choice
-from .enums import ApplicationCommandType, OptionType, try_enum
+from .enums import CommandType, OptionType, try_enum
 from discord import Message, PartialMessage, MessageReference
 from .utils import _handle_edit_params, _handle_send_prams
 from .core import InteractionData, SlashCommandOption, Resolved, ApplicationCommand, DummyOption
@@ -38,11 +38,11 @@ class Context:
         return Adapter(self.interaction)
 
     @property
-    def type(self) -> ApplicationCommandType:
+    def type(self) -> CommandType:
         """
         Returns the type of the invoked application command
         """
-        return try_enum(ApplicationCommandType, self.interaction.data['type'])
+        return try_enum(CommandType, self.interaction.data['type'])
 
     @property
     def name(self) -> str:
@@ -108,13 +108,13 @@ class Context:
 
     @property
     def _target_message(self):
-        if self.type is ApplicationCommandType.MESSAGE:
+        if self.type is CommandType.MESSAGE:
             message_id = int(self.data.target_id)
             return self._resolved.messages[message_id]
 
     @property
     def _target_user(self):
-        if self.type is ApplicationCommandType.USER:
+        if self.type is CommandType.USER:
             user_id = int(self.data.target_id)
             return self._resolved.users[user_id]
 
@@ -124,9 +124,9 @@ class Context:
         Returns the dictionary of the options of the invoked application command
         if the command is a message/user command, this will return an empty dictionary
         """
-        if self.type is ApplicationCommandType.USER:
+        if self.type is CommandType.USER:
             return {'EXECUTION_TYPE': 0}  # type: ignore
-        if self.type is ApplicationCommandType.MESSAGE:
+        if self.type is CommandType.MESSAGE:
             return {'EXECUTION_TYPE': 0}  # type: ignore
         return self._parsed_options
 

@@ -1,7 +1,7 @@
 import discord
 from typing import Any, Union, List, Dict, Optional
 from .origin import ApplicationCommandOrigin
-from .enums import ChannelType, ApplicationCommandType, OptionType
+from .enums import ChannelType, CommandType, OptionType
 
 
 __all__ = [
@@ -344,4 +344,4 @@ class SlashCommand(ApplicationCommandOrigin):
             "options": [option.data for option in options] if options else [],
             "default_member_permissions": None,
         }
-        super().__init__(name=fmt_name, payload=self._payload, command_type=ApplicationCommandType.SLASH)
+        super().__init__(name=fmt_name, payload=self._payload, command_type=CommandType.SLASH)

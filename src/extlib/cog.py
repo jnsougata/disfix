@@ -6,7 +6,7 @@ from .origin import ApplicationCommandOrigin
 from .input_chat import SubCommand, Option, SlashCommand
 from .input_user import UserCommand
 from .input_msg import MessageCommand
-from .utils import ApplicationCommandType
+from .utils import CommandType
 from typing import Optional, ClassVar, Callable, List, Union, Dict, Any
 
 
@@ -62,25 +62,25 @@ class Cog(metaclass=type):
             name: str,
             description: str,
             dm_access: bool = True,
-            category: ApplicationCommandType,
+            category: CommandType,
             options: Optional[List[Option]] = None,
             guild_id: int = None
     ):
         """
         Decorator for registering an application command
-        inside any cog class subclassed from app_util.Cog
+        inside any cog class subclassed from extlib.Cog
         """
-        if options and category is ApplicationCommandType.USER or category is ApplicationCommandType.MESSAGE:
+        if options and category is CommandType.USER or category is CommandType.MESSAGE:
             raise ValueError("Options are only allowed for slash commands")
 
-        if description and category is ApplicationCommandType.USER or category is ApplicationCommandType.MESSAGE:
+        if description and category is CommandType.USER or category is CommandType.MESSAGE:
             raise ValueError("Description is only allowed for slash commands")
 
-        if category is ApplicationCommandType.SLASH:
+        if category is CommandType.SLASH:
             command = SlashCommand(name, description, options=options, dm_access=dm_access)
-        elif category is ApplicationCommandType.USER:
+        elif category is CommandType.USER:
             command = UserCommand(name, dm_access=dm_access)
-        elif category is ApplicationCommandType.MESSAGE:
+        elif category is CommandType.MESSAGE:
             command = MessageCommand(name, dm_access=dm_access)
         else:
             raise ValueError("Invalid command type")
@@ -174,13 +174,13 @@ class Cog(metaclass=type):
         Decorator for adding a listener to the cog
         This listener will be called when an error occurs
         """
-        if coro.__name__ == 'on_app_command':
-            cls.__temp_listeners__['on_app_command'] = coro
-
-        if coro.__name__ == 'on_app_command_error':
-            cls.__temp_listeners__['on_app_command_error'] = coro
-
-        if coro.__name__ == 'on_app_command_completion':
-            cls.__temp_listeners__['on_app_command_completion'] = coro
-
-        return coro
+        allowed_methods = [
+            'on_app_command',
+            'on_app_command_error',
+            'on_app_command_completion',
+        ]
+        if coro.__name__ not in allowed_methods:
+            raise ValueError(f"Invalid method name. Allowed methods are: {' | '.join(allowed_methods)}")
+        else:
+            cls.__temp_listeners__[coro.__name__] = coro
+            return cls

@@ -1,6 +1,6 @@
 import discord
 from .origin import ApplicationCommandOrigin
-from .enums import ApplicationCommandType
+from .enums import CommandType
 from typing import Union, List, Optional
 
 
@@ -15,4 +15,4 @@ class UserCommand(ApplicationCommandOrigin):
             "dm_permission": dm_access,
             "default_member_permissions": None,
         }
-        super().__init__(name=name, payload=self._payload, command_type=ApplicationCommandType.USER)
+        super().__init__(name=name, payload=self._payload, command_type=CommandType.USER)

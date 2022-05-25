@@ -3,7 +3,7 @@ import discord
 from .modal import Modal
 from discord.http import Route
 from discord.utils import MISSING
-from .enums import ApplicationCommandType
+from .enums import CommandType
 from typing import Optional, Any, Union, List, Dict, Sequence
 
 

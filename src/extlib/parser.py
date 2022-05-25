@@ -1,6 +1,6 @@
 import inspect
 from .context import Context
-from .enums import ApplicationCommandType
+from .enums import CommandType
 from typing import List, Dict, Any, Optional, Union, Callable
 
 
@@ -41,9 +41,9 @@ def _build_prams(options: Dict[str, Any], func: Callable):
 
 
 def _build_ctx_menu_param(c: Context):
-    if c.type is ApplicationCommandType.USER:
+    if c.type is CommandType.USER:
         return c._target_user
-    elif c.type is ApplicationCommandType.MESSAGE:
+    elif c.type is CommandType.MESSAGE:
         return c._target_message
 
 

@@ -8,7 +8,7 @@ from discord.ext import commands
 from dataclasses import dataclass
 from .origin import ApplicationCommandOrigin
 from typing import List, Optional, Union, Any, Dict
-from .enums import OptionType, ApplicationCommandType, try_enum
+from .enums import OptionType, CommandType, try_enum
 
 
 def _try_flake(snowflake: str) -> Union[int, None]:
@@ -18,17 +18,17 @@ def _try_flake(snowflake: str) -> Union[int, None]:
         return None
 
 
-def _make_qual(name: str, guild_id: Optional[int], ctype: ApplicationCommandType, ) -> str:
+def _make_qual(name: str, guild_id: Optional[int], ctype: CommandType, ) -> str:
     if guild_id:
         post_fix = f'{name}_{guild_id}'
     else:
         post_fix = name
 
-    if ctype is ApplicationCommandType.SLASH:
+    if ctype is CommandType.SLASH:
         return '__CHAT__' + post_fix
-    if ctype is ApplicationCommandType.MESSAGE:
+    if ctype is CommandType.MESSAGE:
         return '__MESSAGE__' + post_fix
-    if ctype is ApplicationCommandType.USER:
+    if ctype is CommandType.USER:
         return '__USER__' + post_fix
 
 
@@ -184,7 +184,7 @@ class ApplicationCommand:
         self.guild_id = _try_flake(data.get('guild_id'))
         self.name = data['name']
         self.description = data['description']
-        self.type = try_enum(ApplicationCommandType, data['type'])
+        self.type = try_enum(CommandType, data['type'])
         self.qualified_name = _make_qual(self.name, self.guild_id, self.type)
         self.application_id = int(data['application_id'])
         self.version = int(data['version'])

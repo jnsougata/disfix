@@ -18,4 +18,4 @@ from .context import Context
 from .input_chat import *
 from .input_user import UserCommand
 from .input_msg import MessageCommand
-from .enums import ChannelType, ModalTextType, ApplicationCommandType
+from .enums import ChannelType, ModalTextType, CommandType

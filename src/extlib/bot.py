@@ -14,7 +14,7 @@ from .core import ApplicationCommand
 from .input_chat import SlashCommand
 from .input_user import UserCommand
 from .input_msg import MessageCommand
-from .enums import ApplicationCommandType
+from .enums import CommandType
 from discord.enums import InteractionType
 from typing import Callable, Optional, Any, Union, List, Dict, Tuple
 from .parser import _build_prams, _build_ctx_menu_param, _build_modal_prams, _build_autocomplete_prams
@@ -127,7 +127,7 @@ class Bot(commands.Bot):
                             elif done is True:
                                 if before_invoke_job:
                                     self.loop.create_task(before_invoke_job(c))
-                                if c.type is ApplicationCommandType.SLASH:
+                                if c.type is CommandType.SLASH:
                                     args, kwargs = _build_prams(c._parsed_options, hooked_method)
                                     await self._connection.call_hooks(hook_name, cog, c, *args, **kwargs)
                                 else:
@@ -136,7 +136,7 @@ class Bot(commands.Bot):
                     else:
                         if before_invoke_job:
                             self.loop.create_task(before_invoke_job(c))
-                        if c.type is ApplicationCommandType.SLASH:
+                        if c.type is CommandType.SLASH:
                             args, kwargs = _build_prams(c._parsed_options, hooked_method)
                             await self._connection.call_hooks(hook_name, cog, c, *args, **kwargs)
                         else:
@@ -198,7 +198,7 @@ class Bot(commands.Bot):
             app_command._inject_permission(perms)
             for alias, method, subcommand in cog.__subcommands__.values():
                 if asyncio.iscoroutinefunction(method):
-                    if app_command.type == ApplicationCommandType.SLASH and mapping_name in alias:
+                    if app_command.type == CommandType.SLASH and mapping_name in alias:
                         self._connection.hooks[alias] = method
                         app_command._inject_subcommand(subcommand)
                 else:
@@ -211,7 +211,7 @@ class Bot(commands.Bot):
 
     async def add_application_cog(self, cog: Cog) -> None:
         """
-        Adds an app_util cog to the application
+        Adds an extlib cog to the application
         """
 
         await self._walk_app_commands(cog)

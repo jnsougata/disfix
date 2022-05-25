@@ -1,13 +1,13 @@
 import os
 import asyncio
 import discord
-import src.app_util as app
+import src.extlib as extlib
 
 
 intents = discord.Intents.default()
 
 
-class MyBot(app.Bot):
+class MyBot(extlib.Bot):
     def __init__(self):
         super().__init__(command_prefix='-', intents=intents)
 

@@ -8,15 +8,12 @@ with open('README.rst') as f:
     readme = f.read()
 
 setup(
-    name='app_util',
-    version='0.3.8',
+    name='extlib',
+    version='0.3.9',
     description='Asynchronous Application Command wrapper for discord.py 2.0',
     long_description=readme,
     long_description_content_type="text/x-rst",
-    project_urls={
-        'Documentation': 'https://app-util.readthedocs.io/en/latest/',
-        'Source': 'https://github.com/jnsougata/app_util'
-    },
+    project_urls={'Source': 'https://github.com/jnsougata/extlib'},
     author='jnsougata',
     author_email='jnsougata@gmail.com',
     classifiers=[
