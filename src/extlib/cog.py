@@ -118,7 +118,6 @@ class Cog(metaclass=type):
     def subcommand_group(cls, *, name: str, description: str, subcommands: [SubCommand] = None):
         subcommand_group = SubCommandGroup(name, description, subcommands=subcommands)
         mapping_name = f"{cls.__uuid__}_SUBCOMMAND_GROUP_{subcommand_group.name}"
-        print(mapping_name)
 
         def decorator(func):
             @wraps(func)
