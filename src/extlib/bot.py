@@ -74,7 +74,7 @@ class Bot(commands.Bot):
             try:
                 self.__origins[qualified_name]
             except KeyError:
-                raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
+                raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.') from None
             auto = self._automatics[qualified_name]
             args, kwargs = _build_autocomplete_prams(c._parsed_options, auto)
             self.loop.create_task(auto(c, *args, **kwargs))
@@ -92,7 +92,7 @@ class Bot(commands.Bot):
             try:
                 qualified_name = c.command.qualified_name
             except AttributeError:
-                raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
+                raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.') from None
             try:
                 cog = self.__origins[qualified_name]
             except KeyError:
@@ -112,7 +112,7 @@ class Bot(commands.Bot):
                         hooked_method = self._connection.hooks.get(f'{qualified_name}_SUBCOMMAND_{family}')
                         if not hooked_method:
                             raise CommandNotImplemented(
-                                f'Subcommand `{family}` for application command `{c!r}` is not implemented.')
+                                f'Subcommand `{family}` for application command `{c!r}` is not implemented.') from None
                     exec_start = time.perf_counter()
                     if on_invoke:
                         self.loop.create_task(on_invoke(cog, c))
@@ -120,10 +120,10 @@ class Bot(commands.Bot):
                         try:
                             done = await check(c)
                         except Exception as e:
-                            raise CheckFailure(f'Check named `{check.__name__}` raised an exception: ({e})')
+                            raise CheckFailure(f'Check named `{check.__name__}` raised an exception: ({e})') from None
                         else:
                             if type(done) is not bool and done is not None:
-                                raise ReturnNotBoolean('Check function must return a boolean.')
+                                raise ReturnNotBoolean('Check function must return a boolean.') from None
                             elif done is True:
                                 if before_invoke_job:
                                     self.loop.create_task(before_invoke_job(c))
@@ -164,31 +164,31 @@ class Bot(commands.Bot):
             if asyncio.iscoroutinefunction(listener):
                 self._connection.hooks[name] = listener
             else:
-                raise NonCoroutine(f'listener `{name}` must be a coroutine function')
+                raise NonCoroutine(f'listener `{name}` must be a coroutine function') from None
 
         for name, auto in cog.__automatics__.items():
             if asyncio.iscoroutinefunction(auto):
                 self._automatics[name] = auto
             else:
-                raise NonCoroutine(f'Autocomplete function `{auto.__name__}` must be a coroutine.')
+                raise NonCoroutine(f'Autocomplete function `{auto.__name__}` must be a coroutine.') from None
 
         for name, check in cog.__checks__.items():
             if asyncio.iscoroutinefunction(check):
                 self.__checks[name] = check
             else:
-                raise NonCoroutine(f'Check function `{check.__name__}` must be a coroutine.')
+                raise NonCoroutine(f'Check function `{check.__name__}` must be a coroutine.') from None
 
         for name, job in cog.__before_invoke__.items():
             if asyncio.iscoroutinefunction(job):
                 self.__before_invoke_jobs[name] = job
             else:
-                raise NonCoroutine(f'Before invoke function `{job.__name__}` must be a coroutine.')
+                raise NonCoroutine(f'Before invoke function `{job.__name__}` must be a coroutine.') from None
 
         for name, job in cog.__after_invoke__.items():
             if asyncio.iscoroutinefunction(job):
                 self.__after_invoke_jobs[name] = job
             else:
-                raise NonCoroutine(f'After invoke function `{job.__name__}` must be a coroutine.')
+                raise NonCoroutine(f'After invoke function `{job.__name__}` must be a coroutine.') from None
 
         for mapping_name, data in cog.__commands__.items():
             app_command, guild_id = data
@@ -202,12 +202,12 @@ class Bot(commands.Bot):
                         self._connection.hooks[alias] = method
                         app_command._inject_subcommand(subcommand)
                 else:
-                    raise NonCoroutine(f'`{method.__name__}` must be a coroutine function')
+                    raise NonCoroutine(f'`{method.__name__}` must be a coroutine function') from None
             if asyncio.iscoroutinefunction(meth):
                 self._connection.hooks[mapping_name] = meth
                 self._queue[mapping_name] = app_command, guild_id
             else:
-                raise NonCoroutine(f'`{meth.__name__}` must be a coroutine function')
+                raise NonCoroutine(f'`{meth.__name__}` must be a coroutine function') from None
 
     async def add_application_cog(self, cog: Cog) -> None:
         """

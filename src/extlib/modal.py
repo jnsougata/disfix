@@ -4,8 +4,8 @@ import discord
 from functools import wraps
 from typing import Callable
 from discord.utils import MISSING
-from .enums import ModalTextType, ModalFieldType
 from typing import Optional, Union, Any, Sequence, List, Dict
+from .enums import ModalTextType, ModalFieldType, InteractionCallbackType, ComponentType
 
 
 class Modal:
@@ -16,7 +16,7 @@ class Modal:
     def __init__(self, title: str, *, custom_id: str = None):
         self.title = title
         self.custom_id = custom_id or os.urandom(16).hex()
-        self.__action_row = {"type": 1, "components": []}
+        self.__action_row = {"type": ComponentType.ACTION_ROW.value, "components": []}
         self.data = {"title": title, "custom_id": self.custom_id, "components": []}
 
     def add_component(self, component: Union[discord.ui.Select, discord.ui.Button]):
@@ -47,7 +47,7 @@ class Modal:
 
         self.data["components"].append(
             {
-                "type": 1,
+                "type": ComponentType.ACTION_ROW.value,
                 "components": [
                     {
                         "label": label,
@@ -77,7 +77,7 @@ class Modal:
         if len(self.data['components']) > 5:
             raise ValueError("You can only have a maximum of 5 fields in a modal")
 
-        return {'type': 9, 'data': self.data}
+        return {'type': InteractionCallbackType.MODAL_RESPONSE.value, 'data': self.data}
 
     def callback(self, client: discord.Client):
         """
