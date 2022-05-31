@@ -4,15 +4,11 @@ import aiohttp
 import asyncio
 import discord
 import traceback
-from aiotube import Search
 import src.extlib as extlib
 
 
 async def check(ctx: extlib.Context):
-    if not ctx.options:
-        await ctx.send_response(f'{ctx.author.mention} please select any valid option')
-    else:
-        return True
+    return True
 
 
 class Sample(extlib.cog):
@@ -29,9 +25,8 @@ class Sample(extlib.cog):
 
     @extlib.cog.default_permission(discord.Permissions.manage_guild)
     @extlib.cog.command(
-        name='greet', description='greet the user', dm_access=False,
+        name='greet', description='greet the user', dm_access=True,
         category=extlib.CommandType.SLASH,
-        guild_id=877399405056102431
     )
     async def greet(self, ctx: extlib.Context):
         pass
@@ -45,28 +40,24 @@ class Sample(extlib.cog):
         await ctx.send_response(f'Bye {ctx.author.mention}')
 
     @extlib.cog.command(
-        name='search',
-        description='search youtube video',
-        dm_access=False,
-        options=[
-            extlib.StrOption(name='query', description='query to search', required=True),
-        ],
-        category=extlib.CommandType.SLASH
-    )
-    async def search(self, ctx: extlib.Context, query: str):
-        video = Search.video(query)
-        await ctx.send_response(f'{video.url}')
-
-    @extlib.cog.command(
         name='modal', description='sends a cool modal', dm_access=False,
         category=extlib.CommandType.SLASH
     )
     async def modal(self, ctx: extlib.Context):
-        modal = extlib.Modal(f'Cool modal for {ctx.author.name}')
-        modal.add_field(label='Name', custom_id='name')
-        modal.add_field(label='Age', custom_id='age')
-        modal.add_field(label='Gender', custom_id='gender')
-        modal.add_field(label='Religion', custom_id='religion')
+        select = discord.ui.Select(
+            custom_id='select',
+            placeholder='Select an option',
+            max_values=1,
+            min_values=1,
+            options=[
+                discord.SelectOption(label='OP1', value='1'),
+                discord.SelectOption(label='OP2', value='2'),
+                discord.SelectOption(label='OP3', value='3'),
+            ]
+        )
+        modal = extlib.Modal(f'{ctx.author}\'s Selection Modal')
+        modal.add_component(select)
+        modal.add_field(label='Name', custom_id='name', required=True)
         await ctx.send_modal(modal)
 
         @modal.callback(self.bot)

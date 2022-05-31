@@ -212,16 +212,11 @@ class Context:
             return self.guild.me
 
     @property
-    def channel(self) -> discord.abc.GuildChannel:
+    def channel(self) -> Optional[Union[discord.abc.GuildChannel, discord.PartialMessageable, discord.Thread]]:
         """
         Returns the channel on which the command was used
         """
-        channel = self.interaction.channel
-
-        if not self.guild:
-            return channel  # type: ignore
-
-        return self.guild.get_channel(channel.id)
+        return self.interaction.channel  # type: ignore
 
     @property
     def guild(self) -> discord.Guild:

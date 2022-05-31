@@ -16,7 +16,14 @@ class Modal:
     def __init__(self, title: str, *, custom_id: str = None):
         self.title = title
         self.custom_id = custom_id or os.urandom(16).hex()
+        self.__action_row = {"type": 1, "components": []}
         self.data = {"title": title, "custom_id": self.custom_id, "components": []}
+
+    def add_component(self, component: Union[discord.ui.Select, discord.ui.Button]):
+        """
+        Adds a select menu to the modal.
+        """
+        self.__action_row["components"].append(component.to_component_dict())
 
     def add_field(
             self,
@@ -61,6 +68,9 @@ class Modal:
         """
         Returns the modal in json format. Internal use only.
         """
+        if self.__action_row["components"]:
+            self.data['components'].append(self.__action_row)
+
         if not len(self.data['components']) > 0:
             raise ValueError("You must add at least one field to the modal")
 
