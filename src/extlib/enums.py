@@ -8,7 +8,7 @@ def try_enum(enum_class, value):
         return None
 
 
-class ModalTextType(Enum):
+class TextFieldLength(Enum):
     SHORT = 1
     LONG = 2
 

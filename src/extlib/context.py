@@ -8,7 +8,7 @@ from discord.ext import commands
 from .modal import Modal
 from .adp import Adapter
 from .input_chat import Choice
-from .enums import CommandType, OptionType, try_enum
+from .enums import CommandType, OptionType, try_enum, ComponentType
 from discord import Message, PartialMessage, MessageReference
 from .utils import _handle_edit_params, _handle_send_prams
 from .core import InteractionData, SlashCommandOption, Resolved, ApplicationCommand, DummyOption
@@ -96,9 +96,14 @@ class Context:
     @property
     def _modal_values(self):
         options = {}
-        for comp in self.data.components:
-            for sub_comp in comp['components']:
-                options[sub_comp['custom_id']] = sub_comp['value']
+        comps = [data['components'][0] for data in self.data.components]
+        for comp in comps:
+            if comp['type'] == ComponentType.TEXT_INPUT.value:
+                options[comp['custom_id']] = comp['value']
+            elif comp['type'] == ComponentType.SELECT_MENU.value:
+                options[comp['custom_id']] = tuple(comp['values'])
+            else:
+                raise ValueError('Invalid component type') from None
         return options
 
     @property

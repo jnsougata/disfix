@@ -45,27 +45,42 @@ class Sample(extlib.cog):
     )
     async def modal(self, ctx: extlib.Context):
         select = discord.ui.Select(
-            custom_id='select',
-            placeholder='Select an option',
+            custom_id='gender',
+            placeholder='select gender',
             max_values=1,
             min_values=1,
             options=[
-                discord.SelectOption(label='OP1', value='1'),
-                discord.SelectOption(label='OP2', value='2'),
-                discord.SelectOption(label='OP3', value='3'),
+                discord.SelectOption(label='Male', value='m'),
+                discord.SelectOption(label='Female', value='f'),
+                discord.SelectOption(label='Others', value='o'),
+            ]
+        )
+        select_x = discord.ui.Select(
+            custom_id='os',
+            placeholder='select os',
+            max_values=1,
+            min_values=1,
+            options=[
+                discord.SelectOption(label='iOS', value='ios'),
+                discord.SelectOption(label='Android', value='android'),
+                discord.SelectOption(label='MacOS', value='macos'),
+                discord.SelectOption(label='Windows', value='windows'),
+                discord.SelectOption(label='Linux', value='linux'),
             ]
         )
         modal = extlib.Modal(f'{ctx.author}\'s Selection Modal')
-        modal.add_component(select)
         modal.add_field(label='Name', custom_id='name', required=True)
+        modal.add_field(label='Age', custom_id='age', required=True)
+        modal.add_component(select)
+        modal.add_component(select_x)
         await ctx.send_modal(modal)
 
         @modal.callback(self.bot)
-        async def on_submit(mcx: extlib.Context, name: str, age: str, gender: str, religion: str):
+        async def on_submit(mcx: extlib.Context, name: str, age: str, gender: tuple, os: tuple):
             await mcx.send_response(f'**Name:** {name}'
                                     f'\n**Age:** {age}'
-                                    f'\n**Gender:** {gender}'
-                                    f'\n**Religion:** {religion}')
+                                    f'\n**Gender:** {gender[0]}'
+                                    f'\n**Operating system:** {os[0]}')
 
     @extlib.cog.command(name='perms', description='handles permissions', category=extlib.CommandType.SLASH)
     async def perms(self, ctx: extlib.Context):

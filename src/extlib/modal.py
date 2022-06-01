@@ -5,7 +5,7 @@ from functools import wraps
 from typing import Callable
 from discord.utils import MISSING
 from typing import Optional, Union, Any, Sequence, List, Dict
-from .enums import ModalTextType, ModalFieldType, InteractionCallbackType, ComponentType
+from .enums import TextFieldLength, ModalFieldType, InteractionCallbackType, ComponentType
 
 
 class Modal:
@@ -23,7 +23,12 @@ class Modal:
         """
         Adds a select menu to the modal.
         """
-        self.__action_row["components"].append(component.to_component_dict())
+        self.data["components"].append(
+            {
+                "type": ComponentType.ACTION_ROW.value,
+                "components": [component.to_component_dict()]
+            }
+        )
 
     def add_field(
             self,
@@ -35,7 +40,7 @@ class Modal:
             default_text: str = None,
             min_length: int = 0,
             max_length: int = 4000,
-            style: ModalTextType = ModalTextType.SHORT
+            style: TextFieldLength = TextFieldLength.SHORT
     ):
         """
         Adds a field to the modal. Max allowed fields is 5.
