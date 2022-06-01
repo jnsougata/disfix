@@ -56,7 +56,7 @@ class Sample(extlib.cog):
             ]
         )
         select_x = discord.ui.Select(
-            custom_id='os',
+            custom_id='os_',
             placeholder='select os',
             max_values=1,
             min_values=1,
@@ -76,11 +76,11 @@ class Sample(extlib.cog):
         await ctx.send_modal(modal)
 
         @modal.callback(self.bot)
-        async def on_submit(mcx: extlib.Context, name: str, age: str, gender: tuple, os: tuple):
+        async def on_submit(mcx: extlib.Context, name: str, age: str, gender: tuple, os_: tuple):
             await mcx.send_response(f'**Name:** {name}'
                                     f'\n**Age:** {age}'
                                     f'\n**Gender:** {gender[0]}'
-                                    f'\n**Operating system:** {os[0]}')
+                                    f'\n**Operating system:** {os_[0]}')
 
     @extlib.cog.command(name='perms', description='handles permissions', category=extlib.CommandType.SLASH)
     async def perms(self, ctx: extlib.Context):
