@@ -50,9 +50,9 @@ class Sample(extlib.cog):
             max_values=1,
             min_values=1,
             options=[
-                discord.SelectOption(label='Male', value='m'),
-                discord.SelectOption(label='Female', value='f'),
-                discord.SelectOption(label='Others', value='o'),
+                discord.SelectOption(label='Male', value='Male'),
+                discord.SelectOption(label='Female', value='Female'),
+                discord.SelectOption(label='Others', value='Others'),
             ]
         )
         select_x = discord.ui.Select(
@@ -61,11 +61,11 @@ class Sample(extlib.cog):
             max_values=1,
             min_values=1,
             options=[
-                discord.SelectOption(label='iOS', value='ios'),
-                discord.SelectOption(label='Android', value='android'),
-                discord.SelectOption(label='MacOS', value='macos'),
-                discord.SelectOption(label='Windows', value='windows'),
-                discord.SelectOption(label='Linux', value='linux'),
+                discord.SelectOption(label='iOS', value='iOS'),
+                discord.SelectOption(label='Android', value='Android'),
+                discord.SelectOption(label='MacOS', value='MacOS'),
+                discord.SelectOption(label='Windows', value='Windows'),
+                discord.SelectOption(label='Linux', value='Linux'),
             ]
         )
         modal = extlib.Modal(f'{ctx.author}\'s Selection Modal')
