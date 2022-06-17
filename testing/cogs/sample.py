@@ -92,20 +92,13 @@ class Sample(extlib.cog):
     async def auto_mod(self, ctx: extlib.Context):
 
         rule = ModerationRule(
-            name='anti-nsfw',
+            name=f'{self.bot.user.name.lower()}-moderation-rule',
             event_type=extlib.AutoModEvent.MESSAGE_SEND,
-            trigger_type=extlib.AutoModTrigger.KEYWORD_PRESET,
+            trigger_type=extlib.AutoModTrigger.KEYWORD,
         )
-        rule.add_action(
-            extlib.AutoModAction.block_message()
-        )
+        rule.add_action(extlib.AutoModAction.block_message())
         rule.add_action(extlib.AutoModAction.send_alert_message(987173252306702346))
-        rule.add_trigger_metadata(extlib.TriggerMetadata.keyword_preset_filter(
-            [
-                extlib.KeywordPresets.PROFANITY,
-                extlib.KeywordPresets.SEXUAL_CONTENT
-            ]
-        ))
+        rule.add_trigger_metadata(extlib.TriggerMetadata.keyword_filter(['nig*']))
         await self.bot.create_rule(rule, ctx.guild.id)
         await ctx.send_response(f'Auto moderation `{rule.to_dict()["name"]}` added to this server!')
 

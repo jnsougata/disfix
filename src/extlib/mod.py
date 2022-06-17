@@ -62,6 +62,8 @@ class AutoModAction:
 
     @classmethod
     def timeout(cls, seconds: int):
+        if seconds > 2419200:
+            raise ValueError('Timeout must be less than 4 weeks (2419200s)')
         return cls(
             {
                 'type': AutoModActionType.TIMEOUT.value,
@@ -105,7 +107,8 @@ class ModerationRule:
             'name': name,
             'event_type': event_type.value,
             'trigger_type': trigger_type.value,
-            'actions': []
+            'enabled': enabled,
+            'actions': [],
         }
         if ignore_role_ids:
             self._data['exempt_roles'] = [str(role_id) for role in ignore_role_ids]
