@@ -37,7 +37,7 @@ class KeywordPresets(Enum):
 
 class AutoModAction:
 
-    def __int__(self, data: dict):
+    def __init__(self, data: dict):
         self._data = data
 
     @classmethod
@@ -73,7 +73,7 @@ class AutoModAction:
 
 
 class TriggerMetadata:
-    def __int__(self, value: dict):
+    def __init__(self, value: dict):
         self._value = value
 
     @classmethod
@@ -91,7 +91,7 @@ class TriggerMetadata:
 
 class ModerationRule:
 
-    def __int__(
+    def __init__(
             self,
             name,
             *,
