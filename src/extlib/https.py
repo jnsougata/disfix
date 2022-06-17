@@ -53,3 +53,8 @@ async def delete_command(client, command_id: int, guild_id: int = None):
     else:
         r = Route('DELETE', f'/applications/{client.application_id}/commands/{command_id}')
     return await client.http.request(r)
+
+
+async def create_auto_mod_rule(client, data: dict, guild_id: int):
+    r = Route('POST', f'/guilds/{guild_id}/auto-moderation/rules')
+    return await client.http.request(r, json=data)

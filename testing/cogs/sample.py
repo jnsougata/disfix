@@ -1,10 +1,10 @@
 import os
 import sys
-import aiohttp
 import asyncio
 import discord
 import traceback
 import src.extlib as extlib
+from src.extlib import ModerationRule
 
 
 async def check(ctx: extlib.Context):
@@ -22,6 +22,7 @@ class Sample(extlib.cog):
             await ctx.send_followup(f'**Error:** *{error}*')
         else:
             await ctx.send_response(f'**Error:** *{error}*')
+        raise error
 
     @extlib.cog.default_permission(discord.Permissions.manage_guild)
     @extlib.cog.command(
@@ -82,25 +83,31 @@ class Sample(extlib.cog):
                                     f'\n**Gender:** {gender[0]}'
                                     f'\n**Operating system:** {os_[0]}')
 
-    @extlib.cog.command(name='perms', description='handles permissions', category=extlib.CommandType.SLASH)
-    async def perms(self, ctx: extlib.Context):
-        pass
+    @extlib.cog.command(
+        name='automod',
+        description='adds moderation rule to server',
+        category=extlib.CommandType.SLASH,
+        dm_access=False
+    )
+    async def auto_mod(self, ctx: extlib.Context):
 
-    @perms.subcommand_group(name='add', description='adds a permission')
-    async def add(self, ctx: extlib.Context):
-        pass
-
-    @perms.subcommand_group(name='remove', description='removes a permission')
-    async def remove(self, ctx: extlib.Context):
-        pass
-
-    @add.subcommand(name='role', description='adds a role permission')
-    async def add_role(self, ctx: extlib.Context, role: discord.Role):
-        pass
-
-    @remove.subcommand(name='role', description='removes a role permission')
-    async def remove_role(self, ctx: extlib.Context, role: discord.Role):
-        pass
+        rule = ModerationRule(
+            name='anti-nsfw',
+            event_type=extlib.AutoModEvent.MESSAGE_SEND,
+            trigger_type=extlib.AutoModTrigger.KEYWORD_PRESET,
+        )
+        rule.add_action(
+            extlib.AutoModAction.block_message()
+        )
+        rule.add_action(extlib.AutoModAction.send_alert_message(987173252306702346))
+        rule.add_trigger_metadata(extlib.TriggerMetadata.keyword_preset_filter(
+            [
+                extlib.KeywordPresets.PROFANITY,
+                extlib.KeywordPresets.SEXUAL_CONTENT
+            ]
+        ))
+        await self.bot.create_rule(rule, ctx.guild.id)
+        await ctx.send_response(f'Auto moderation `{rule.to_dict()["name"]}` added to this server!')
 
 
 async def setup(bot: extlib.Bot):

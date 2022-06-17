@@ -1,23 +1,19 @@
 from __future__ import annotations
 import sys
 import time
-import discord
 import asyncio
 import traceback
 from .errors import *
 from .cog import Cog
 from .https import *
-from discord.http import Route
 from .context import Context
 from discord.ext import commands
 from .core import ApplicationCommand
-from .input_chat import SlashCommand
-from .input_user import UserCommand
-from .input_msg import MessageCommand
 from .enums import CommandType
 from discord.enums import InteractionType
-from typing import Callable, Optional, Any, Union, List, Dict, Tuple
+from typing import Callable, Optional, Any, Union, List, Dict
 from .parser import _build_prams, _build_ctx_menu_param, _build_modal_prams, _build_autocomplete_prams
+from .mod import ModerationRule
 
 
 __all__ = ['Bot']
@@ -244,10 +240,10 @@ class Bot(commands.Bot):
         """
         Automatically sync all commands for a specific guild.
         """
-        data_arr = await fetch_guild_commands(self, guild.id)
-        for data in data_arr:
-            command = ApplicationCommand(self, data)
-            client._application_commands[command.id] = command
+        cmd_ls = await fetch_guild_commands(self, guild.id)
+        for cmd in cmd_ls:
+            command = ApplicationCommand(self, cmd)
+            self._application_commands[command.id] = command
 
     async def fetch_command(self, command_id: int, guild_id: int = None) -> ApplicationCommand:
         """
@@ -258,6 +254,9 @@ class Bot(commands.Bot):
 
     def get_application_command(self, command_id: int) -> ApplicationCommand:
         return self._application_commands.get(command_id)
+
+    async def create_rule(self, rule: ModerationRule, guild_id: int):
+        await create_auto_mod_rule(self, rule.to_dict(), guild_id)
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
         """

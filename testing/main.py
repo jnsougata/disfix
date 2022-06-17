@@ -1,5 +1,4 @@
 import os
-import asyncio
 import discord
 import src.extlib as extlib
 
