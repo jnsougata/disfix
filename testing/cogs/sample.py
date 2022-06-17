@@ -22,7 +22,6 @@ class Sample(extlib.cog):
             await ctx.send_followup(f'**Error:** *{error}*')
         else:
             await ctx.send_response(f'**Error:** *{error}*')
-        raise error
 
     @extlib.cog.default_permission(discord.Permissions.manage_guild)
     @extlib.cog.command(
@@ -94,11 +93,13 @@ class Sample(extlib.cog):
         rule = ModerationRule(
             name=f'{self.bot.user.name.lower()}-moderation-rule',
             event_type=extlib.AutoModEvent.MESSAGE_SEND,
-            trigger_type=extlib.AutoModTrigger.KEYWORD,
+            trigger_type=extlib.AutoModTrigger.KEYWORD_PRESET,
         )
         rule.add_action(extlib.AutoModAction.block_message())
         rule.add_action(extlib.AutoModAction.send_alert_message(987173252306702346))
-        rule.add_trigger_metadata(extlib.TriggerMetadata.keyword_filter(['nig*']))
+        rule.add_trigger_metadata(extlib.TriggerMetadata.keyword_preset_filter(
+            [extlib.KeywordPresets.SEXUAL_CONTENT, extlib.KeywordPresets.SLURS, extlib.KeywordPresets.PROFANITY]
+        ))
         await self.bot.create_rule(rule, ctx.guild.id)
         await ctx.send_response(f'Auto moderation `{rule.to_dict()["name"]}` added to this server!')
 
