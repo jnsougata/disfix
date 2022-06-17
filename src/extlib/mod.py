@@ -116,7 +116,7 @@ class ModerationRule:
         self._data['actions'].append(action._data)
 
     def add_trigger_metadata(self, metadata: TriggerMetadata):
-        self._data['trigger_metadata'] = metadata._data
+        self._data['trigger_metadata'] = metadata._value
 
     def to_dict(self):
         return self._data
