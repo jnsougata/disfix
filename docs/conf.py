@@ -13,11 +13,11 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
-import src.extlib
+import src.disfix
 
 # -- Project information -----------------------------------------------------
 
-project = 'extlib'
+project = 'disfix'
 copyright = '2022, jnsougata'
 author = 'jnsougata'
 

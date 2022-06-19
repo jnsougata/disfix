@@ -1,12 +1,12 @@
 import os
 import discord
-import src.extlib as extlib
+import src.disfix as extlib
 
 
 intents = discord.Intents.default()
 
 
-class Bot(extlib.Bot):
+class Bot(disfix.Bot):
     def __init__(self):
         super().__init__(command_prefix='-', intents=intents)
 

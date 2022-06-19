@@ -207,7 +207,7 @@ class Bot(commands.Bot):
 
     async def add_application_cog(self, cog: Cog) -> None:
         """
-        Adds an extlib cog to the application
+        Adds an disfix cog to the application
         """
 
         await self._walk_app_commands(cog)

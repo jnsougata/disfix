@@ -69,7 +69,7 @@ class Cog(metaclass=type):
     ):
         """
         Decorator for registering an application command
-        inside any cog class subclassed from extlib.Cog
+        inside any cog class subclassed from disfix.Cog
         """
         if options and category is CommandType.USER or category is CommandType.MESSAGE:
             raise ValueError("Options are only allowed for slash commands")
