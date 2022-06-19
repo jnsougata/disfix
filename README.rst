@@ -1,7 +1,7 @@
-extlib
+disfix
 ==========
 
-Asynchronous Application Command wrapper for discord.py 2.0
+Latest feature addons for discord.py 2.0
 
 Installing
 ----------
@@ -11,12 +11,12 @@ Installing
 .. code:: sh
 
     # Linux/macOS
-    python3 -m pip install git+https://github.com/jnsougata/extlib
+    python3 -m pip install git+https://github.com/jnsougata/disfix
 
 .. code:: sh
 
     # Windows
-    py -3 -m pip install git+https://github.com/jnsougata/extlib
+    py -3 -m pip install git+https://github.com/jnsougata/disfix
 
 Quick Example
 --------------
@@ -24,13 +24,13 @@ Quick Example
 .. code:: py
 
     import discord
-    import extlib
+    import disfix
 
 
     intents = discord.Intents.default()
 
 
-    class SampleBot(extlib.Bot):
+    class SampleBot(disfix.Bot):
         def __init__(self):
             super().__init__(command_prefix='-', intents=intents)
 
@@ -50,26 +50,26 @@ Cog Example
 
     import asyncio
     import discord
-    import extlib
+    import disfix
 
 
-    class Sample(extlib.Cog):
+    class Sample(disfix.Cog):
 
-        def __init__(self, bot: extlib.Bot):
+        def __init__(self, bot: disfix.Bot):
             self.bot = bot
 
         # slash command named `book`
-        @extlib.Cog.command(
+        @disfix.Cog.command(
             name='book',
             description='get a sample book',
-            category=extlib.CommandType.SLASH,
+            category=disfix.CommandType.SLASH,
             options=[
-                extlib.StrOption(
+                disfix.StrOption(
                     name='book_name',
                     description='the name of the book you want to get',
                     required=True,
                 ),
-                extlib.IntOption(
+                disfix.IntOption(
                     name='page',
                     description='the page number to look for',
                     max_value=10,
@@ -80,7 +80,7 @@ Cog Example
             guild_id=1234567890
             # if None, available for all guilds
         )
-        async def book(self, ctx: extlib.Context, book_name: str, page: int):
+        async def book(self, ctx: disfix.Context, book_name: str, page: int):
             await ctx.defer(ephemeral=True)
             page_content = await imaginary_api.fetch(book_name, page)
             embed = discord.Embed(
@@ -91,7 +91,7 @@ Cog Example
             embed.set_footer(text=f'Page {page_number}')
             await ctx.send_followup(embed=embed)
 
-    def setup(bot: extlib.Bot):
+    def setup(bot: disfix.Bot):
         bot.add_application_cog(Sample(bot))
 
 User Command Example
@@ -99,8 +99,8 @@ User Command Example
 
 .. code:: py
 
-        @extlib.Cog.command(name='Bonk', category=extlib.CommandType.USER)
-        async def bonk(self, ctx: extlib.Context, user: discord.User):
+        @disfix.Cog.command(name='Bonk', category=disfix.CommandType.USER)
+        async def bonk(self, ctx: disfix.Context, user: discord.User):
             await ctx.send_response(f'{ctx.author.mention} just bonked {user.mention}!')
 
 Message Command Example
@@ -108,8 +108,8 @@ Message Command Example
 
 .. code:: py
 
-        @extlib..Cog.command(name='Pin', category=extlib.CommandType.MESSAGE))
-        async def pin(self, ctx: extlib.Context, message: discord.Message):
+        @disfix.Cog.command(name='Pin', category=disfix.CommandType.MESSAGE))
+        async def pin(self, ctx: disfix.Context, message: discord.Message):
             await message.pin()
             await ctx.send_response(f'Message pinned by {ctx.author}', ephemeral=True)
 
@@ -118,28 +118,28 @@ Sending Modal Example
 
 .. code:: py
 
-        @extlib.Cog.command(
+        @disfix.Cog.command(
             name='modal',
             description='sends a placeholder modal',
-            category=extlib.CommandType.SLASH,
+            category=disfix.CommandType.SLASH,
             guild_id=1234567890
         )
-        async def modal_command(self, ctx: extlib.Context):
+        async def modal_command(self, ctx: disfix.Context):
 
             # creating a modal with author's name
 
-            modal = extlib.Modal(title=f'A Super Modal for {ctx.author.name}')
+            modal = disfix.Modal(title=f'A Super Modal for {ctx.author.name}')
             modal.add_field(
                 label='About',
                 custom_id='about',
-                style=extlib.TextInputStyle.PARAGRAPH,
+                style=disfix.TextInputStyle.PARAGRAPH,
                 required=False,
                 hint='Write something about yourself...',
             )
             modal.add_field(
                 label='Tip',
                 custom_id='tip',
-                style=extlib.TextInputStyle.SHORT,
+                style=disfix.TextInputStyle.SHORT,
                 required=True,
                 hint='Give me some tips to improve...',
                 max_length=100,
@@ -147,7 +147,7 @@ Sending Modal Example
             await ctx.send_modal(modal)  # sending the modal
 
             @modal.callback(self.bot)  # in-place callback for the modal
-            async def on_submit(mcx: extlib.Context, about: str, tip: str):
+            async def on_submit(mcx: disfix.Context, about: str, tip: str):
                 embed = discord.Embed(
                     description=f'**About:** {about}\n**Tip:** {tip}')
                 embed.set_author(name=f'{mcx.author.name}', icon_url=mcx.author.avatar.url)
@@ -158,21 +158,21 @@ Subcommand Example
 
 .. code:: py
 
-        @extlib.Cog.default_permission(discord.Permissions.manage_guild)
-        @extlib.Cog.command(
+        @disfix.Cog.default_permission(discord.Permissions.manage_guild)
+        @disfix.Cog.command(
             name='greet', description='greet the user', dm_access=False,
-            category=extlib.CommandType.SLASH,
+            category=disfix.CommandType.SLASH,
             guild_id=877399405056102431
         )
-        async def greet(self, ctx: extlib.Context):
+        async def greet(self, ctx: disfix.Context):
             pass
 
         @greet.subcommand(name='hi', description='greet the user with hi')
-        async def hello(self, ctx: extlib.Context):
+        async def hello(self, ctx: disfix.Context):
             await ctx.send_response(f'Hi {ctx.author.mention}')
 
         @greet.subcommand(name='bye', description='greet the user with bye')
-        async def bye(self, ctx: extlib.Context):
+        async def bye(self, ctx: disfix.Context):
             await ctx.send_response(f'Bye {ctx.author.mention}')
 
 Error Handler Example
@@ -180,6 +180,6 @@ Error Handler Example
 
 .. code:: py
 
-        @extlib.Cog.listener
-        async def on_command_error(self, ctx: extlib.Context, error: Exception):
+        @disfix.Cog.listener
+        async def on_command_error(self, ctx: disfix.Context, error: Exception):
             await ctx.send_followup(f'Something went wrong!')
