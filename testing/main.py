@@ -1,6 +1,6 @@
 import os
 import discord
-import src.disfix as extlib
+import src.disfix as disfix
 
 
 intents = discord.Intents.default()
@@ -18,5 +18,6 @@ class Bot(disfix.Bot):
         await self.load_extension('cogs.sample')
 
 
-bot = Bot()
-bot.run(os.getenv('DISCORD_TOKEN'))
+if __name__ == '__main__':
+    bot = Bot()
+    bot.run(os.getenv('DISCORD_TOKEN'))

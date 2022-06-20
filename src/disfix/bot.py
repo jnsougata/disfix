@@ -60,7 +60,7 @@ class Bot(commands.Bot):
         """
         Returns a list of all the application commands from cache
         """
-        return list(self._application_commands.values())
+        return list(self._application_commands.values())  # type: ignore # linter gone nuts
 
     async def _handle_interaction(self, interaction: discord.Interaction):
 
@@ -207,9 +207,8 @@ class Bot(commands.Bot):
 
     async def add_application_cog(self, cog: Cog) -> None:
         """
-        Adds an disfix cog to the application
+        Adds a disfix cog to the application
         """
-
         await self._walk_app_commands(cog)
 
     async def sync_current_commands(self) -> None:
@@ -231,8 +230,8 @@ class Bot(commands.Bot):
         Syncs the global commands of the application.
         It does this automatically when the bot is ready.
         """
-        data_arr = await fetch_global_commands(self)
-        for data in data_arr:
+        payloads = await fetch_global_commands(self)
+        for data in payloads:
             command = ApplicationCommand(self, data)
             self._application_commands[command.id] = command
 

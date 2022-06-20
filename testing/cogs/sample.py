@@ -3,7 +3,7 @@ import sys
 import asyncio
 import discord
 import traceback
-import src.disfix as extlib
+import src.disfix as disfix
 from src.disfix import ModerationRule
 
 
