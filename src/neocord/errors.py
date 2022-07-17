@@ -1,6 +1,6 @@
 class InvalidCog(Exception):
     """
-    Raised when a cog is not the correct type (disfix.Cog)
+    Raised when a cog is not the correct type (neocord.Cog)
     """
     def __init__(self, message: str):
         super().__init__(message)

@@ -8,7 +8,7 @@ with open('README.rst') as f:
     readme = f.read()
 
 setup(
-    name='disfix',
+    name='neocord',
     version='0.3.9',
     description='Asynchronous Application Command wrapper for discord.py 2.0',
     long_description=readme,
