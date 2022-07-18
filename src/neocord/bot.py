@@ -91,46 +91,58 @@ class Bot(commands.Bot):
                 print(f'CommandNotImplemented: Application Command `{c!r}` is not implemented', file=sys.stderr)
             else:
                 try:
+                    cog = self.__origins[c.command.id]
+                    main_handler = self._connection.hooks[str(c.command.id)]
                     check = self.__checks.get(c.command.id)
                     on_invoke = self._connection.hooks.get('on_app_command')
                     before_invoke_job = self.__before_invoke_jobs.get(c.command.id)
                     after_invoke_job = self.__after_invoke_jobs.get(c.command.id)
-                    if c._parsed_options['EXECUTION_TYPE'] == 0:
-                        hooked_method = self._connection.hooks[str(c.command.id)]
-                    else:
-                        family = c._parsed_options['FAMILY']
-                        hooked_method = self._connection.hooks.get(f'{c.command.id}*{family}')
-                        if not hooked_method:
-                            raise CommandNotImplemented(
-                                f'Subcommand `{family}` for application command `{c!r}` is not implemented.') from None
+
                     if on_invoke:
                         self.loop.create_task(on_invoke(cog, c))
                     if check is not None:
                         try:
                             done = await check(c)
                         except Exception as e:
-                            raise CheckFailure(f'Check named `{check.__name__}` raised an exception: ({e})') from None
+                            raise CheckFailure(f'Check named `{check.__name__}` raised an exception: ({e})')
                         else:
-                            if type(done) is not bool and done is not None:
-                                raise ReturnNotBoolean('Check function must return a boolean.') from None
-                            elif done is True:
+                            if type(done) is not bool:
+                                raise CheckFailure(f'Check named `{check.__name__}` did not return a boolean.')
+                            if done:
                                 if before_invoke_job:
                                     self.loop.create_task(before_invoke_job(c))
-                                if c.type is CommandType.SLASH:
-                                    args, kwargs = _build_prams(c._parsed_options, hooked_method)
-                                    await self._connection.call_hooks(str(c.command.id), cog, c, *args, **kwargs)
-                                else:
-                                    param = _build_ctx_menu_param(c)
-                                    await self._connection.call_hooks(str(c.command.id), cog, c, param)
+
+                                main_options = {k: v for k, v in c._parsed_options.items() if not k.startswith("*")}
+                                args, kwargs = _build_prams(main_options, main_handler)
+                                self.loop.create_task(main_handler(cog, c, *args, **kwargs))
+
+                                options = c._parsed_options
+                                for name, option in options.items():
+                                    if name.startswith('*'):
+                                        handler = self._connection.hooks.get(f'{c.command.id}{name}')
+                                        if handler:
+                                            args, kwargs = _build_prams(option, handler)
+                                            self.loop.create_task(handler(cog, c, *args, **kwargs))
+                                    else:
+                                        pass
                     else:
                         if before_invoke_job:
                             self.loop.create_task(before_invoke_job(c))
-                        if c.type is CommandType.SLASH:
-                            args, kwargs = _build_prams(c._parsed_options, hooked_method)
-                            await self._connection.call_hooks(str(c.command.id), cog, c, *args, **kwargs)
-                        else:
-                            param = _build_ctx_menu_param(c)
-                            await self._connection.call_hooks(str(c.command.id), cog, c, param)
+
+                        main_options = {k: v for k, v in c._parsed_options.items() if not k.startswith("*")}
+                        args, kwargs = _build_prams(main_options, main_handler)
+                        self.loop.create_task(main_handler(cog, c, *args, **kwargs))
+
+                        options = c._parsed_options
+                        for name, option in options.items():
+                            if name.startswith('*'):
+                                handler = self._connection.hooks.get(f'{c.command.id}{name}')
+                                if handler:
+                                    args, kwargs = _build_prams(option, handler)
+                                    self.loop.create_task(handler(cog, c, *args, **kwargs))
+                            else:
+                                pass
+
                 except Exception as e:
                     error_handler = self._connection.hooks.get('on_app_command_error')
                     if error_handler:
