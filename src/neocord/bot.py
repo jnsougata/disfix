@@ -3,17 +3,17 @@ import sys
 import time
 import asyncio
 import traceback
-from .errors import *
 from .cog import Cog
 from .https import *
+from .errors import *
 from .context import Context
+from .enums import CommandType
+from .mod import ModerationRule
 from discord.ext import commands
 from .core import ApplicationCommand
-from .enums import CommandType
 from discord.enums import InteractionType
 from typing import Callable, Optional, Any, Union, List, Dict
 from .parser import _build_prams, _build_ctx_menu_param, _build_modal_prams, _build_autocomplete_prams
-from .mod import ModerationRule
 
 
 __all__ = ['Bot']
@@ -68,12 +68,11 @@ class Bot(commands.Bot):
             c = Context(interaction)
             qualified_name = c.command.qualified_name
             try:
-                self.__origins[qualified_name]
+                self.__origins[c.command.id]
             except KeyError:
-                raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.') from None
-            auto = self._automatics[qualified_name]
+                raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
             args, kwargs = _build_autocomplete_prams(c._parsed_options, auto)
-            self.loop.create_task(auto(c, *args, **kwargs))
+            self.loop.create_task(self._automatics[c.command.id](c, *args, **kwargs))
 
         if interaction.type is InteractionType.modal_submit:
             m = Context(interaction)
@@ -87,11 +86,12 @@ class Bot(commands.Bot):
             c = Context(interaction)
             try:
                 cog = self.__origins[c.command.id]
-            except KeyError:
+            except (KeyError, AttributeError):
                 print(f'CommandNotImplemented: Application Command `{c!r}` is not implemented', file=sys.stderr)
             else:
                 try:
                     cog = self.__origins[c.command.id]
+                    options = c._parsed_options
                     main_handler = self._connection.hooks[str(c.command.id)]
                     check = self.__checks.get(c.command.id)
                     on_invoke = self._connection.hooks.get('on_app_command')
@@ -112,11 +112,10 @@ class Bot(commands.Bot):
                                 if before_invoke_job:
                                     self.loop.create_task(before_invoke_job(c))
 
-                                main_options = {k: v for k, v in c._parsed_options.items() if not k.startswith("*")}
+                                main_options = {k: v for k, v in options.items() if not k.startswith("*")}
                                 args, kwargs = _build_prams(main_options, main_handler)
                                 self.loop.create_task(main_handler(cog, c, *args, **kwargs))
 
-                                options = c._parsed_options
                                 for name, option in options.items():
                                     if name.startswith('*'):
                                         handler = self._connection.hooks.get(f'{c.command.id}{name}')
@@ -129,11 +128,10 @@ class Bot(commands.Bot):
                         if before_invoke_job:
                             self.loop.create_task(before_invoke_job(c))
 
-                        main_options = {k: v for k, v in c._parsed_options.items() if not k.startswith("*")}
+                        main_options = {k: v for k, v in options.items() if not k.startswith("*")}
                         args, kwargs = _build_prams(main_options, main_handler)
                         self.loop.create_task(main_handler(cog, c, *args, **kwargs))
 
-                        options = c._parsed_options
                         for name, option in options.items():
                             if name.startswith('*'):
                                 handler = self._connection.hooks.get(f'{c.command.id}{name}')

@@ -155,6 +155,7 @@ class Context:
                 if command_type == OptionType.SUBCOMMAND_GROUP.value:
                     pass
             return container
+        return {}
 
     @property
     def application_id(self) -> int:
