@@ -1,4 +1,4 @@
-disfix
+Neocord
 ==========
 
 Latest feature addons for discord.py 2.0
