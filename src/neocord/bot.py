@@ -86,30 +86,23 @@ class Bot(commands.Bot):
         if interaction.type == InteractionType.application_command:
             c = Context(interaction)
             try:
-                qualified_name = c.command.qualified_name
-            except AttributeError:
-                raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.') from None
-            try:
-                cog = self.__origins[qualified_name]
+                cog = self.__origins[c.command.id]
             except KeyError:
                 print(f'CommandNotImplemented: Application Command `{c!r}` is not implemented', file=sys.stderr)
             else:
                 try:
-                    check = self.__checks.get(qualified_name)
+                    check = self.__checks.get(c.command.id)
                     on_invoke = self._connection.hooks.get('on_app_command')
-                    before_invoke_job = self.__before_invoke_jobs.get(qualified_name)
-                    after_invoke_job = self.__after_invoke_jobs.get(qualified_name)
+                    before_invoke_job = self.__before_invoke_jobs.get(c.command.id)
+                    after_invoke_job = self.__after_invoke_jobs.get(c.command.id)
                     if c._parsed_options['EXECUTION_TYPE'] == 0:
-                        hook_name = qualified_name
-                        hooked_method = self._connection.hooks[qualified_name]
+                        hooked_method = self._connection.hooks[str(c.command.id)]
                     else:
                         family = c._parsed_options['FAMILY']
-                        hook_name = f'{qualified_name}_SUBCOMMAND_{family}'
-                        hooked_method = self._connection.hooks.get(f'{qualified_name}_SUBCOMMAND_{family}')
+                        hooked_method = self._connection.hooks.get(f'{c.command.id}*{family}')
                         if not hooked_method:
                             raise CommandNotImplemented(
                                 f'Subcommand `{family}` for application command `{c!r}` is not implemented.') from None
-                    exec_start = time.perf_counter()
                     if on_invoke:
                         self.loop.create_task(on_invoke(cog, c))
                     if check is not None:
@@ -125,21 +118,19 @@ class Bot(commands.Bot):
                                     self.loop.create_task(before_invoke_job(c))
                                 if c.type is CommandType.SLASH:
                                     args, kwargs = _build_prams(c._parsed_options, hooked_method)
-                                    await self._connection.call_hooks(hook_name, cog, c, *args, **kwargs)
+                                    await self._connection.call_hooks(str(c.command.id), cog, c, *args, **kwargs)
                                 else:
                                     param = _build_ctx_menu_param(c)
-                                    await self._connection.call_hooks(hook_name, cog, c, param)
+                                    await self._connection.call_hooks(str(c.command.id), cog, c, param)
                     else:
                         if before_invoke_job:
                             self.loop.create_task(before_invoke_job(c))
                         if c.type is CommandType.SLASH:
                             args, kwargs = _build_prams(c._parsed_options, hooked_method)
-                            await self._connection.call_hooks(hook_name, cog, c, *args, **kwargs)
+                            await self._connection.call_hooks(str(c.command.id), cog, c, *args, **kwargs)
                         else:
                             param = _build_ctx_menu_param(c)
-                            await self._connection.call_hooks(hook_name, cog, c, param)
-                    exec_end = time.perf_counter()
-                    c.time_taken = exec_end - exec_start
+                            await self._connection.call_hooks(str(c.command.id), cog, c, param)
                 except Exception as e:
                     error_handler = self._connection.hooks.get('on_app_command_error')
                     if error_handler:
@@ -156,54 +147,55 @@ class Bot(commands.Bot):
 
     async def _walk_app_commands(self, cog: Cog):
 
-        for name, listener in cog.__listeners__.items():
+        for map_hash, listener in cog.__listeners__.items():
             if asyncio.iscoroutinefunction(listener):
-                self._connection.hooks[name] = listener
+                self._connection.hooks[map_hash] = listener
             else:
-                raise NonCoroutine(f'listener `{name}` must be a coroutine function') from None
+                raise NonCoroutine(f'listener `{map_hash}` must be a coroutine function') from None
 
-        for name, auto in cog.__automatics__.items():
+        for map_hash, auto in cog.__automatics__.items():
             if asyncio.iscoroutinefunction(auto):
-                self._automatics[name] = auto
+                self._automatics[map_hash] = auto
             else:
                 raise NonCoroutine(f'Autocomplete function `{auto.__name__}` must be a coroutine.') from None
 
-        for name, check in cog.__checks__.items():
+        for map_hash, check in cog.__checks__.items():
             if asyncio.iscoroutinefunction(check):
-                self.__checks[name] = check
+                self.__checks[map_hash] = check
             else:
                 raise NonCoroutine(f'Check function `{check.__name__}` must be a coroutine.') from None
 
-        for name, job in cog.__before_invoke__.items():
+        for map_hash, job in cog.__before_invoke__.items():
             if asyncio.iscoroutinefunction(job):
-                self.__before_invoke_jobs[name] = job
+                self.__before_invoke_jobs[map_hash] = job
             else:
                 raise NonCoroutine(f'Before invoke function `{job.__name__}` must be a coroutine.') from None
 
-        for name, job in cog.__after_invoke__.items():
+        for map_hash, job in cog.__after_invoke__.items():
             if asyncio.iscoroutinefunction(job):
-                self.__after_invoke_jobs[name] = job
+                self.__after_invoke_jobs[map_hash] = job
             else:
                 raise NonCoroutine(f'After invoke function `{job.__name__}` must be a coroutine.') from None
 
-        for mapping_name, data in cog.__commands__.items():
+        for mapping_hash, data in cog.__commands__.items():
             app_command, guild_id = data
-            self.__origins[mapping_name] = cog.__self__
-            meth = cog.__methods__[mapping_name]
-            perms = cog.__permissions__.get(mapping_name)
+            self.__origins[mapping_hash] = cog.__self__
+            handler = cog.__methods__[mapping_hash]
+            perms = cog.__permissions__.get(mapping_hash)
             app_command._inject_permission(perms)
-            for alias, method, subcommand in cog.__subcommands__.values():
-                if asyncio.iscoroutinefunction(method):
-                    if app_command.type == CommandType.SLASH and mapping_name in alias:
-                        self._connection.hooks[alias] = method
+            sub_command_map = {}
+            for alias, sub_handler, subcommand in cog.__subcommands__.values():
+                if asyncio.iscoroutinefunction(sub_handler):
+                    if app_command.type == CommandType.SLASH and alias == f'{mapping_hash}*{subcommand.name}':
                         app_command._inject_subcommand(subcommand)
+                        sub_command_map[alias] = sub_handler
                 else:
-                    raise NonCoroutine(f'`{method.__name__}` must be a coroutine function') from None
-            if asyncio.iscoroutinefunction(meth):
-                self._connection.hooks[mapping_name] = meth
-                self._queue[mapping_name] = app_command, guild_id
+                    raise NonCoroutine(f'`{sub_handler.__name__}` must be a coroutine function') from None
+            if asyncio.iscoroutinefunction(handler):
+                self._connection.hooks[mapping_hash] = handler
+                self._queue[mapping_hash] = app_command, guild_id, handler, sub_command_map
             else:
-                raise NonCoroutine(f'`{meth.__name__}` must be a coroutine function') from None
+                raise NonCoroutine(f'`{handler.__name__}` must be a coroutine function') from None
 
     async def add_application_cog(self, cog: Cog) -> None:
         """
@@ -217,12 +209,19 @@ class Bot(commands.Bot):
         This method is called automatically when the bot is ready. however, you can call it manually
         to ensure that the bot is up-to-date with the latest commands.
         """
-        for command, guild_id in self._queue.values():
-            if guild_id:
-                data = await post_command(self, command, guild_id)
-            else:
-                data = await post_command(self, command)
+        for map_hash, value in self._queue.items():
+            data = await post_command(self, value[0], value[1])
             command_id = int(data['id'])
+            self._connection.hooks[str(command_id)] = value[2]
+            self._connection.hooks.pop(map_hash, None)
+            for alias, sub_handler in value[3].items():
+                hook_name = str(command_id) + '*' + alias.split('*')[1]
+                self._connection.hooks[hook_name] = sub_handler
+                self._connection.hooks.pop(alias, None)
+            self.__checks[command_id] = self.__checks.pop(map_hash, None)
+            self.__before_invoke_jobs[command_id] = self.__before_invoke_jobs.pop(map_hash, None)
+            self.__after_invoke_jobs[command_id] = self.__after_invoke_jobs.pop(map_hash, None)
+            self.__origins[command_id] = self.__origins.pop(map_hash, None)
             self._application_commands[command_id] = ApplicationCommand(self, data)
 
     async def sync_global_commands(self) -> None:

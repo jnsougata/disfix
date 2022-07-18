@@ -18,20 +18,6 @@ def _try_flake(snowflake: str) -> Union[int, None]:
         return None
 
 
-def _make_qual(name: str, guild_id: Optional[int], ctype: CommandType, ) -> str:
-    if guild_id:
-        post_fix = f'{name}_{guild_id}'
-    else:
-        post_fix = name
-
-    if ctype is CommandType.SLASH:
-        return '__CHAT__' + post_fix
-    if ctype is CommandType.MESSAGE:
-        return '__MESSAGE__' + post_fix
-    if ctype is CommandType.USER:
-        return '__USER__' + post_fix
-
-
 @dataclass(frozen=True)
 class InteractionData:
     name: str = None
@@ -185,7 +171,6 @@ class ApplicationCommand:
         self.name = data['name']
         self.description = data['description']
         self.type = try_enum(CommandType, data['type'])
-        self.qualified_name = _make_qual(self.name, self.guild_id, self.type)
         self.application_id = int(data['application_id'])
         self.version = int(data['version'])
         self.options = data.get('options')

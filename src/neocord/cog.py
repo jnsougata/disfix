@@ -12,7 +12,7 @@ from .input_chat import SubCommand, Option, SlashCommand, SubCommandGroup
 
 class Cog(metaclass=type):
 
-    __uuid__ = None
+    __uid__ = None
     __autocomplete__ = {}
     __mapped_checks__: dict = {}
     __temp_listeners__: dict = {}
@@ -86,25 +86,21 @@ class Cog(metaclass=type):
         else:
             raise ValueError("Invalid command type")
 
-        if guild_id:
-            cls.__uuid__ = f"{command.uuid}_{guild_id}"
-        else:
-            cls.__uuid__ = command.uuid
-
-        cls.__command_container__[cls.__uuid__] = (command, guild_id)
+        cls.__uid__ = command._custom_id
+        cls.__command_container__[cls.__uid__] = command, guild_id
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            cls.__method_container__[cls.__uuid__] = wrapper()
+            cls.__method_container__[cls.__uid__] = wrapper()
             return cls
         return decorator
 
     @classmethod
     def subcommand(cls, *, name: str, description: str, options: [Option] = None):
         subcommand = SubCommand(name, description, options=options)
-        mapping_name = f"{cls.__uuid__}_SUBCOMMAND_{subcommand.name}"
+        mapping_name = f"{cls.__uid__}*{subcommand.name}"
 
         def decorator(func):
             @wraps(func)
@@ -117,7 +113,7 @@ class Cog(metaclass=type):
     @classmethod
     def subcommand_group(cls, *, name: str, description: str, subcommands: [SubCommand] = None):
         subcommand_group = SubCommandGroup(name, description, subcommands=subcommands)
-        mapping_name = f"{cls.__uuid__}_SUBCOMMAND_GROUP_{subcommand_group.name}"
+        mapping_name = f"{cls.__uid__}_SUBCOMMAND_GROUP_{subcommand_group.name}"
 
         def decorator(func):
             @wraps(func)
@@ -133,7 +129,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__permission_container__[cls.__uuid__] = permission
+                cls.__permission_container__[cls.__uid__] = permission
                 return func
             return wrapper()
         return decorator
@@ -144,7 +140,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__autocomplete__[cls.__uuid__] = coro
+                cls.__autocomplete__[cls.__uid__] = coro
                 return func
             return wrapper()
         return decorator
@@ -155,7 +151,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__mapped_checks__[cls.__uuid__] = coro
+                cls.__mapped_checks__[cls.__uid__] = coro
                 return func
             return wrapper()
         return decorator
@@ -166,7 +162,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__before_invoke_container__[cls.__uuid__] = coro
+                cls.__before_invoke_container__[cls.__uid__] = coro
                 return func
             return wrapper()
         return decorator
@@ -177,7 +173,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__after_invoke_container__[cls.__uuid__] = coro
+                cls.__after_invoke_container__[cls.__uid__] = coro
                 return func
             return wrapper()
         return decorator

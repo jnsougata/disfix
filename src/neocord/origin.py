@@ -1,6 +1,7 @@
 import discord
 from .enums import CommandType
 from typing import Optional, Any, Union, List, Dict
+from secrets import token_hex
 
 
 class ApplicationCommandOrigin:
@@ -9,12 +10,7 @@ class ApplicationCommandOrigin:
         self.name = name
         self.type = command_type
         self._payload = payload
-        if self.type is CommandType.MESSAGE:
-            self.uuid = '__MESSAGE__' + name
-        elif self.type is CommandType.USER:
-            self.uuid = '__USER__' + name
-        elif self.type is CommandType.SLASH:
-            self.uuid = '__CHAT__' + name
+        self._custom_id = token_hex(8)
 
     def _inject_permission(self, permission: discord.Permissions):
         if permission:
