@@ -91,6 +91,15 @@ class Bot(commands.Bot):
             else:
                 try:
                     cog = self.__origins[c.command.id]
+
+                    if c.type is CommandType.USER:
+                        h = self._connection.hooks[str(c.command.id)]
+                        return await h(cog, c, c._target_user)
+
+                    if c.type is CommandType.MESSAGE:
+                        h = self._connection.hooks[str(c.command.id)]
+                        return await h(cog, c, c._target_message)
+
                     options = c._parsed_options
                     main_handler = self._connection.hooks[str(c.command.id)]
                     check = self.__checks.get(c.command.id)
@@ -104,10 +113,10 @@ class Bot(commands.Bot):
                         try:
                             done = await check(c)
                         except Exception as e:
-                            raise CheckFailure(f'Check named `{check.__name__}` raised an exception: ({e})')
+                            raise CheckFailure(f'Check `{check.__name__}` raised an exception: ({e})')
                         else:
                             if type(done) is not bool:
-                                raise CheckFailure(f'Check named `{check.__name__}` did not return a boolean.')
+                                raise CheckFailure(f'Check `{check.__name__}` should return a boolean.')
                             if done:
                                 if before_invoke_job:
                                     self.loop.create_task(before_invoke_job(c))

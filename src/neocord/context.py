@@ -124,18 +124,6 @@ class Context:
             return self._resolved.users[user_id]
 
     @property
-    def options(self) -> Dict[str, SlashCommandOption]:
-        """
-        Returns the dictionary of the options of the invoked application command
-        if the command is a message/user command, this will return an empty dictionary
-        """
-        if self.type is CommandType.USER:
-            return 0  # type: ignore
-        if self.type is CommandType.MESSAGE:
-            return 1  # type: ignore
-        return self._parsed_options
-
-    @property
     def _parsed_options(self) -> Dict[str, Any]:
         container = {}
         options = self.data.options

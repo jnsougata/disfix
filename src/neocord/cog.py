@@ -61,7 +61,7 @@ class Cog(metaclass=type):
             cls,
             *,
             name: str,
-            description: str,
+            description: str = None,
             dm_access: bool = True,
             category: CommandType,
             options: Optional[List[Option]] = None,
@@ -71,10 +71,10 @@ class Cog(metaclass=type):
         Decorator for registering an application command
         inside any cog class subclassed from neocord.Cog
         """
-        if options and category is CommandType.USER or category is CommandType.MESSAGE:
+        if options and category is not CommandType.SLASH:
             raise ValueError("Options are only allowed for slash commands")
 
-        if description and category is CommandType.USER or category is CommandType.MESSAGE:
+        if description and category is not CommandType.SLASH:
             raise ValueError("Description is only allowed for slash commands")
 
         if category is CommandType.SLASH:
