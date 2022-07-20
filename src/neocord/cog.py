@@ -11,49 +11,11 @@ from .input_chat import SubCommand, Option, SlashCommand, SubCommandGroup
 
 
 class Cog(metaclass=type):
-
-    __uid__ = None
-    __autocomplete__ = {}
-    __mapped_checks__: dict = {}
-    __temp_listeners__: dict = {}
-    __mapped_container__: dict = {}
-    __method_container__: dict = {}
-    __sub_method_container__: dict = {}
-    __sub_group_method_container__: dict = {}
-    __command_container__: dict = {}
-    __permission_container__: dict = {}
-    __after_invoke_container__: dict = {}
-    __before_invoke_container__: dict = {}
+    container: ClassVar[Dict[str, Any]] = {}
+    listeners: ClassVar[Dict[str, Any]] = {}
 
     def __new__(cls, *args, **kwargs):
         self = super().__new__(cls)
-        commands = cls.__command_container__.copy()
-        setattr(cls, '__commands__', commands)
-        cls.__command_container__.clear()
-        methods = cls.__method_container__.copy()
-        setattr(cls, '__methods__', methods)
-        cls.__method_container__.clear()
-        checks = cls.__mapped_checks__.copy()
-        setattr(cls, '__checks__', checks)
-        cls.__mapped_checks__.clear()
-        automatics = cls.__autocomplete__.copy()
-        setattr(cls, '__automatics__', automatics)
-        listeners = cls.__temp_listeners__.copy()
-        setattr(cls, '__listeners__', listeners)
-        cls.__temp_listeners__.clear()
-        perms = cls.__permission_container__.copy()
-        setattr(cls, '__permissions__', perms)
-        cls.__permission_container__.clear()
-        before_invoke = cls.__before_invoke_container__.copy()
-        setattr(cls, '__before_invoke__', before_invoke)
-        cls.__before_invoke_container__.clear()
-        after_invoke = cls.__after_invoke_container__.copy()
-        setattr(cls, '__after_invoke__', after_invoke)
-        cls.__after_invoke_container__.clear()
-        subcommands = cls.__sub_method_container__.copy()
-        setattr(cls, '__subcommands__', subcommands)
-        cls.__sub_method_container__.clear()
-        setattr(cls, '__self__', self)
         return self
 
     @classmethod
@@ -87,39 +49,58 @@ class Cog(metaclass=type):
             raise ValueError("Invalid command type")
 
         cls.__uid__ = command._custom_id
-        cls.__command_container__[cls.__uid__] = command, guild_id
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            cls.__method_container__[cls.__uid__] = wrapper()
+            cls.container[command._custom_id] = {
+                "command": {
+                    "origin": cls,
+                    "object": command,
+                    "method": wrapper(),
+                    "check": None,
+                    "autocompletes": None,
+                    "permissions": None,
+                    "before_invoke": None,
+                    "after_invoke": None,
+                    "guild_id": guild_id,
+                },
+                "subcommands": {},
+                "groupcommands": {},
+            }
             return cls
         return decorator
 
     @classmethod
     def subcommand(cls, *, name: str, description: str, options: [Option] = None):
         subcommand = SubCommand(name, description, options=options)
-        mapping_name = f"{cls.__uid__}*{subcommand.name}"
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            cls.__sub_method_container__[mapping_name] = mapping_name, wrapper(), subcommand
+            cls.container[cls.__uid__]["subcommands"][subcommand.name] = {
+                "method": wrapper(),
+                "object": subcommand
+            }
             return cls
         return decorator
 
     @classmethod
-    def subcommand_group(cls, *, name: str, description: str, subcommands: [SubCommand] = None):
-        subcommand_group = SubCommandGroup(name, description, subcommands=subcommands)
-        mapping_name = f"{cls.__uid__}_SUBCOMMAND_GROUP_{subcommand_group.name}"
+    def group_command(cls, *, name: str, description: str, subcommands: [SubCommand] = None):
+        group = SubCommandGroup(name, description, subcommands=subcommands)
+        mname = f"{cls.__uid__}**{group.name}"
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            cls.__sub_group_method_container__[mapping_name] = mapping_name, wrapper(), subcommand_group
+            cls.container[cls.__uid__]["groupcommands"][group.name] = {
+                "object": group,
+                "method": wrapper(),
+                "subcommands": {}
+            }
             return cls
         return decorator
 
@@ -129,7 +110,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__permission_container__[cls.__uid__] = permission
+                cls.container[cls.__uid__]["command"]["permissions"] = permission
                 return func
             return wrapper()
         return decorator
@@ -140,7 +121,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__autocomplete__[cls.__uid__] = coro
+                cls.container[cls.__uid__]["command"]["autocompletes"] = coro
                 return func
             return wrapper()
         return decorator
@@ -151,7 +132,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__mapped_checks__[cls.__uid__] = coro
+                cls.container[cls.__uid__]["command"]["check"] = coro
                 return func
             return wrapper()
         return decorator
@@ -162,7 +143,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__before_invoke_container__[cls.__uid__] = coro
+                cls.container[cls.__uid__]["command"]["before_invoke"] = coro
                 return func
             return wrapper()
         return decorator
@@ -173,7 +154,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.__after_invoke_container__[cls.__uid__] = coro
+                cls.container[cls.__uid__]["command"]["after_invoke"] = coro
                 return func
             return wrapper()
         return decorator
@@ -192,7 +173,7 @@ class Cog(metaclass=type):
         if coro.__name__ not in allowed_methods:
             raise ValueError(f"Invalid method name. Allowed methods are: {' | '.join(allowed_methods)}")
         else:
-            cls.__temp_listeners__[coro.__name__] = coro
+            cls.listeners[coro.__name__] = coro
             return cls
 
 

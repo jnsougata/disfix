@@ -47,8 +47,8 @@ class Bot(commands.Bot):
         )
         self._queue = {}
         self._modals = {}
-        self.__checks = {}
-        self.__origins = {}
+        self._checks = {}
+        self._origins = {}
         self._automatics = {}
         self.__after_invoke_jobs = {}
         self.__before_invoke_jobs = {}
@@ -68,7 +68,7 @@ class Bot(commands.Bot):
             c = Context(interaction)
             qualified_name = c.command.qualified_name
             try:
-                self.__origins[c.command.id]
+                self._origins[c.command.id]
             except KeyError:
                 raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
             args, kwargs = _build_autocomplete_prams(c._parsed_options, auto)
@@ -85,12 +85,12 @@ class Bot(commands.Bot):
         if interaction.type == InteractionType.application_command:
             c = Context(interaction)
             try:
-                cog = self.__origins[c.command.id]
+                cog = self._origins[c.command.id]
             except (KeyError, AttributeError):
                 print(f'CommandNotImplemented: Application Command `{c!r}` is not implemented', file=sys.stderr)
             else:
                 try:
-                    cog = self.__origins[c.command.id]
+                    cog = self._origins[c.command.id]
 
                     if c.type is CommandType.USER:
                         h = self._connection.hooks[str(c.command.id)]
@@ -102,7 +102,7 @@ class Bot(commands.Bot):
 
                     options = c._parsed_options
                     main_handler = self._connection.hooks[str(c.command.id)]
-                    check = self.__checks.get(c.command.id)
+                    check = self._checks.get(c.command.id)
                     on_invoke = self._connection.hooks.get('on_app_command')
                     before_invoke_job = self.__before_invoke_jobs.get(c.command.id)
                     after_invoke_job = self.__after_invoke_jobs.get(c.command.id)
@@ -166,55 +166,62 @@ class Bot(commands.Bot):
 
     async def _walk_app_commands(self, cog: Cog):
 
-        for map_hash, listener in cog.__listeners__.items():
-            if asyncio.iscoroutinefunction(listener):
-                self._connection.hooks[map_hash] = listener
+        for name, method in cog.listeners.items():
+            if asyncio.iscoroutinefunction(method):
+                self._connection.hooks[name] = method
             else:
-                raise NonCoroutine(f'listener `{map_hash}` must be a coroutine function') from None
+                raise NonCoroutine(f'listener `{name}` must be a coroutine function')
 
-        for map_hash, auto in cog.__automatics__.items():
-            if asyncio.iscoroutinefunction(auto):
-                self._automatics[map_hash] = auto
-            else:
-                raise NonCoroutine(f'Autocomplete function `{auto.__name__}` must be a coroutine.') from None
+        for custom_id, struct in cog.container.items():
+            cmd = struct['command']['object']
+            origin = struct['command']['origin']
+            guild_id = struct['command']['guild_id']
+            method = struct['command']['method']
+            check = struct['command']['check']
+            auto = struct['command']['autocompletes']
+            perms = struct['command']['permissions']
+            before_invoke = struct['command']['before_invoke']
+            after_invoke = struct['command']['after_invoke']
+            subcommands = struct['subcommands']
+            groupcommands = struct['groupcommands']
 
-        for map_hash, check in cog.__checks__.items():
-            if asyncio.iscoroutinefunction(check):
-                self.__checks[map_hash] = check
-            else:
-                raise NonCoroutine(f'Check function `{check.__name__}` must be a coroutine.') from None
+            if not asyncio.iscoroutinefunction(method):
+                raise NonCoroutine(f'Application command handler `{method.__name__}` must be a coroutine function')
 
-        for map_hash, job in cog.__before_invoke__.items():
-            if asyncio.iscoroutinefunction(job):
-                self.__before_invoke_jobs[map_hash] = job
-            else:
-                raise NonCoroutine(f'Before invoke function `{job.__name__}` must be a coroutine.') from None
+            if auto:
+                if not asyncio.iscoroutinefunction(auto):
+                    raise NonCoroutine(f'Autocomplete function `{auto.__name__}` must be a coroutine.')
+                self._automatics[custom_id] = auto
 
-        for map_hash, job in cog.__after_invoke__.items():
-            if asyncio.iscoroutinefunction(job):
-                self.__after_invoke_jobs[map_hash] = job
-            else:
-                raise NonCoroutine(f'After invoke function `{job.__name__}` must be a coroutine.') from None
+            if check:
+                if not asyncio.iscoroutinefunction(check):
+                    raise NonCoroutine(f'Check function `{check.__name__}` must be a coroutine.')
+                self._checks[custom_id] = check
 
-        for mapping_hash, data in cog.__commands__.items():
-            app_command, guild_id = data
-            self.__origins[mapping_hash] = cog.__self__
-            handler = cog.__methods__[mapping_hash]
-            perms = cog.__permissions__.get(mapping_hash)
-            app_command._inject_permission(perms)
-            sub_command_map = {}
-            for alias, sub_handler, subcommand in cog.__subcommands__.values():
-                if asyncio.iscoroutinefunction(sub_handler):
-                    if app_command.type == CommandType.SLASH and alias == f'{mapping_hash}*{subcommand.name}':
-                        app_command._inject_subcommand(subcommand)
-                        sub_command_map[alias] = sub_handler
-                else:
-                    raise NonCoroutine(f'`{sub_handler.__name__}` must be a coroutine function') from None
-            if asyncio.iscoroutinefunction(handler):
-                self._connection.hooks[mapping_hash] = handler
-                self._queue[mapping_hash] = app_command, guild_id, handler, sub_command_map
-            else:
-                raise NonCoroutine(f'`{handler.__name__}` must be a coroutine function') from None
+            if before_invoke:
+                if not asyncio.iscoroutinefunction(before_invoke):
+                    raise NonCoroutine(f'Before invoke function `{before_invoke.__name__}` must be a coroutine.')
+                self.__before_invoke_jobs[custom_id] = before_invoke
+
+            if after_invoke:
+                if not asyncio.iscoroutinefunction(after_invoke):
+                    raise NonCoroutine(f'After invoke function `{after_invoke.__name__}` must be a coroutine.')
+                self.__after_invoke_jobs[custom_id] = after_invoke
+
+            if perms:
+                cmd._inject_permission(perms)
+
+            temp_map = {}
+            if subcommands:
+                for name, data in subcommands.items():
+                    cmd._inject_subcommand(data['object'])
+                    meth = data['method']
+                    if not asyncio.iscoroutinefunction(meth):
+                        raise NonCoroutine(f'Subcommand method `{meth.__name__}` must be a coroutine.')
+                    temp_map[f'{custom_id}*{name}'] = meth
+
+            #self._origins[custom_id] = origin
+            self._queue[custom_id] = cmd, guild_id, method, temp_map
 
     async def add_application_cog(self, cog: Cog) -> None:
         """
@@ -229,18 +236,19 @@ class Bot(commands.Bot):
         to ensure that the bot is up-to-date with the latest commands.
         """
         for map_hash, value in self._queue.items():
-            data = await post_command(self, value[0], value[1])
+            command, guild_id, method, subcommands = value
+            data = await post_command(self, command, guild_id)
             command_id = int(data['id'])
-            self._connection.hooks[str(command_id)] = value[2]
+            self._connection.hooks[str(command_id)] = method
             self._connection.hooks.pop(map_hash, None)
-            for alias, sub_handler in value[3].items():
+            for alias, handler in subcommands.items():
                 hook_name = str(command_id) + '*' + alias.split('*')[1]
-                self._connection.hooks[hook_name] = sub_handler
+                self._connection.hooks[hook_name] = handler
                 self._connection.hooks.pop(alias, None)
-            self.__checks[command_id] = self.__checks.pop(map_hash, None)
+            self._checks[command_id] = self._checks.pop(map_hash, None)
             self.__before_invoke_jobs[command_id] = self.__before_invoke_jobs.pop(map_hash, None)
             self.__after_invoke_jobs[command_id] = self.__after_invoke_jobs.pop(map_hash, None)
-            self.__origins[command_id] = self.__origins.pop(map_hash, None)
+            self._origins[command_id] = self._origins.pop(map_hash, None)
             self._application_commands[command_id] = ApplicationCommand(self, data)
 
     async def sync_global_commands(self) -> None:
