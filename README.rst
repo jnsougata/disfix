@@ -73,7 +73,7 @@ User Command Example
 
 .. code:: py
 
-        @neocrod.Cog.command(name='Bonk', category=nc.CommandType.USER)
+        @neocrod.cog.command(name='Bonk', category=nc.CommandType.USER)
         async def bonk(self, ctx: nc.Context, user: discord.User):
             await ctx.send_response(f'{ctx.author.mention} just bonked {user.mention}!')
 
