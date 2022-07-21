@@ -24,11 +24,6 @@ async def _supress_tree_error(interaction: any, error: Any):
 
 
 class Bot(commands.Bot):
-    """
-    This is the main class that is used to run the bot.
-    As this has been subclassed from the discord.ext.commands.Bot class
-    so all functionality of the discord.ext.commands.Bot class is available
-    """
 
     def __init__(
             self,
