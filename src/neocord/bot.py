@@ -166,24 +166,24 @@ class Bot(commands.Bot):
 
     async def _walk_app_commands(self, cog: Cog):
 
-        for name, method in cog.listeners.items():
+        for name, method in cog.__listeners__.items():
             if asyncio.iscoroutinefunction(method):
                 self._connection.hooks[name] = method
             else:
-                raise NonCoroutine(f'listener `{name}` must be a coroutine function')
+                raise NonCoroutine(f'Listener `{name}` must be a coroutine function')
 
-        for custom_id, struct in cog.container.items():
+        for custom_id, struct in cog.__container__.items():
+            origin = struct['origin']
             cmd = struct['command']['object']
-            origin = struct['command']['origin']
-            guild_id = struct['command']['guild_id']
-            method = struct['command']['method']
             check = struct['command']['check']
-            auto = struct['command']['autocompletes']
-            perms = struct['command']['permissions']
-            before_invoke = struct['command']['before_invoke']
-            after_invoke = struct['command']['after_invoke']
             subcommands = struct['subcommands']
+            method = struct['command']['method']
             groupcommands = struct['groupcommands']
+            perms = struct['command']['permissions']
+            guild_id = struct['command']['guild_id']
+            auto = struct['command']['autocompletes']
+            after_invoke = struct['command']['after_invoke']
+            before_invoke = struct['command']['before_invoke']
 
             if not asyncio.iscoroutinefunction(method):
                 raise NonCoroutine(f'Application command handler `{method.__name__}` must be a coroutine function')
@@ -220,7 +220,7 @@ class Bot(commands.Bot):
                         raise NonCoroutine(f'Subcommand method `{meth.__name__}` must be a coroutine.')
                     temp_map[f'{custom_id}*{name}'] = meth
 
-            #self._origins[custom_id] = origin
+            self._origins[custom_id] = origin
             self._queue[custom_id] = cmd, guild_id, method, temp_map
 
     async def add_application_cog(self, cog: Cog) -> None:
@@ -230,11 +230,6 @@ class Bot(commands.Bot):
         await self._walk_app_commands(cog)
 
     async def sync_current_commands(self) -> None:
-        """
-        Synchronize the currently implemented application commands for the specified guild or global.
-        This method is called automatically when the bot is ready. however, you can call it manually
-        to ensure that the bot is up-to-date with the latest commands.
-        """
         for map_hash, value in self._queue.items():
             command, guild_id, method, subcommands = value
             data = await post_command(self, command, guild_id)

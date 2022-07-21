@@ -11,11 +11,16 @@ from .input_chat import SubCommand, Option, SlashCommand, SubCommandGroup
 
 
 class Cog(metaclass=type):
-    container: ClassVar[Dict[str, Any]] = {}
-    listeners: ClassVar[Dict[str, Any]] = {}
+    __container: ClassVar[Dict[str, Any]] = {}
+    __listeners: ClassVar[Dict[str, Any]] = {}
 
     def __new__(cls, *args, **kwargs):
         self = super().__new__(cls)
+        cls.__container[self.__uid__]["origin"] = self
+        self.__setattr__("__container__", cls.__container.copy())
+        self.__setattr__("__listeners__", cls.__listeners.copy())
+        cls.__listeners.clear()
+        cls.__container.clear()
         return self
 
     @classmethod
@@ -54,9 +59,8 @@ class Cog(metaclass=type):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            cls.container[command._custom_id] = {
+            cls.__container[command._custom_id] = {
                 "command": {
-                    "origin": cls,
                     "object": command,
                     "method": wrapper(),
                     "check": None,
@@ -68,6 +72,7 @@ class Cog(metaclass=type):
                 },
                 "subcommands": {},
                 "groupcommands": {},
+                "origin": None,
             }
             return cls
         return decorator
@@ -80,7 +85,7 @@ class Cog(metaclass=type):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            cls.container[cls.__uid__]["subcommands"][subcommand.name] = {
+            cls.__container[cls.__uid__]["subcommands"][subcommand.name] = {
                 "method": wrapper(),
                 "object": subcommand
             }
@@ -96,7 +101,7 @@ class Cog(metaclass=type):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            cls.container[cls.__uid__]["groupcommands"][group.name] = {
+            cls.__container[cls.__uid__]["groupcommands"][group.name] = {
                 "object": group,
                 "method": wrapper(),
                 "subcommands": {}
@@ -110,7 +115,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.container[cls.__uid__]["command"]["permissions"] = permission
+                cls.__container[cls.__uid__]["command"]["permissions"] = permission
                 return func
             return wrapper()
         return decorator
@@ -121,7 +126,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.container[cls.__uid__]["command"]["autocompletes"] = coro
+                cls.__container[cls.__uid__]["command"]["autocompletes"] = coro
                 return func
             return wrapper()
         return decorator
@@ -132,7 +137,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.container[cls.__uid__]["command"]["check"] = coro
+                cls.__container[cls.__uid__]["command"]["check"] = coro
                 return func
             return wrapper()
         return decorator
@@ -143,7 +148,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.container[cls.__uid__]["command"]["before_invoke"] = coro
+                cls.__container[cls.__uid__]["command"]["before_invoke"] = coro
                 return func
             return wrapper()
         return decorator
@@ -154,7 +159,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls.container[cls.__uid__]["command"]["after_invoke"] = coro
+                cls.__container[cls.__uid__]["command"]["after_invoke"] = coro
                 return func
             return wrapper()
         return decorator
@@ -173,7 +178,7 @@ class Cog(metaclass=type):
         if coro.__name__ not in allowed_methods:
             raise ValueError(f"Invalid method name. Allowed methods are: {' | '.join(allowed_methods)}")
         else:
-            cls.listeners[coro.__name__] = coro
+            cls.__listeners[coro.__name__] = coro
             return cls
 
 
