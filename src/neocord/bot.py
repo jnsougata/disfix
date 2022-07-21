@@ -65,7 +65,7 @@ class Bot(commands.Bot):
             try:
                 self._origins[c.command.id]
             except KeyError:
-                raise CommandNotImplemented(f'Application Command `{c!r}` is not implemented.')
+                raise CommandNotImplemented(f'Application Command `{c!r}` (ID: {c.id}) is not implemented.')
             args, kwargs = _build_autocomplete_prams(c._parsed_options, auto)
             self.loop.create_task(self._automatics[c.command.id](c, *args, **kwargs))
 
@@ -82,7 +82,9 @@ class Bot(commands.Bot):
             try:
                 cog = self._origins[c.command.id]
             except (KeyError, AttributeError):
-                print(f'CommandNotImplemented: Application Command `{c!r}` is not implemented', file=sys.stderr)
+                print(
+                    f'WARNING: Application command `{c!r}` (ID: {c.id}) is not implemented',
+                    file=sys.stderr)
             else:
                 try:
                     cog = self._origins[c.command.id]
@@ -168,13 +170,11 @@ class Bot(commands.Bot):
                 raise NonCoroutine(f'Listener `{name}` must be a coroutine function')
 
         for custom_id, struct in cog.__container__.items():
-            origin = struct['origin']
             cmd = struct['command']['object']
             check = struct['command']['check']
             subcommands = struct['subcommands']
             method = struct['command']['method']
             groupcommands = struct['groupcommands']
-            perms = struct['command']['permissions']
             guild_id = struct['command']['guild_id']
             auto = struct['command']['autocompletes']
             after_invoke = struct['command']['after_invoke']
@@ -203,9 +203,6 @@ class Bot(commands.Bot):
                     raise NonCoroutine(f'After invoke function `{after_invoke.__name__}` must be a coroutine.')
                 self.__after_invoke_jobs[custom_id] = after_invoke
 
-            if perms:
-                cmd._inject_permission(perms)
-
             temp_map = {}
             if subcommands:
                 for name, data in subcommands.items():
@@ -215,13 +212,10 @@ class Bot(commands.Bot):
                         raise NonCoroutine(f'Subcommand method `{meth.__name__}` must be a coroutine.')
                     temp_map[f'{custom_id}*{name}'] = meth
 
-            self._origins[custom_id] = origin
+            self._origins[custom_id] = cog.cls
             self._queue[custom_id] = cmd, guild_id, method, temp_map
 
     async def add_application_cog(self, cog: Cog) -> None:
-        """
-        Adds a neocord cog to the application
-        """
         await self._walk_app_commands(cog)
 
     async def sync_current_commands(self) -> None:

@@ -286,9 +286,13 @@ class SubCommand:
             "name": self.name,
             "description": description,
             "type": self.type.value,
+            "options": []
         }
         if options:
             self.data["options"] = [op.data for op in options]
+
+    def _inject_option(self, option: Option):
+        self.data["options"].append(option.data)
 
 
 class SubCommandGroup(Option):
@@ -334,7 +338,7 @@ class SlashCommand(ApplicationCommandOrigin):
                 UserOption
             ]] = None,
             dm_access: bool = True,
-    ) -> None:
+    ):
         fmt_name = name.lower().replace(' ', '_')
         self._payload = {
             "name": fmt_name,

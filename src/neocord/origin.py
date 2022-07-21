@@ -21,6 +21,11 @@ class ApplicationCommandOrigin:
     def _inject_subcommand(self, subcommand):
         self._payload['options'].append(subcommand.data)
 
+    def _inject_option(self, option):
+        if self.type != CommandType.SLASH:
+            raise TypeError("options are not allowed in context menu commands")
+        self._payload["options"].append(option.data)
+
     def to_dict(self):
         self._payload['type'] = self.type.value
         return self._payload
