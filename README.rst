@@ -52,7 +52,7 @@ Cog Example
     import neocord as nc
 
 
-    class Math(nc.cog):
+    class Test(nc.cog):
 
         def __init__(self, bot):
             self.bot = bot
@@ -65,7 +65,7 @@ Cog Example
 
 
     async def setup(bot):
-        await bot.add_application_cog(Math(bot))
+        await bot.add_application_cog(Test(bot))
 
 
 User Command Example
