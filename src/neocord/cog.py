@@ -60,7 +60,7 @@ class Cog(metaclass=type):
                     "guild_id": guild_id,
                 },
                 "subcommands": {},
-                "groupcommands": {},
+                "groups": {},
             }
             return cls
         return decorator
@@ -84,18 +84,28 @@ class Cog(metaclass=type):
 
     @classmethod
     def subcommand(cls, name: str, description: str):
-        if '*' in cls.__temp_id:
+        if '**' in cls.__temp_id:
+            custom_id = cls.__temp_id.split('**')[-1]
+            subcommand = SubCommand(name, description)
             custom_id = cls.__temp_id.split('*')[1]
+            cls.__container[custom_id]["subcommands"][name] = {
+                "object": subcommand,
+                "method": None,
+                "options": [],
+            }
+
+        elif '*' in cls.__temp_id:
+            custom_id = cls.__temp_id.split('*')[-1]
+            cls.__temp_id = f'{name}*{custom_id}'
+            subcommand = SubCommand(name, description)
+            custom_id = cls.__temp_id.split('*')[1]
+            cls.__container[custom_id]["subcommands"][name] = {
+                "object": subcommand,
+                "method": None,
+                "options": [],
+            }
         else:
             custom_id = cls.__temp_id
-        cls.__temp_id = f'{name}*{custom_id}'
-        subcommand = SubCommand(name, description)
-        custom_id = cls.__temp_id.split('*')[1]
-        cls.__container[custom_id]["subcommands"][name] = {
-            "object": subcommand,
-            "method": None,
-            "options": [],
-        }
 
         def decorator(func):
             @wraps(func)
@@ -106,19 +116,20 @@ class Cog(metaclass=type):
         return decorator
 
     @classmethod
-    def group_command(cls, *, name: str, description: str, subcommands: [SubCommand] = None):
-        group = SubCommandGroup(name, description, subcommands=subcommands)
-        mname = f"{cls.__temp_id}**{group.name}"
+    def group(cls, name: str, description: str):
+        if '*' not in cls.__temp_id:
+            cls.__container[cls.__temp_id]["groups"][name] = {"object": SubCommandGroup(name, description)}
+            custom_id = cls.__temp_id
+        else:
+            custom_id = cls.__temp_id.split('*')[-1]
+            cls.__container[custom_id]["groups"][name] = {"object": SubCommandGroup(name, description)}
+        cls.__temp_id = f'{custom_id}**{name}'
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            cls.__container[cls.__temp_id]["groupcommands"][group.name] = {
-                "object": group,
-                "method": wrapper(),
-                "subcommands": {}
-            }
+            cls.__container[cls.__temp_id]["groups"][name]["method"] = wrapper()
             return cls
         return decorator
 

@@ -311,9 +311,13 @@ class SubCommandGroup(Option):
             "name": self.name,
             "description": description,
             "type": self.type.value,
+            "options": []
         }
         if subcommands:
             self.data["options"] = [sc.data for sc in subcommands]
+
+    def _inject_subcommand(self, subcommand: SubCommand):
+        self.data["options"].append(subcommand.data)
 
 
 class SlashCommand(ApplicationCommandOrigin):
