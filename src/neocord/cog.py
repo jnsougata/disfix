@@ -10,8 +10,17 @@ from typing import Optional, ClassVar, Callable, List, Union, Dict, Any
 from .input_chat import SubCommand, Option, SlashCommand, SubCommandGroup
 
 
+class Temp:
+    ROOT = None
+    GROUP = None
+    SUBCOMMAND = None
+    GRP_SUBCOMMAND = None
+
+
+T = Temp()
+
+
 class Cog(metaclass=type):
-    _temp_id: ClassVar[str] = None
     _container: ClassVar[Dict[str, Any]] = {}
     _listeners: ClassVar[Dict[str, Any]] = {}
 
@@ -43,7 +52,10 @@ class Cog(metaclass=type):
         else:
             raise ValueError("Invalid command type")
 
-        cls._temp_id = command._custom_id
+        T.ROOT = command._custom_id
+        T.GROUP = None
+        T.SUBCOMMAND = None
+        T.GRP_SUBCOMMAND = None
 
         def decorator(func):
             @wraps(func)
@@ -67,18 +79,12 @@ class Cog(metaclass=type):
 
     @classmethod
     def option(cls, option: Option):
-        if '*' not in cls._temp_id:
-            cls._container[cls._temp_id]["command"]["object"]._inject_option(option)
-        elif '**' in cls._temp_id:
-            custom_id = cls._temp_id.split('**')[-1]
-            temp = cls._temp_id.split('**')[0]
-            sub_name = temp.split('*')[0]
-            gr_name = temp.split('*')[-1]
-            cls._container[custom_id]["groups"][gr_name]["subcommands"][sub_name]["object"]._inject_option(option)
+        if T.SUBCOMMAND:
+            cls._container[T.ROOT]["subcommands"][T.SUBCOMMAND]["object"]._inject_option(option)
+        elif T.GROUP:
+            cls._container[T.ROOT]["groups"][T.GROUP]["subcommands"][T.GRP_SUBCOMMAND]["object"]._inject_option(option)
         else:
-            sub_name = cls._temp_id.split('*')[0]
-            custom_id = cls._temp_id.split('*')[-1]
-            cls._container[custom_id]["subcommands"][sub_name]["object"]._inject_option(option)
+            cls._container[T.ROOT]["command"]["object"]._inject_option(option)
 
         def decorator(func):
             @wraps(func)
@@ -89,26 +95,18 @@ class Cog(metaclass=type):
 
     @classmethod
     def subcommand(cls, name: str, description: str):
-        if '**' in cls._temp_id:
-            custom_id = cls._temp_id.split('**')[-1]
-            group_name = cls._temp_id.split('**')[0].split('*')[-1]
+        if T.GROUP:
+            T.SUBCOMMAND = None
+            T.GRP_SUBCOMMAND = name
             subcommand = SubCommand(name, description)
-            cls._container[custom_id]["groups"][group_name]["subcommands"][name] = {
-                "object": subcommand,
-                "method": None,
-            }
-            ref = cls._container[custom_id]["groups"][group_name]["subcommands"][name]
-            cls._temp_id = f"{name}*{group_name}**{custom_id}"
+            cls._container[T.ROOT]["groups"][T.GROUP]["subcommands"][name] = {"object": subcommand, "method": None}
+            ref = cls._container[T.ROOT]["groups"][T.GROUP]["subcommands"][name]
 
-        elif '*' in cls._temp_id:
-            custom_id = cls._temp_id.split('*')[-1]
-            cls._temp_id = f'{name}*{custom_id}'
-            subcommand = SubCommand(name, description)
-            cls._container[custom_id]["subcommands"][name] = {
-                "object": subcommand,
-                "method": None,
-            }
-            ref = cls._container[custom_id]["subcommands"][name]
+        elif T.SUBCOMMAND:
+            T.GROUP = None
+            T.SUBCOMMAND = name
+            cls._container[T.ROOT]["subcommands"][name] = {"object": SubCommand(name, description), "method": None}
+            ref = cls._container[T.ROOT]["subcommands"][name]
 
         def decorator(func):
             @wraps(func)
@@ -120,25 +118,19 @@ class Cog(metaclass=type):
 
     @classmethod
     def group(cls, name: str, description: str):
-
-        if '*' not in cls._temp_id:
-            custom_id = cls._temp_id
-        else:
-            custom_id = cls._temp_id.split('*')[-1]
-
-        cls._container[custom_id]["groups"][name] = {
+        T.GROUP = name
+        T.GRP_SUBCOMMAND = None
+        cls._container[T.ROOT]["groups"][name] = {
             "object": SubCommandGroup(name, description),
             "subcommands": {},
             "method": None,
         }
 
-        cls._temp_id = f'{name}**{custom_id}'
-
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            cls._container[custom_id]["groups"][name]["method"] = wrapper()
+            cls._container[T.ROOT]["groups"][name]["method"] = wrapper()
             return cls
         return decorator
 
@@ -148,7 +140,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls._container[cls._temp_id]["command"]["object"]._inject_permission(permission)
+                cls._container[T.ROOT]["command"]["object"]._inject_permission(permission)
                 return cls
             return wrapper()
         return decorator
@@ -159,7 +151,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls._container[cls._temp_id]["command"]["autocompletes"] = coro
+                cls._container[T.ROOT]["command"]["autocompletes"] = coro
                 return func
             return wrapper()
         return decorator
@@ -170,7 +162,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls._container[cls._temp_id]["command"]["check"] = coro
+                cls._container[T.ROOT]["command"]["check"] = coro
                 return func
             return wrapper()
         return decorator
@@ -181,7 +173,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls._container[cls._temp_id]["command"]["before_invoke"] = coro
+                cls._container[T.ROOT]["command"]["before_invoke"] = coro
                 return func
             return wrapper()
         return decorator
@@ -192,7 +184,7 @@ class Cog(metaclass=type):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                cls._container[cls._temp_id]["command"]["after_invoke"] = coro
+                cls._container[T.ROOT]["command"]["after_invoke"] = coro
                 return func
             return wrapper()
         return decorator
