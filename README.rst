@@ -127,27 +127,6 @@ Sending Modal Example
                 embed.set_author(name=f'{mcx.author.name}', icon_url=mcx.author.avatar.url)
                 await mcx.send_response(embed=embed)
 
-Subcommand Example
-------------------
-
-.. code:: py
-
-        @nc.cog.default_permission(discord.Permissions.manage_guild)
-        @nc.cog.command(name='math', description='does some arithmatic operations', dm_access=True)
-        async def math(self, ctx):
-            pass
-
-        @math.subcommand(name='add', description='adds two number')
-        @nc.cog.option(nc.NumberOption(name='a', description='first number', required=True))
-        @nc.cog.option(nc.NumberOption(name='b', description='second number', required=True))
-        async def add(self, ctx, a: float, b: float):
-            await ctx.send_response(f'The result of {a} + {b}: `{a + b}`')
-
-        @math.subcommand(name='mul', description='multiplies two number')
-        @nc.cog.option(nc.NumberOption(name='a', description='first number', required=True))
-        @nc.cog.option(nc.NumberOption(name='b', description='second number', required=True))
-        async def add(self, ctx, a: float, b: float):
-            await ctx.send_response(f'The result of {a} * {b}: `{a * b}`')
 
 Error Handler Example
 ---------------------
