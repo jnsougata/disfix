@@ -128,8 +128,11 @@ class Bot(commands.Bot):
                                         if handler:
                                             args, kwargs = _build_prams(option, handler)
                                             self.loop.create_task(handler(cog, c, *args, **kwargs))
-                                    else:
-                                        pass
+                                    elif name.startswith('**'):
+                                        handler = self._connection.hooks.get(f'{c.command.id}{name}')
+                                        if handler:
+                                            args, kwargs = _build_prams(option, handler)
+                                            self.loop.create_task(handler(cog, c, *args, **kwargs))
                     else:
                         if before_invoke_job:
                             self.loop.create_task(before_invoke_job(c))
@@ -144,8 +147,11 @@ class Bot(commands.Bot):
                                 if handler:
                                     args, kwargs = _build_prams(option, handler)
                                     self.loop.create_task(handler(cog, c, *args, **kwargs))
-                            else:
-                                pass
+                            elif name.startswith('**'):
+                                handler = self._connection.hooks.get(f'{c.command.id}{name}')
+                                if handler:
+                                    args, kwargs = _build_prams(option, handler)
+                                    self.loop.create_task(handler(cog, c, *args, **kwargs))
 
                 except Exception as e:
                     error_handler = self._connection.hooks.get('on_app_command_error')
@@ -218,7 +224,7 @@ class Bot(commands.Bot):
                     group = data['object']
                     for sub_name, val in data['subcommands'].items():
                         group._inject_subcommand(val['object'])
-                        group_map[f'{custom_id}*{group_name}*{sub_name}'] = group
+                        group_map[f'{custom_id}${group_name}**{sub_name}'] = val['method']
                     cmd._inject_group(group)
 
             self._origins[custom_id] = cog.cls
@@ -234,10 +240,15 @@ class Bot(commands.Bot):
             command_id = int(data['id'])
             self._connection.hooks[str(command_id)] = method
             self._connection.hooks.pop(map_hash, None)
+
             for alias, handler in subcommands.items():
-                hook_name = str(command_id) + '*' + alias.split('*')[1]
+                hook_name = str(command_id) + '*' + alias.split('*')[-1]
                 self._connection.hooks[hook_name] = handler
-                self._connection.hooks.pop(alias, None)
+
+            for alias, handler in groups.items():
+                hook_name = str(command_id) + '**' + alias.split('$')[-1]
+                self._connection.hooks[hook_name] = handler
+
             self._checks[command_id] = self._checks.pop(map_hash, None)
             self.__before_invoke_jobs[command_id] = self.__before_invoke_jobs.pop(map_hash, None)
             self.__after_invoke_jobs[command_id] = self.__after_invoke_jobs.pop(map_hash, None)
@@ -245,28 +256,18 @@ class Bot(commands.Bot):
             self._application_commands[command_id] = ApplicationCommand(self, data)
 
     async def sync_global_commands(self) -> None:
-        """
-        Syncs the global commands of the application.
-        It does this automatically when the bot is ready.
-        """
         payloads = await fetch_global_commands(self)
         for data in payloads:
             command = ApplicationCommand(self, data)
             self._application_commands[command.id] = command
 
     async def sync_for(self, guild: discord.Guild) -> None:
-        """
-        Automatically sync all commands for a specific guild.
-        """
         cmd_ls = await fetch_guild_commands(self, guild.id)
         for cmd in cmd_ls:
             command = ApplicationCommand(self, cmd)
             self._application_commands[command.id] = command
 
     async def fetch_command(self, command_id: int, guild_id: int = None) -> ApplicationCommand:
-        """
-        Fetch an application command by its id
-        """
         data = await fetch_any_command(self, command_id, guild_id)
         return ApplicationCommand(self, data)
 
@@ -277,9 +278,6 @@ class Bot(commands.Bot):
         await create_auto_mod_rule(self, rule.to_dict(), guild_id)
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
-        """
-        Does the login and command registrations
-        """
         self.add_listener(self._handle_interaction, 'on_interaction')
         await self.login(token)
         app = await self.application_info()

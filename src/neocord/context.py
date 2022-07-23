@@ -134,14 +134,20 @@ class Context:
                 if command_type > OptionType.SUBCOMMAND_GROUP.value:
                     container[name] = SlashCommandOption(self, option)
                 if command_type == OptionType.SUBCOMMAND.value:
-                    sc_name = f'*{name}'
-                    container[sc_name] = {}
+                    map_name = f'*{name}'
+                    container[map_name] = {}
                     sub_options = option['options']
                     for sub_option in sub_options:
-                        container[sc_name][sub_option['name']] = SlashCommandOption(self, sub_option)
-
+                        container[map_name][sub_option['name']] = SlashCommandOption(self, sub_option)
                 if command_type == OptionType.SUBCOMMAND_GROUP.value:
-                    pass
+                    sub_options = option['options']
+                    if sub_options:
+                        sub_name = sub_options[0]['name']
+                        map_name = f'**{name}**{sub_name}'
+                        container[map_name] = {}
+                        options = sub_options[0]['options']
+                        for sub_option in options:
+                            container[map_name][sub_option['name']] = SlashCommandOption(self, sub_option)
             return container
         return {}
 
