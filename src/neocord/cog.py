@@ -95,30 +95,34 @@ class Cog(metaclass=type):
 
     @classmethod
     def subcommand(cls, name: str, description: str):
+
         if T.GROUP:
             T.SUBCOMMAND = None
             T.GRP_SUBCOMMAND = name
             subcommand = SubCommand(name, description)
             cls._container[T.ROOT]["groups"][T.GROUP]["subcommands"][name] = {"object": subcommand, "method": None}
-            ref = cls._container[T.ROOT]["groups"][T.GROUP]["subcommands"][name]
 
-        elif T.SUBCOMMAND:
+        else:
             T.GROUP = None
             T.SUBCOMMAND = name
+            T.GRP_SUBCOMMAND = None
             cls._container[T.ROOT]["subcommands"][name] = {"object": SubCommand(name, description), "method": None}
-            ref = cls._container[T.ROOT]["subcommands"][name]
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 return func
-            ref["method"] = wrapper()
+            if T.GROUP:
+                cls._container[T.ROOT]["groups"][T.GROUP]["subcommands"][name]["method"] = wrapper()
+            if T.SUBCOMMAND:
+                cls._container[T.ROOT]["subcommands"][name]["method"] = wrapper()
             return cls
         return decorator
 
     @classmethod
     def group(cls, name: str, description: str):
         T.GROUP = name
+        T.SUBCOMMAND = None
         T.GRP_SUBCOMMAND = None
         cls._container[T.ROOT]["groups"][name] = {
             "object": SubCommandGroup(name, description),
