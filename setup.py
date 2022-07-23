@@ -9,7 +9,7 @@ with open('README.rst') as f:
 
 setup(
     name='neocord',
-    version='0.4rc1',
+    version='0.4.2',
     description='discord api wrapper for application commands and more',
     long_description=readme,
     long_description_content_type="text/x-rst",
