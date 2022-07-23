@@ -26,6 +26,11 @@ class ApplicationCommandOrigin:
             raise TypeError("options are not allowed in context menu commands")
         self._payload["options"].append(option.data)
 
+    def _inject_group(self, group):
+        if self.type != CommandType.SLASH:
+            raise TypeError("options are not allowed in context menu commands")
+        self._payload["options"].append(group.data)
+
     def to_dict(self):
         self._payload['type'] = self.type.value
         return self._payload

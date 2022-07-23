@@ -174,7 +174,7 @@ class Bot(commands.Bot):
             check = struct['command']['check']
             subcommands = struct['subcommands']
             method = struct['command']['method']
-            groupcommands = struct['groupcommands']
+            groups = struct['groups']
             guild_id = struct['command']['guild_id']
             auto = struct['command']['autocompletes']
             after_invoke = struct['command']['after_invoke']
@@ -203,24 +203,33 @@ class Bot(commands.Bot):
                     raise NonCoroutine(f'After invoke function `{after_invoke.__name__}` must be a coroutine.')
                 self.__after_invoke_jobs[custom_id] = after_invoke
 
-            temp_map = {}
+            sub_map = {}
             if subcommands:
                 for name, data in subcommands.items():
                     cmd._inject_subcommand(data['object'])
                     meth = data['method']
                     if not asyncio.iscoroutinefunction(meth):
                         raise NonCoroutine(f'Subcommand method `{meth.__name__}` must be a coroutine.')
-                    temp_map[f'{custom_id}*{name}'] = meth
+                    sub_map[f'{custom_id}*{name}'] = meth
+
+            group_map = {}
+            if groups:
+                for group_name, data in groups.items():
+                    group = data['object']
+                    for sub_name, val in data['subcommands'].items():
+                        group._inject_subcommand(val['object'])
+                        group_map[f'{custom_id}*{group_name}*{sub_name}'] = group
+                    cmd._inject_group(group)
 
             self._origins[custom_id] = cog.cls
-            self._queue[custom_id] = cmd, guild_id, method, temp_map
+            self._queue[custom_id] = cmd, guild_id, method, sub_map, group_map
 
     async def add_application_cog(self, cog: Cog) -> None:
         await self._walk_app_commands(cog)
 
     async def sync_current_commands(self) -> None:
         for map_hash, value in self._queue.items():
-            command, guild_id, method, subcommands = value
+            command, guild_id, method, subcommands, groups = value
             data = await post_command(self, command, guild_id)
             command_id = int(data['id'])
             self._connection.hooks[str(command_id)] = method
