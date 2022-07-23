@@ -21,7 +21,6 @@ T = Temp()
 
 
 class Cog(metaclass=type):
-    _options: ClassVar[List[Any]] = []
     _container: ClassVar[Dict[str, Any]] = {}
     _listeners: ClassVar[Dict[str, Any]] = {}
 
