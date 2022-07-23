@@ -10,7 +10,7 @@ with open('README.rst') as f:
 setup(
     name='neocord',
     version='0.4rc1',
-    description='extension to discord.py for application commands and more',
+    description='discord api wrapper for application commands and more',
     long_description=readme,
     long_description_content_type="text/x-rst",
     project_urls={'Source': 'https://github.com/jnsougata/neocord'},
