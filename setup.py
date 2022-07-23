@@ -13,7 +13,7 @@ setup(
     description='extension to discord.py for application commands and more',
     long_description=readme,
     long_description_content_type="text/x-rst",
-    project_urls={'Source': 'https://github.com/jnsougata/disfix'},
+    project_urls={'Source': 'https://github.com/jnsougata/neocord'},
     author='jnsougata',
     author_email='jnsougata@gmail.com',
     classifiers=[
